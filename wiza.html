@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WIZA FOOD CAFE - Manager Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="manager-styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Manager Header -->
+    <header class="manager-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="wfc.png" alt="WIZA FOOD CAFE Logo" class="logo-img" width="50" height="50">
+                <h1>WIZA FOOD CAFE - Manager</h1>
+            </div>
+            <div class="header-actions">
+                <div class="manager-info">
+                    <span class="manager-name">Admin Manager</span>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Manager Navigation -->
+    <nav class="manager-nav">
+        <div class="nav-items">
+            <button class="nav-item active" data-section="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-item" data-section="menu-management">
+                <i class="fas fa-utensils"></i>
+                <span>Menu Management</span>
+            </button>
+            <button class="nav-item" data-section="orders">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+                <span class="notification-badge" id="pendingOrdersCount">0</span>
+            </button>
+            <button class="nav-item" data-section="promotions">
+                <i class="fas fa-tag"></i>
+                <span>Promotions</span>
+            </button>
+            <button class="nav-item" data-section="customers">
+                <i class="fas fa-users"></i>
+                <span>Customers</span>
+            </button>
+            <button class="nav-item" data-section="analytics">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analytics</span>
+            </button>
+            <button class="nav-item" data-section="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="manager-main">
+        <!-- Dashboard Section -->
+        <section class="content-section active" id="dashboard">
+            <div class="section-header">
+                <h2>Dashboard Overview</h2>
+                <div class="date-filter">
+                    <select id="timeRange">
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Enhanced Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card revenue">
+                    <div class="stat-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Revenue</h3>
+                        <p class="stat-value" id="totalRevenue">K0.00</p>
+                        <p class="stat-change positive">+0% from yesterday</p>
+                    </div>
+                </div>
+
+                <div class="stat-card orders">
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Orders</h3>
+                        <p class="stat-value" id="totalOrders">0</p>
+                        <p class="stat-change positive">+0% from yesterday</p>
+                    </div>
+                </div>
+
+                <div class="stat-card customers">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Active Customers</h3>
+                        <p class="stat-value" id="activeCustomers">0</p>
+                        <p class="stat-change positive">+0% from yesterday</p>
+                    </div>
+                </div>
+
+                <div class="stat-card pending">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Pending Orders</h3>
+                        <p class="stat-value" id="pendingOrders">0</p>
+                        <p class="stat-change">Ready: <span id="readyOrders">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Status Quick Overview -->
+            <div class="status-overview">
+                <h3>Order Status Overview</h3>
+                <div class="status-counts" id="orderStatusCounts">
+                    <!-- Status counts will be populated here -->
+                </div>
+            </div>
+
+            <!-- Revenue Breakdown -->
+            <div class="revenue-breakdown">
+                <h3>Revenue Breakdown</h3>
+                <div class="revenue-list" id="revenueBreakdown">
+                    <!-- Revenue breakdown will be populated here -->
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Revenue Trend</h3>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Order Status Distribution</h3>
+                    <canvas id="ordersChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Top Selling Items</h3>
+                    <canvas id="topItemsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Customer Growth</h3>
+                    <canvas id="customersChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <div class="activity-list" id="recentActivity">
+                    <!-- Activity items will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Menu Management Section -->
+        <section class="content-section" id="menu-management">
+            <div class="section-header">
+                <h2>Menu Management</h2>
+                <div class="header-actions">
+                    <button class="btn-primary" id="addMenuItemBtn">
+                        <i class="fas fa-plus"></i> Add New Item
+                    </button>
+                    <div class="search-box">
+                        <input type="text" id="menuSearch" placeholder="Search menu items...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Categories -->
+            <div class="menu-categories">
+                <button class="category-btn active" data-category="all">All Items</button>
+                <button class="category-btn" data-category="quick-fills">Quick Fills</button>
+                <button class="category-btn" data-category="savory-bites">Savory Bites</button>
+                <button class="category-btn" data-category="snacks-treats">Snacks & Treats</button>
+                <button class="category-btn" data-category="beverages">Beverages</button>
+                <button class="category-btn" data-category="light-fresh">Light & Fresh</button>
+                <button class="category-btn" data-category="promo">Promotions</button>
+            </div>
+
+            <!-- Menu Stats -->
+            <div class="menu-stats">
+                <div class="menu-stat">
+                    <span class="stat-number" id="totalMenuItems">0</span>
+                    <span class="stat-label">Total Items</span>
+                </div>
+                <div class="menu-stat">
+                    <span class="stat-number" id="availableItems">0</span>
+                    <span class="stat-label">Available</span>
+                </div>
+                <div class="menu-stat">
+                    <span class="stat-number" id="popularItems">0</span>
+                    <span class="stat-label">Popular</span>
+                </div>
+                <div class="menu-stat">
+                    <span class="stat-number" id="newItems">0</span>
+                    <span class="stat-label">New</span>
+                </div>
+            </div>
+
+            <!-- Menu Items Grid -->
+            <div id="menuItemsGrid" class="menu-items-grid">
+                <!-- Menu items will be populated here -->
+            </div>
+        </section>
+
+        <!-- Orders Section -->
+        <section class="content-section" id="orders">
+            <div class="section-header">
+                <h2>Order Management</h2>
+                <div class="header-actions">
+                    <div class="order-filters">
+                        <select id="orderStatusFilter">
+                            <option value="all">All Orders</option>
+                            <option value="pending">Pending</option>
+                            <option value="preparing">Preparing</option>
+                            <option value="ready">Ready</option>
+                            <option value="out-for-delivery">Out for Delivery</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="orderSearch" placeholder="Search orders...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Summary -->
+            <div class="orders-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Today's Orders</span>
+                    <span class="summary-value" id="todayOrders">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Revenue Today</span>
+                    <span class="summary-value" id="todayRevenue">K0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Avg. Order Value</span>
+                    <span class="summary-value" id="avgOrderValueSummary">K0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Completion Rate</span>
+                    <span class="summary-value" id="completionRate">0%</span>
+                </div>
+            </div>
+
+            <!-- Orders Tabs -->
+            <div class="orders-tabs">
+                <button class="tab-btn active" data-tab="current">Current Orders</button>
+                <button class="tab-btn" data-tab="history">Order History</button>
+                <button class="tab-btn" data-tab="analytics">Order Analytics</button>
+            </div>
+
+            <!-- Orders List -->
+            <div class="orders-list" id="ordersList">
+                <!-- Orders will be populated here -->
+            </div>
+
+            <!-- Order Analytics -->
+            <div class="order-analytics" id="orderAnalytics" style="display: none;">
+                <div class="analytics-cards">
+                    <div class="analytics-card">
+                        <h4>Order Volume</h4>
+                        <canvas id="orderVolumeChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Order Status Trends</h4>
+                        <canvas id="orderTrendsChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Peak Hours</h4>
+                        <canvas id="peakHoursChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Popular Items</h4>
+                        <div id="popularItemsList">
+                            <!-- Popular items will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Promotions Section -->
+        <section class="content-section" id="promotions">
+            <div class="section-header">
+                <h2>Promotions Management</h2>
+                <div class="header-actions">
+                    <button class="btn-primary" id="addPromotionBtn">
+                        <i class="fas fa-plus"></i> Add Promotion
+                    </button>
+                    <div class="promotion-stats">
+                        <span class="stat">Active: <strong id="activePromotions">0</strong></span>
+                        <span class="stat">Total: <strong id="totalPromotions">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Promotions Filter -->
+            <div class="promotions-filter">
+                <button class="filter-btn active" data-filter="all">All Promotions</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+                <button class="filter-btn" data-filter="expired">Expired</button>
+            </div>
+
+            <!-- Active Promotions -->
+            <div class="promotions-grid" id="promotionsGrid">
+                <!-- Promotion cards will be populated here -->
+            </div>
+
+            <!-- Add Promotion Form -->
+            <div class="add-promotion-form" id="addPromotionForm" style="display: none;">
+                <h3>Add New Promotion</h3>
+                <form id="promotionForm">
+                    <div class="form-group">
+                        <label for="promotionTitle">Promotion Title *</label>
+                        <input type="text" id="promotionTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="promotionDescription">Description *</label>
+                        <textarea id="promotionDescription" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promotionType">Promotion Type *</label>
+                            <select id="promotionType" required>
+                                <option value="banner">Banner Promotion</option>
+                                <option value="discount">Discount Code</option>
+                                <option value="combo">Combo Deal</option>
+                                <option value="flash">Flash Sale</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="promotionCode">Promo Code</label>
+                            <input type="text" id="promotionCode" placeholder="e.g., WIZA20">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promotionDiscount">Discount (%) *</label>
+                            <input type="number" id="promotionDiscount" min="1" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="minOrderAmount">Minimum Order (K)</label>
+                            <input type="number" id="minOrderAmount" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate">Start Date *</label>
+                            <input type="datetime-local" id="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">End Date *</label>
+                            <input type="datetime-local" id="endDate" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="promotionImage">Promotion Image</label>
+                        <input type="file" id="promotionImage" accept="image/*">
+                        <div class="image-preview" id="promotionImagePreview"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="promotionActive" checked> Active
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="promotionFeatured"> Featured Promotion
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Create Promotion</button>
+                        <button type="button" class="btn-secondary" id="cancelPromotionBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Customers Section -->
+        <section class="content-section" id="customers">
+            <div class="section-header">
+                <h2>Customer Management</h2>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <input type="text" id="customerSearch" placeholder="Search customers...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="customer-stats">
+                        <span class="stat">Total: <strong id="totalCustomers">0</strong></span>
+                        <span class="stat">Active: <strong id="activeCustomersCount">0</strong></span>
+                        <span class="stat">Banned: <strong id="bannedCustomers">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Filters -->
+            <div class="customer-filters">
+                <button class="filter-btn active" data-filter="all">All Customers</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="banned">Banned</button>
+                <button class="filter-btn" data-filter="new">New This Month</button>
+                <button class="filter-btn" data-filter="vip">VIP Customers</button>
+            </div>
+
+            <!-- Customers List -->
+            <div class="customers-table-container">
+                <table class="customers-table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Contact</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Status</th>
+                            <th>Last Order</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersTableBody">
+                        <!-- Customers will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Customer Analytics -->
+            <div class="customer-analytics">
+                <div class="analytics-card">
+                    <h4>Customer Growth</h4>
+                    <canvas id="customerGrowthChart"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h4>Customer Value</h4>
+                    <div class="value-stats">
+                        <div class="value-stat">
+                            <span class="value-label">Average Order Value</span>
+                            <span class="value-amount" id="avgCustomerValue">K0.00</span>
+                        </div>
+                        <div class="value-stat">
+                            <span class="value-label">Customer Lifetime Value</span>
+                            <span class="value-amount" id="lifetimeValue">K0.00</span>
+                        </div>
+                        <div class="value-stat">
+                            <span class="value-label">Repeat Customer Rate</span>
+                            <span class="value-amount" id="repeatRate">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section class="content-section" id="analytics">
+            <div class="section-header">
+                <h2>Business Analytics</h2>
+                <div class="analytics-controls">
+                    <select id="analyticsPeriod">
+                        <option value="7">Last 7 Days</option>
+                        <option value="30">Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="365">Last Year</option>
+                    </select>
+                    <select id="analyticsType">
+                        <option value="sales">Sales Analytics</option>
+                        <option value="orders">Order Analytics</option>
+                        <option value="customers">Customer Analytics</option>
+                        <option value="menu">Menu Performance</option>
+                    </select>
+                    <button class="btn-secondary" id="exportAnalytics">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="key-metrics">
+                <div class="metric-card">
+                    <div class="metric-icon revenue">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Total Revenue</h3>
+                        <p class="metric-value" id="analyticsRevenue">K0.00</p>
+                        <p class="metric-change" id="revenueChange">+0%</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon orders">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Total Orders</h3>
+                        <p class="metric-value" id="analyticsOrders">0</p>
+                        <p class="metric-change" id="ordersChange">+0%</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon customers">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>New Customers</h3>
+                        <p class="metric-value" id="analyticsCustomers">0</p>
+                        <p class="metric-change" id="customersChange">+0%</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon average">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Average Order Value</h3>
+                        <p class="metric-value" id="analyticsAOV">K0.00</p>
+                        <p class="metric-change" id="aovChange">+0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Charts -->
+            <div class="analytics-charts">
+                <div class="chart-card large">
+                    <h3>Sales Performance</h3>
+                    <canvas id="salesChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Order Volume</h3>
+                    <canvas id="orderVolumeAnalyticsChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Customer Behavior</h3>
+                    <canvas id="customerBehaviorChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Popular Categories</h3>
+                    <canvas id="categoriesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Analytics -->
+            <div class="detailed-analytics">
+                <div class="analytics-section">
+                    <h4>Top Performing Items</h4>
+                    <div class="top-items-list" id="topItemsList">
+                        <!-- Top items will be populated here -->
+                    </div>
+                </div>
+                <div class="analytics-section">
+                    <h4>Peak Performance Hours</h4>
+                    <div class="peak-hours" id="peakHoursList">
+                        <!-- Peak hours will be populated here -->
+                    </div>
+                </div>
+                <div class="analytics-section">
+                    <h4>Customer Segmentation</h4>
+                    <div class="segmentation" id="customerSegmentation">
+                        <!-- Segmentation data will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section class="content-section" id="settings">
+            <div class="section-header">
+                <h2>System Settings</h2>
+                <button class="btn-primary" id="saveSettings">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h3><i class="fas fa-mobile-alt"></i> App Control</h3>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="appStatusToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Customer App Status</span>
+                            <span class="setting-desc">Turn off to disable customer app completely</span>
+                            <span class="setting-status" id="appStatus">Online</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="orderingToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Accept New Orders</span>
+                            <span class="setting-desc">Pause new order requests</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="deliveryToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Delivery Service</span>
+                            <span class="setting-desc">Enable/disable delivery orders</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="pickupToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Pickup Service</span>
+                            <span class="setting-desc">Enable/disable pickup orders</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-clock"></i> Business Hours</h3>
+                    <div class="business-hours-settings">
+                        <div class="hours-day">
+                            <span class="day-label">Monday - Friday</span>
+                            <div class="time-inputs">
+                                <input type="time" value="08:00" class="open-time">
+                                <span>to</span>
+                                <input type="time" value="22:00" class="close-time">
+                            </div>
+                        </div>
+                        <div class="hours-day">
+                            <span class="day-label">Saturday</span>
+                            <div class="time-inputs">
+                                <input type="time" value="09:00" class="open-time">
+                                <span>to</span>
+                                <input type="time" value="23:00" class="close-time">
+                            </div>
+                        </div>
+                        <div class="hours-day">
+                            <span class="day-label">Sunday</span>
+                            <div class="time-inputs">
+                                <input type="time" value="10:00" class="open-time">
+                                <span>to</span>
+                                <input type="time" value="20:00" class="close-time">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-actions">
+                        <button class="btn-secondary" id="applyHours">Apply Hours</button>
+                        <button class="btn-text" id="resetHours">Reset to Default</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-bell"></i> Notifications</h3>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="orderNotifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">New Order Alerts</span>
+                            <span class="setting-desc">Get notified for new orders</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="promoNotifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Promotion Alerts</span>
+                            <span class="setting-desc">Promotion performance updates</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="customerNotifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Customer Alerts</span>
+                            <span class="setting-desc">New customer registrations</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="systemNotifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">System Alerts</span>
+                            <span class="setting-desc">System status and updates</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-receipt"></i> Order Settings</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Deposit Percentage</span>
+                            <span class="setting-desc">Required deposit for orders</span>
+                        </div>
+                        <input type="number" id="depositPercentage" value="50" min="0" max="100" class="number-input">
+                        <span class="percentage-symbol">%</span>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Service Fee</span>
+                            <span class="setting-desc">Fixed service charge per order</span>
+                        </div>
+                        <span class="currency-symbol">K</span>
+                        <input type="number" id="serviceFee" value="2.00" step="0.01" min="0" class="number-input">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Delivery Base Fee</span>
+                            <span class="setting-desc">Standard delivery charge</span>
+                        </div>
+                        <span class="currency-symbol">K</span>
+                        <input type="number" id="deliveryFee" value="25.00" step="0.01" min="0" class="number-input">
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-shield-alt"></i> Security</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Auto Logout</span>
+                            <span class="setting-desc">Automatic logout after inactivity</span>
+                        </div>
+                        <select id="autoLogout" class="select-input">
+                            <option value="15">15 minutes</option>
+                            <option value="30" selected>30 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Password Change</span>
+                            <span class="setting-desc">Last changed: Never</span>
+                        </div>
+                        <button class="btn-secondary" id="changePassword">Change</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Session Management</span>
+                            <span class="setting-desc">Manage active sessions</span>
+                        </div>
+                        <button class="btn-text" id="viewSessions">View</button>
+                    </div>
+                </div>
+
+                <div class="settings-card danger-zone">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+                    <div class="danger-actions">
+                        <button class="btn-danger" id="clearAllData">
+                            <i class="fas fa-trash"></i> Clear All Data
+                        </button>
+                        <button class="btn-danger" id="resetSystem">
+                            <i class="fas fa-redo"></i> Reset System
+                        </button>
+                        <button class="btn-danger" id="exportAllData">
+                            <i class="fas fa-download"></i> Export All Data
+                        </button>
+                    </div>
+                    <p class="danger-warning">
+                        <i class="fas fa-exclamation-circle"></i>
+                        These actions are irreversible. Please proceed with caution.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Add/Edit Menu Item Modal -->
+    <div class="modal" id="menuItemModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="menuModalTitle">Add Menu Item</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="menuItemForm">
+                <div class="form-group">
+                    <label for="itemName">Item Name *</label>
+                    <input type="text" id="itemName" required placeholder="Enter item name">
+                </div>
+                <div class="form-group">
+                    <label for="itemDescription">Description *</label>
+                    <textarea id="itemDescription" required placeholder="Enter item description"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemPrice">Price (K) *</label>
+                        <input type="number" id="itemPrice" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemOriginalPrice">Original Price (K)</label>
+                        <input type="number" id="itemOriginalPrice" step="0.01" min="0" placeholder="For discounted items">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemCategory">Category *</label>
+                        <select id="itemCategory" required>
+                            <option value="quick-fills">Quick Fills</option>
+                            <option value="savory-bites">Savory Bites</option>
+                            <option value="snacks-treats">Snacks & Treats</option>
+                            <option value="beverages">Beverages</option>
+                            <option value="light-fresh">Light & Fresh</option>
+                            <option value="promo">Promotions</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemDiscount">Discount (%)</label>
+                        <input type="number" id="itemDiscount" min="0" max="100" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="itemImage">Item Image</label>
+                    <input type="file" id="itemImage" accept="image/*">
+                    <div class="image-preview" id="imagePreview"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemAvailable" checked> Available
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemPopular"> Popular Item
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemVegetarian"> Vegetarian
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemNew"> New Item
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemPromo"> Promotion
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemFeatured"> Featured
+                        </label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Item</button>
+                    <button type="button" class="btn-secondary close-modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderDetailsModal">
+        <div class="modal-content x-large">
+            <div class="modal-header">
+                <h3>Order Details - <span id="orderRef"></span></h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="order-details-content">
+                <!-- Order details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Details Modal -->
+    <div class="modal" id="customerDetailsModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Customer Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="customer-details-content">
+                <!-- Customer details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Promotion Details Modal -->
+    <div class="modal" id="promotionDetailsModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Promotion Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="promotion-details-content">
+                <!-- Promotion details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3 id="confirmationTitle">Confirm Action</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="confirmation-content">
+                <p id="confirmationMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="confirmation-actions">
+                <button class="btn-danger" id="confirmAction">Confirm</button>
+                <button class="btn-secondary close-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay"></div>
+
+    <script src="manager-script.js"></script>
+</body>
+</html>
