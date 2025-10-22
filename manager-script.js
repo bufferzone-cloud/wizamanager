@@ -1,4 +1,4 @@
-
+```javascript
 // --- Your Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyCZEqWRAHW0tW6j0WfBf8lxj61oExa6BwY",
@@ -41,7 +41,7 @@ let isNotificationActive = false;
 
 // Auto-refresh interval
 let autoRefreshInterval = null;
-const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
+const AUTO_REFRESH_INTERVAL = 2000; // 2 seconds
 
 // Initialize Manager App
 document.addEventListener('DOMContentLoaded', function() {
@@ -403,6 +403,7 @@ function startAutoRefresh() {
     
     if (managerState.settings.autoRefresh) {
         autoRefreshInterval = setInterval(() => {
+            checkForNewOrders();
             if (managerState.currentSection === 'orders') {
                 loadOrders();
             }
@@ -2082,7 +2083,4 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
-
-
-
-
+```
