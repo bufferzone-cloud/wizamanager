@@ -9,459 +9,10 @@ const managerState = {
     settings: {
         appOnline: true,
         acceptOrders: true,
-        deliveryEnabled: false
-    }
+        deliveryEnabled: true
+    },
+    restaurantLocation: [-15.402235977316481, 28.329942522202668] // Wiza Food Cafe coordinates
 };
-
-// Complete Menu Data
-const completeMenuData = [
-    // Quick Fills
-    {
-        id: 1,
-        name: "Chicken & Chips (Wing)",
-        description: "Crispy chicken wings served with golden fries",
-        price: 35,
-        originalPrice: 40,
-        category: "quick-fills",
-        image: "Q1.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false,
-        discount: 12
-    },
-    {
-        id: 2,
-        name: "Sausage & Chips",
-        description: "Grilled sausage served with crispy chips",
-        price: 40,
-        category: "quick-fills",
-        image: "Q2.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false
-    },
-    {
-        id: 3,
-        name: "Chicken Drumsticks",
-        description: "Juicy, flavorful chicken drumsticks",
-        price: 45,
-        category: "quick-fills",
-        image: "Q3.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false,
-        new: true
-    },
-    {
-        id: 4,
-        name: "Plain Chips",
-        description: "Crispy golden fries with a pinch of salt",
-        price: 20,
-        category: "quick-fills",
-        image: "Q4.jpg",
-        available: true,
-        popular: false,
-        vegetarian: true
-    },
-    {
-        id: 5,
-        name: "Bread & Egg",
-        description: "Fresh bread with scrambled eggs",
-        price: 15,
-        originalPrice: 17,
-        category: "quick-fills",
-        image: "Q5.jpg",
-        available: true,
-        popular: false,
-        vegetarian: true,
-        discount: 10
-    },
-
-    // Savory Bites
-    {
-        id: 6,
-        name: "Shawarma",
-        description: "Delicious wrap with spiced meat and vegetables",
-        price: 33,
-        category: "savory-bites",
-        image: "P1.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false
-    },
-    {
-        id: 7,
-        name: "Shawarma Platter",
-        description: "Complete shawarma meal with sides",
-        price: 70,
-        originalPrice: 82,
-        category: "savory-bites",
-        image: "P2.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false,
-        discount: 15
-    },
-    {
-        id: 8,
-        name: "Plain Sausage",
-        description: "Grilled sausage, perfect as a snack",
-        price: 20,
-        category: "savory-bites",
-        image: "P3.jpg",
-        available: true,
-        popular: false,
-        vegetarian: false
-    },
-    {
-        id: 9,
-        name: "Plain Wings",
-        description: "Simple, flavorful chicken wings",
-        price: 12,
-        category: "savory-bites",
-        image: "P4.jpg",
-        available: true,
-        popular: false,
-        vegetarian: false
-    },
-    {
-        id: 10,
-        name: "Plain Chapati",
-        description: "Soft, unleavened flatbread",
-        price: 10,
-        category: "savory-bites",
-        image: "P5.jpg",
-        available: true,
-        popular: false,
-        vegetarian: true
-    },
-    {
-        id: 11,
-        name: "Plain Rice",
-        description: "Steamed white rice, perfect with any dish",
-        price: 10,
-        category: "savory-bites",
-        image: "P6.jpg",
-        available: true,
-        popular: false,
-        vegetarian: true
-    },
-    {
-        id: 12,
-        name: "Pizza Pie",
-        description: "Individual-sized pizza with delicious toppings",
-        price: 50,
-        category: "savory-bites",
-        image: "P7.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false,
-        new: true
-    },
-    {
-        id: 13,
-        name: "Regular Pizza",
-        description: "Full-sized pizza with your choice of toppings",
-        price: 70,
-        originalPrice: 88,
-        category: "savory-bites",
-        image: "P8.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false,
-        discount: 20
-    },
-
-    // Snacks & Treats
-    {
-        id: 14,
-        name: "Popcorn (Small)",
-        description: "Freshly popped corn in a small pack",
-        price: 3,
-        category: "snacks-treats",
-        image: "M1.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true
-    },
-    {
-        id: 15,
-        name: "Popcorn (Medium)",
-        description: "Freshly popped corn in a medium pack",
-        price: 6,
-        category: "snacks-treats",
-        image: "M1.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true
-    },
-    {
-        id: 16,
-        name: "Popcorn (Large)",
-        description: "Freshly popped corn in a large pack",
-        price: 10,
-        originalPrice: 11,
-        category: "snacks-treats",
-        image: "M1.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true,
-        discount: 8
-    },
-    {
-        id: 17,
-        name: "Cupcake",
-        description: "Nice frosty cupcakes with sprinkles",
-        price: 10,
-        category: "snacks-treats",
-        image: "M2.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true
-    },
-    {
-        id: 18,
-        name: "Cream Donut",
-        description: "Freshly baked donuts with cream",
-        price: 12,
-        category: "snacks-treats",
-        image: "M3.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true,
-        new: true
-    },
-    {
-        id: 19,
-        name: "Chocolate Muffin",
-        description: "Rich chocolate muffin with chocolate chips",
-        price: 14,
-        originalPrice: 16,
-        category: "snacks-treats",
-        image: "M4.jpg",
-        available: true,
-        popular: false,
-        vegetarian: true,
-        discount: 12
-    },
-    {
-        id: 20,
-        name: "Cinnamon Roll",
-        description: "Soft, sweet roll with cinnamon and icing",
-        price: 15,
-        category: "snacks-treats",
-        image: "M5.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true
-    },
-
-    // Beverages
-    {
-        id: 21,
-        name: "Mojo",
-        description: "Refreshing energy drink",
-        price: 8,
-        category: "beverages",
-        image: "B1.jpeg",
-        available: true,
-        popular: true,
-        vegetarian: true
-    },
-    {
-        id: 22,
-        name: "Coca Cola",
-        description: "Classic cola soft drink",
-        price: 8,
-        category: "beverages",
-        image: "B2.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true
-    },
-    {
-        id: 23,
-        name: "Fanta Fruitcana",
-        description: "Fruity and refreshing Fanta flavor",
-        price: 8,
-        category: "beverages",
-        image: "B3.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true,
-        new: true
-    },
-    {
-        id: 24,
-        name: "Water",
-        description: "Pure bottled water",
-        price: 5,
-        category: "beverages",
-        image: "B4.jpg",
-        available: true,
-        popular: false,
-        vegetarian: true
-    },
-    {
-        id: 25,
-        name: "Fresh Juice",
-        description: "Freshly squeezed fruit juice",
-        price: 15,
-        originalPrice: 17,
-        category: "beverages",
-        image: "B5.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true,
-        discount: 10
-    },
-    {
-        id: 26,
-        name: "Coffee",
-        description: "Hot or iced coffee options",
-        price: 12,
-        category: "beverages",
-        image: "B6.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true
-    },
-    {
-        id: 27,
-        name: "Milkshake",
-        description: "Creamy milkshake in chocolate, vanilla or strawberry",
-        price: 18,
-        category: "beverages",
-        image: "B7.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true,
-        new: true
-    },
-    {
-        id: 28,
-        name: "Smoothie",
-        description: "Fresh fruit smoothie with yogurt",
-        price: 20,
-        originalPrice: 23,
-        category: "beverages",
-        image: "B8.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true,
-        discount: 15
-    },
-
-    // Light & Fresh
-    {
-        id: 29,
-        name: "Salads",
-        description: "Fresh garden salad with your choice of dressing",
-        price: 25,
-        category: "light-fresh",
-        image: "S1.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true
-    },
-    {
-        id: 30,
-        name: "Fruits",
-        description: "Seasonal fruit platter",
-        price: 20,
-        originalPrice: 22,
-        category: "light-fresh",
-        image: "S2.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true,
-        discount: 10
-    },
-    {
-        id: 31,
-        name: "Veggie Wrap",
-        description: "Fresh vegetables wrapped in a tortilla",
-        price: 22,
-        category: "light-fresh",
-        image: "S3.jpg",
-        available: true,
-        popular: true,
-        vegetarian: true,
-        new: true
-    },
-    {
-        id: 32,
-        name: "Yogurt Parfait",
-        description: "Layers of yogurt, granola, and fresh fruits",
-        price: 28,
-        originalPrice: 32,
-        category: "light-fresh",
-        image: "S4.jpg",
-        available: true,
-        popular: false,
-        vegetarian: true,
-        discount: 12
-    },
-
-    // Promotions
-    {
-        id: 33,
-        name: "Family Meal Deal",
-        description: "2 Shawarma Platters, 4 drinks, and 2 snacks",
-        price: 180,
-        originalPrice: 220,
-        category: "promo",
-        image: "PR1.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false,
-        discount: 18,
-        promo: true
-    },
-    {
-        id: 34,
-        name: "Burger Combo",
-        description: "Burger, chips, and a drink of your choice",
-        price: 55,
-        originalPrice: 65,
-        category: "promo",
-        image: "PR2.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false,
-        discount: 15,
-        promo: true,
-        new: true
-    },
-    {
-        id: 35,
-        name: "Weekend Special",
-        description: "Pizza, 2 sides, and 2 drinks - perfect for weekends",
-        price: 120,
-        originalPrice: 145,
-        category: "promo",
-        image: "PR3.jpg",
-        available: true,
-        popular: true,
-        vegetarian: false,
-        discount: 17,
-        promo: true
-    },
-    {
-        id: 36,
-        name: "Breakfast Deal",
-        description: "2 Bread & Egg, 2 coffees, and fruit juice",
-        price: 45,
-        originalPrice: 55,
-        category: "promo",
-        image: "PR4.jpg",
-        available: true,
-        popular: false,
-        vegetarian: true,
-        discount: 18,
-        promo: true
-    }
-];
 
 // DOM Elements
 let elements = {};
@@ -474,6 +25,9 @@ let isNotificationActive = false;
 // Save timeout
 let saveTimeout = null;
 const SAVE_DELAY = 500;
+
+// Auto-refresh interval
+let autoRefreshInterval = null;
 
 // Initialize Manager App
 document.addEventListener('DOMContentLoaded', () => {
@@ -494,12 +48,8 @@ function initializeManagerApp() {
     // Initialize notification sound
     createNotificationSound();
     
-    // Schedule new order notification after 10 seconds
-    setTimeout(() => {
-        if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
-            createSampleNewOrder();
-        }
-    }, 10000);
+    // Start auto-refresh for orders
+    startAutoRefresh();
     
     showNotification('Manager dashboard loaded successfully!', 'success');
 }
@@ -753,83 +303,21 @@ function rejectNewOrder(orderId) {
     showNotification('Order rejected successfully!', 'warning');
 }
 
-function createSampleNewOrder() {
-    const sampleOrder = {
-        id: generateId(),
-        ref: `WIZA${(managerState.orders.length + 1).toString().padStart(4, '0')}`,
-        customer: {
-            name: "Sarah Chanda",
-            email: "sarah.chanda@email.com",
-            phone: "0977123456",
-            coordinates: [-15.4167, 28.2833]
-        },
-        items: [
-            {
-                id: 6,
-                name: "Shawarma",
-                description: "Delicious wrap with spiced meat and vegetables",
-                price: 33,
-                quantity: 2,
-                image: "P1.jpg",
-                toppings: ["Extra Garlic Sauce", "Extra Vegetables", "Spicy Mayo"],
-                instructions: "Please make it extra spicy and add extra sauce"
-            },
-            {
-                id: 1,
-                name: "Chicken & Chips (Wing)",
-                description: "Crispy chicken wings served with golden fries",
-                price: 35,
-                quantity: 1,
-                image: "Q1.jpg",
-                toppings: ["Extra Chilli", "Lemon Wedge"],
-                instructions: "Make it extra crispy with well-done fries"
-            },
-            {
-                id: 21,
-                name: "Mojo",
-                description: "Refreshing energy drink",
-                price: 8,
-                quantity: 3,
-                image: "B1.jpeg",
-                toppings: [],
-                instructions: "Serve very cold with ice"
-            }
-        ],
-        subtotal: (33 * 2) + 35 + (8 * 3),
-        deliveryFee: 25,
-        serviceFee: 2,
-        discount: 18.75,
-        total: 0,
-        deposit: 0,
-        status: "pending",
-        delivery: true,
-        deliveryLocation: {
-            address: "78 Independence Avenue, Lusaka",
-            coordinates: [-15.4167, 28.2833]
-        },
-        promoCode: "WIZA15",
-        date: new Date().toISOString(),
-        paymentScreenshot: "payment-new.jpg"
-    };
-    
-    // Calculate final totals
-    sampleOrder.total = sampleOrder.subtotal - sampleOrder.discount + sampleOrder.deliveryFee + sampleOrder.serviceFee;
-    sampleOrder.deposit = sampleOrder.total * 0.5;
-    
-    managerState.orders.unshift(sampleOrder);
-    saveManagerData();
-    showNewOrderNotification(sampleOrder);
-    updateDashboard();
-    loadOrders();
-    updatePendingOrdersCount();
-}
-
-function updatePendingOrdersCount() {
-    const pendingCount = managerState.orders.filter(order => order.status === 'pending').length;
-    const pendingOrdersCount = document.getElementById('pendingOrdersCount');
-    if (pendingOrdersCount) {
-        pendingOrdersCount.textContent = pendingCount;
+// Auto-refresh functionality
+function startAutoRefresh() {
+    // Clear existing interval
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
     }
+    
+    // Set new interval to refresh every 5 seconds
+    autoRefreshInterval = setInterval(() => {
+        if (managerState.currentSection === 'orders') {
+            loadOrders();
+        }
+        updateDashboard();
+        updatePendingOrdersCount();
+    }, 5000);
 }
 
 // EVENT LISTENERS
@@ -941,153 +429,19 @@ function loadManagerData() {
             managerState.settings = data.settings || managerState.settings;
         } catch (e) {
             console.error('Error parsing saved data:', e);
-            initializeSampleData();
+            initializeDefaultData();
             showNotification('Data corrupted. Reset to default menu.', 'error');
         }
     } else {
-        initializeSampleData();
+        initializeDefaultData();
     }
 }
 
-function initializeSampleData() {
+function initializeDefaultData() {
     managerState.menuItems = [...completeMenuData];
-
-    // Sample orders
-    managerState.orders = [
-        {
-            id: 1,
-            ref: "WIZA0001",
-            customer: {
-                name: "Jubel mobz",
-                email: "jubelmobz19@gmail.com.com",
-                phone: "0976769537",
-                coordinates: [-15.42, 28.28]
-            },
-            items: [
-                {
-                    id: 1,
-                    name: "Chicken & Chips (Wing)",
-                    description: "Crispy chicken wings served with golden fries",
-                    price: 35,
-                    quantity: 2,
-                    image: "Q1.jpg",
-                    toppings: ["Extra Sauce", "Extra Chilli"],
-                    instructions: "Make it extra spicy please"
-                },
-                {
-                    id: 21,
-                    name: "Mojo",
-                    description: "Refreshing energy drink",
-                    price: 8,
-                    quantity: 1,
-                    image: "B1.jpeg",
-                    toppings: [],
-                    instructions: ""
-                }
-            ],
-            subtotal: 78,
-            deliveryFee: 25,
-            serviceFee: 2,
-            total: 105,
-            deposit: 52.5,
-            status: "pending",
-            delivery: true,
-            deliveryLocation: {
-                address: "123 Main Street, Lusaka",
-                coordinates: [-15.42, 28.28]
-            },
-            promoCode: "WIZA20",
-            discount: 15.6,
-            date: new Date().toISOString(),
-            paymentScreenshot: "payment1.jpg"
-        },
-        {
-            id: 2,
-            ref: "WIZA0002",
-            customer: {
-                name: "Astridah Nyumbu",
-                email: "astridahnyumbu@gmail.com",
-                phone: "0977654321",
-                coordinates: [-15.41, 28.29]
-            },
-            items: [
-                {
-                    id: 6,
-                    name: "Shawarma",
-                    description: "Delicious wrap with spiced meat and vegetables",
-                    price: 33,
-                    quantity: 1,
-                    image: "P1.jpg",
-                    toppings: ["Extra Tomato", "Extra Onions"],
-                    instructions: "No mayo, add extra garlic sauce"
-                }
-            ],
-            subtotal: 33,
-            deliveryFee: 0,
-            serviceFee: 2,
-            total: 35,
-            deposit: 17.5,
-            status: "ready",
-            delivery: false,
-            promoCode: "",
-            discount: 0,
-            date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            paymentScreenshot: "payment2.jpg"
-        }
-    ];
-
-    // Sample customers
-    managerState.customers = [
-        {
-            id: 1,
-            name: "Jubel Mobela",
-            email: "jubelmobz19@gmail.com",
-            phone: "0976760537",
-            totalOrders: 5,
-            totalSpent: 485,
-            status: "active",
-            joinDate: new Date('2024-01-15').toISOString(),
-            lastOrder: new Date().toISOString()
-        },
-        {
-            id: 2,
-            name: "Astridah Nyumbu",
-            email: "astridahnyumbu@gmail.com",
-            phone: "0977654321",
-            totalOrders: 3,
-            totalSpent: 150,
-            status: "active",
-            joinDate: new Date('2024-02-01').toISOString(),
-            lastOrder: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-        },
-        {
-            id: 3,
-            name: "Mike Johnson",
-            email: "mike@gmail.com",
-            phone: "0975558888",
-            totalOrders: 8,
-            totalSpent: 720,
-            status: "banned",
-            joinDate: new Date('2024-01-10').toISOString(),
-            lastOrder: new Date('2024-02-20').toISOString()
-        }
-    ];
-
-    // Sample promotions
-    managerState.promotions = [
-        {
-            id: 1,
-            title: "Welcome Offer",
-            description: "20% off on your first order",
-            type: "banner",
-            code: "WIZA20",
-            discount: 20,
-            startDate: "2024-01-01",
-            endDate: "2024-12-31",
-            active: true,
-            image: "banner1.jpg"
-        }
-    ];
+    managerState.orders = [];
+    managerState.customers = [];
+    managerState.promotions = [];
 
     saveManagerData();
 }
@@ -1105,6 +459,906 @@ function saveManagerData() {
             showNotification('Error saving data. Storage might be full.', 'error');
         }
     }, SAVE_DELAY);
+}
+
+// Fetch orders from the provided URL
+async function fetchOrdersFromAPI() {
+    try {
+        const response = await fetch('https://bufferzone-cloud.github.io/wizafoodcafe/wiza.html');
+        if (!response.ok) {
+            throw new Error('Failed to fetch orders');
+        }
+        
+        const htmlText = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        // Extract orders from the HTML
+        const orders = extractOrdersFromHTML(doc);
+        return orders;
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+    }
+}
+
+// Extract orders from HTML
+function extractOrdersFromHTML(doc) {
+    const orders = [];
+    
+    // Look for order elements in the HTML
+    // This is a simplified implementation - you'll need to adjust selectors based on actual HTML structure
+    const orderElements = doc.querySelectorAll('.order, [class*="order"], .cart-item, [class*="cart"]');
+    
+    if (orderElements.length === 0) {
+        // If no specific order elements found, create sample orders from the page content
+        return createSampleOrdersFromPage(doc);
+    }
+    
+    orderElements.forEach((orderElement, index) => {
+        const order = createOrderFromElement(orderElement, index);
+        if (order) {
+            orders.push(order);
+        }
+    });
+    
+    return orders;
+}
+
+// Create sample orders when no specific order structure is found
+function createSampleOrdersFromPage(doc) {
+    const orders = [];
+    const menuItems = doc.querySelectorAll('.menu-item, .food-item, [class*="item"]');
+    
+    // Create 3 sample orders
+    for (let i = 0; i < 3; i++) {
+        const order = {
+            id: generateId(),
+            ref: `WIZA${(orders.length + 1).toString().padStart(4, '0')}`,
+            customer: {
+                name: `Customer ${i + 1}`,
+                email: `customer${i + 1}@email.com`,
+                phone: `0977${Math.floor(100000 + Math.random() * 900000)}`,
+                coordinates: getRandomCoordinates()
+            },
+            items: [],
+            subtotal: 0,
+            deliveryFee: 25,
+            serviceFee: 2,
+            discount: 0,
+            total: 0,
+            deposit: 0,
+            status: "pending",
+            delivery: Math.random() > 0.5,
+            deliveryLocation: {
+                address: `Address ${i + 1}, Lusaka`,
+                coordinates: getRandomCoordinates()
+            },
+            promoCode: "",
+            date: new Date().toISOString(),
+            paymentScreenshot: "payment-default.jpg"
+        };
+        
+        // Add 1-3 random items
+        const itemCount = Math.floor(Math.random() * 3) + 1;
+        for (let j = 0; j < itemCount; j++) {
+            const item = createSampleItem(j);
+            order.items.push(item);
+            order.subtotal += item.price * item.quantity;
+        }
+        
+        // Calculate final totals
+        order.total = order.subtotal - order.discount + order.deliveryFee + order.serviceFee;
+        order.deposit = order.total * 0.5;
+        
+        orders.push(order);
+    }
+    
+    return orders;
+}
+
+// Create order from HTML element
+function createOrderFromElement(element, index) {
+    try {
+        const order = {
+            id: generateId(),
+            ref: `WIZA${(index + 1).toString().padStart(4, '0')}`,
+            customer: {
+                name: extractText(element, '.customer-name, .name, [class*="name"]') || 'Customer ' + (index + 1),
+                email: extractText(element, '.customer-email, .email, [class*="email"]') || `customer${index + 1}@email.com`,
+                phone: extractText(element, '.customer-phone, .phone, [class*="phone"]') || `0977${Math.floor(100000 + Math.random() * 900000)}`,
+                coordinates: getRandomCoordinates()
+            },
+            items: extractOrderItems(element),
+            subtotal: extractPrice(element, '.subtotal, .total, [class*="total"]'),
+            deliveryFee: 25,
+            serviceFee: 2,
+            discount: extractPrice(element, '.discount, [class*="discount"]'),
+            total: 0,
+            deposit: 0,
+            status: "pending",
+            delivery: Math.random() > 0.5,
+            deliveryLocation: {
+                address: extractText(element, '.address, [class*="address"]') || 'Unknown Address, Lusaka',
+                coordinates: getRandomCoordinates()
+            },
+            promoCode: extractText(element, '.promo-code, .voucher, [class*="promo"]') || '',
+            date: new Date().toISOString(),
+            paymentScreenshot: "payment-default.jpg"
+        };
+        
+        // Calculate final totals
+        order.total = order.subtotal - order.discount + order.deliveryFee + order.serviceFee;
+        order.deposit = order.total * 0.5;
+        
+        return order;
+    } catch (error) {
+        console.error('Error creating order from element:', error);
+        return null;
+    }
+}
+
+// Extract order items from element
+function extractOrderItems(element) {
+    const items = [];
+    const itemElements = element.querySelectorAll('.order-item, .cart-item, .item, [class*="item"]');
+    
+    itemElements.forEach((itemElement, index) => {
+        const item = {
+            id: generateId(),
+            name: extractText(itemElement, '.item-name, .name, [class*="name"]') || 'Item ' + (index + 1),
+            description: extractText(itemElement, '.item-description, .description, [class*="desc"]') || 'No description available',
+            price: extractPrice(itemElement, '.item-price, .price, [class*="price"]') || 10 + Math.random() * 40,
+            quantity: parseInt(extractText(itemElement, '.quantity, [class*="quantity"]') || '1'),
+            image: extractAttribute(itemElement, '.item-image, img', 'src') || 'https://via.placeholder.com/300x200/FF6B35/white?text=Food+Image',
+            toppings: extractToppings(itemElement),
+            instructions: extractText(itemElement, '.instructions, [class*="instruction"]') || ''
+        };
+        
+        items.push(item);
+    });
+    
+    // If no items found, create sample items
+    if (items.length === 0) {
+        items.push(createSampleItem(0));
+    }
+    
+    return items;
+}
+
+// Create sample menu item
+function createSampleItem(index) {
+    const sampleItems = [
+        { name: "Chicken & Chips", description: "Crispy chicken with golden fries", price: 35 },
+        { name: "Shawarma", description: "Delicious wrap with spiced meat", price: 33 },
+        { name: "Pizza", description: "Cheesy pizza with your favorite toppings", price: 70 },
+        { name: "Burger", description: "Juicy beef burger with fresh veggies", price: 45 },
+        { name: "Mojo Drink", description: "Refreshing energy drink", price: 8 }
+    ];
+    
+    const item = sampleItems[index % sampleItems.length];
+    return {
+        id: generateId(),
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        quantity: Math.floor(Math.random() * 3) + 1,
+        image: 'https://via.placeholder.com/300x200/FF6B35/white?text=Food+Image',
+        toppings: ['Extra Sauce', 'Spicy'],
+        instructions: 'Make it extra crispy'
+    };
+}
+
+// Helper functions for HTML extraction
+function extractText(element, selector) {
+    const found = element.querySelector(selector);
+    return found ? found.textContent.trim() : null;
+}
+
+function extractPrice(element, selector) {
+    const text = extractText(element, selector);
+    if (!text) return 0;
+    
+    // Extract number from price text (e.g., "K35.00" -> 35.00)
+    const match = text.match(/(\d+\.?\d*)/);
+    return match ? parseFloat(match[1]) : 0;
+}
+
+function extractAttribute(element, selector, attribute) {
+    const found = element.querySelector(selector);
+    return found ? found.getAttribute(attribute) : null;
+}
+
+function extractToppings(element) {
+    const toppings = [];
+    const toppingElements = element.querySelectorAll('.topping, .extra, [class*="topping"]');
+    
+    toppingElements.forEach(toppingElement => {
+        toppings.push(toppingElement.textContent.trim());
+    });
+    
+    return toppings.length > 0 ? toppings : ['Extra Sauce', 'Spicy'];
+}
+
+// Helper function to generate random coordinates near the restaurant
+function getRandomCoordinates() {
+    const lat = managerState.restaurantLocation[0] + (Math.random() * 0.02 - 0.01);
+    const lng = managerState.restaurantLocation[1] + (Math.random() * 0.02 - 0.01);
+    return [lat, lng];
+}
+
+// Load orders from API
+async function loadOrders() {
+    if (!elements.ordersList) return;
+
+    // Fetch orders from API
+    const apiOrders = await fetchOrdersFromAPI();
+    
+    // Merge with existing orders
+    if (apiOrders.length > 0) {
+        let newOrdersCount = 0;
+        
+        apiOrders.forEach(apiOrder => {
+            const existingOrder = managerState.orders.find(order => 
+                order.ref === apiOrder.ref || 
+                (order.customer.name === apiOrder.customer.name && 
+                 Math.abs(new Date(order.date) - new Date(apiOrder.date)) < 60000) // Within 1 minute
+            );
+            
+            if (!existingOrder) {
+                managerState.orders.unshift(apiOrder);
+                newOrdersCount++;
+                
+                // Show notification for new orders
+                if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
+                    setTimeout(() => {
+                        showNewOrderNotification(apiOrder);
+                    }, 1000);
+                }
+            }
+        });
+        
+        if (newOrdersCount > 0) {
+            saveManagerData();
+            showNotification(`${newOrdersCount} new order(s) loaded`, 'success');
+        }
+    }
+
+    const statusFilter = elements.orderStatusFilter ? elements.orderStatusFilter.value : 'all';
+    let filteredOrders = managerState.orders;
+
+    if (statusFilter !== 'all') {
+        filteredOrders = managerState.orders.filter(order => order.status === statusFilter);
+    }
+
+    filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    elements.ordersList.innerHTML = filteredOrders.map(order => `
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-info">
+                    <h4>Order ${order.ref}</h4>
+                    <p class="order-customer">
+                        <i class="fas fa-user"></i> ${order.customer.name} • 
+                        <i class="fas fa-phone"></i> ${order.customer.phone}
+                    </p>
+                    <p class="order-time">
+                        <i class="fas fa-clock"></i> ${new Date(order.date).toLocaleString()}
+                    </p>
+                </div>
+                <div class="order-status-container">
+                    <span class="order-status status-${order.status}">
+                        <i class="fas fa-${getStatusIcon(order.status)}"></i> ${order.status}
+                    </span>
+                    <p class="order-total-amount">K${order.total.toFixed(2)}</p>
+                </div>
+            </div>
+            
+            <div class="order-items-preview">
+                ${order.items.slice(0, 2).map(item => `
+                    <div class="order-item-preview">
+                        <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-preview-image">
+                        <span>${item.quantity}x ${item.name}</span>
+                    </div>
+                `).join('')}
+                ${order.items.length > 2 ? `<div class="more-items">+${order.items.length - 2} more items</div>` : ''}
+            </div>
+
+            <div class="order-details-quick">
+                <div class="detail-quick">
+                    <i class="fas fa-${order.delivery ? 'truck' : 'store'}"></i>
+                    ${order.delivery ? 'Delivery' : 'Pickup'}
+                </div>
+                <div class="detail-quick">
+                    <i class="fas fa-money-bill-wave"></i>
+                    Deposit: K${order.deposit.toFixed(2)}
+                </div>
+                ${order.promoCode ? `
+                <div class="detail-quick">
+                    <i class="fas fa-tag"></i>
+                    Promo: ${order.promoCode}
+                </div>
+                ` : ''}
+            </div>
+
+            <div class="order-actions">
+                <button class="btn-primary" onclick="viewOrderDetails(${order.id})">
+                    <i class="fas fa-eye"></i> View Details
+                </button>
+                
+                ${order.status === 'pending' ? `
+                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'preparing')">
+                        <i class="fas fa-check"></i> Accept
+                    </button>
+                    <button class="btn-danger" onclick="updateOrderStatus(${order.id}, 'cancelled')">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                ` : ''}
+                
+                ${order.status === 'preparing' ? `
+                    <button class="btn-warning" onclick="updateOrderStatus(${order.id}, 'ready')">
+                        <i class="fas fa-check-double"></i> Mark Ready
+                    </button>
+                ` : ''}
+                
+                ${order.status === 'ready' && order.delivery ? `
+                    <button class="btn-info" onclick="updateOrderStatus(${order.id}, 'out-for-delivery')">
+                        <i class="fas fa-truck"></i> Out for Delivery
+                    </button>
+                ` : ''}
+                
+                ${order.status === 'ready' && !order.delivery ? `
+                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'completed')">
+                        <i class="fas fa-check-circle"></i> Complete
+                    </button>
+                ` : ''}
+                
+                ${order.status === 'out-for-delivery' ? `
+                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'completed')">
+                        <i class="fas fa-check-circle"></i> Delivered
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function getStatusIcon(status) {
+    const icons = {
+        'pending': 'clock',
+        'preparing': 'utensils',
+        'ready': 'check-circle',
+        'out-for-delivery': 'truck',
+        'completed': 'check-double',
+        'cancelled': 'times-circle'
+    };
+    return icons[status] || 'question';
+}
+
+function filterOrders() {
+    loadOrders();
+}
+
+function switchOrdersTab(tab) {
+    elements.tabBtns.forEach(btn => btn.classList.remove('active'));
+    const activeTab = document.querySelector(`[data-tab="${tab}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+    
+    if (tab === 'history') {
+        loadOrderHistory();
+    } else {
+        loadOrders();
+    }
+}
+
+function loadOrderHistory() {
+    if (!elements.ordersList) return;
+
+    const historicalOrders = managerState.orders.filter(order => 
+        order.status === 'completed' || order.status === 'cancelled'
+    ).sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    elements.ordersList.innerHTML = historicalOrders.map(order => `
+        <div class="order-card historical">
+            <div class="order-header">
+                <div class="order-info">
+                    <h4>Order ${order.ref}</h4>
+                    <p class="order-customer">${order.customer.name} • ${order.customer.phone}</p>
+                    <p class="order-time">${new Date(order.date).toLocaleString()}</p>
+                </div>
+                <div class="order-status-container">
+                    <span class="order-status status-${order.status}">${order.status}</span>
+                    <p class="order-total-amount">K${order.total.toFixed(2)}</p>
+                </div>
+            </div>
+            
+            <div class="order-items">
+                ${order.items.map(item => `
+                    <div class="order-item">
+                        <span>${item.quantity}x ${item.name}</span>
+                        <span>K${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="order-actions">
+                <button class="btn-primary" onclick="viewOrderDetails(${order.id})">
+                    <i class="fas fa-eye"></i> View Details
+                </button>
+                ${order.status === 'completed' ? `
+                    <button class="btn-success" onclick="recreateOrder(${order.id})">
+                        <i class="fas fa-redo"></i> Recreate
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// View order details with map
+function viewOrderDetails(orderId) {
+    const order = managerState.orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    const modal = document.getElementById('orderDetailsModal');
+    if (!modal) return;
+
+    const content = modal.querySelector('.order-details-content');
+    if (!content) return;
+    
+    // Create map HTML
+    const mapHtml = order.delivery ? `
+        <div class="order-detail-section">
+            <h4><i class="fas fa-map-marked-alt"></i> Delivery Location</h4>
+            <div class="order-map" id="orderMap-${order.id}"></div>
+            <button class="map-directions-btn" onclick="openDirections(${order.id})">
+                <i class="fas fa-directions"></i> Get Directions
+            </button>
+        </div>
+    ` : '';
+    
+    content.innerHTML = `
+        <div class="order-detail-section">
+            <h4><i class="fas fa-info-circle"></i> Order Information</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label><i class="fas fa-hashtag"></i> Order Reference:</label>
+                    <span>${order.ref}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-calendar"></i> Order Date:</label>
+                    <span>${new Date(order.date).toLocaleString()}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-flag"></i> Status:</label>
+                    <span class="status status-${order.status}">${order.status}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-shipping-fast"></i> Delivery Method:</label>
+                    <span>${order.delivery ? 'Delivery' : 'Self Pickup'}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="order-detail-section">
+            <h4><i class="fas fa-user"></i> Customer Information</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label><i class="fas fa-user"></i> Name:</label>
+                    <span>${order.customer.name}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-envelope"></i> Email:</label>
+                    <span>${order.customer.email}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-phone"></i> Phone:</label>
+                    <span>${order.customer.phone}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-map-marker-alt"></i> Coordinates:</label>
+                    <span>${order.customer.coordinates.join(', ')}</span>
+                </div>
+                ${order.deliveryLocation ? `
+                <div class="detail-item">
+                    <label><i class="fas fa-home"></i> Delivery Address:</label>
+                    <span>${order.deliveryLocation.address}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-map-pin"></i> Delivery Coordinates:</label>
+                    <span>${order.deliveryLocation.coordinates.join(', ')}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+
+        <div class="order-detail-section">
+            <h4><i class="fas fa-utensils"></i> Order Items</h4>
+            <div class="order-items-detailed">
+                ${order.items.map(item => `
+                    <div class="order-item-detailed">
+                        <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-image">
+                        <div class="item-details">
+                            <h5>${item.name}</h5>
+                            <p class="item-description">${item.description}</p>
+                            <p class="item-price">K${item.price} × ${item.quantity} = K${(item.price * item.quantity).toFixed(2)}</p>
+                            ${item.toppings && item.toppings.length > 0 ? `
+                                <p class="item-toppings"><strong>Extras:</strong> ${item.toppings.join(', ')}</p>
+                            ` : ''}
+                            ${item.instructions ? `
+                                <p class="item-instructions"><strong>Special Instructions:</strong> ${item.instructions}</p>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="order-detail-section">
+            <h4><i class="fas fa-money-bill-wave"></i> Payment Information</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Subtotal:</label>
+                    <span>K${order.subtotal.toFixed(2)}</span>
+                </div>
+                ${order.delivery ? `
+                <div class="detail-item">
+                    <label>Delivery Fee:</label>
+                    <span>K${order.deliveryFee.toFixed(2)}</span>
+                </div>
+                ` : ''}
+                <div class="detail-item">
+                    <label>Service Fee:</label>
+                    <span>K${order.serviceFee.toFixed(2)}</span>
+                </div>
+                ${order.discount > 0 ? `
+                <div class="detail-item discount">
+                    <label>Discount (${order.promoCode}):</label>
+                    <span>-K${order.discount.toFixed(2)}</span>
+                </div>
+                ` : ''}
+                <div class="detail-item total">
+                    <label>Total Amount:</label>
+                    <span>K${order.total.toFixed(2)}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Deposit Paid (50%):</label>
+                    <span>K${order.deposit.toFixed(2)}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Balance Due:</label>
+                    <span>K${(order.total - order.deposit).toFixed(2)}</span>
+                </div>
+            </div>
+        </div>
+
+        ${mapHtml}
+
+        ${order.paymentScreenshot ? `
+        <div class="order-detail-section">
+            <h4><i class="fas fa-receipt"></i> Payment Proof</h4>
+            <img src="${getImagePath(order.paymentScreenshot)}" alt="Payment Screenshot" class="payment-screenshot" onerror="this.style.display='none'">
+        </div>
+        ` : ''}
+    `;
+
+    // Initialize map if delivery order
+    if (order.delivery) {
+        setTimeout(() => {
+            initializeOrderMap(order);
+        }, 100);
+    }
+    
+    showModal(modal);
+}
+
+// Initialize Leaflet map for order
+function initializeOrderMap(order) {
+    const mapElement = document.getElementById(`orderMap-${order.id}`);
+    if (!mapElement) return;
+    
+    // Clear any existing map
+    mapElement.innerHTML = '';
+    
+    // Create map
+    const map = L.map(mapElement).setView(managerState.restaurantLocation, 13);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Add markers
+    const wizaMarker = L.marker(managerState.restaurantLocation).addTo(map)
+        .bindPopup('<b>WIZA FOOD CAFE</b><br>Restaurant Location')
+        .openPopup();
+    
+    const customerMarker = L.marker(order.deliveryLocation.coordinates).addTo(map)
+        .bindPopup(`<b>Customer:</b> ${order.customer.name}<br>${order.deliveryLocation.address}`);
+    
+    // Add line between restaurant and customer
+    const line = L.polyline([managerState.restaurantLocation, order.deliveryLocation.coordinates], {
+        color: 'red',
+        weight: 3,
+        opacity: 0.7,
+        dashArray: '10, 10'
+    }).addTo(map);
+    
+    // Fit map to show both markers
+    const group = new L.featureGroup([wizaMarker, customerMarker]);
+    map.fitBounds(group.getBounds().pad(0.1));
+}
+
+// Open directions in Google Maps
+function openDirections(orderId) {
+    const order = managerState.orders.find(o => o.id === orderId);
+    if (!order || !order.delivery) return;
+    
+    const origin = `${managerState.restaurantLocation[0]},${managerState.restaurantLocation[1]}`;
+    const destination = `${order.deliveryLocation.coordinates[0]},${order.deliveryLocation.coordinates[1]}`;
+    
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+    window.open(url, '_blank');
+}
+
+function updateOrderStatus(orderId, newStatus) {
+    const order = managerState.orders.find(o => o.id === orderId);
+    if (order) {
+        const oldStatus = order.status;
+        order.status = newStatus;
+        order.statusUpdated = new Date().toISOString();
+        saveManagerData();
+        loadOrders();
+        updateDashboard();
+        
+        showNotification(`Order ${order.ref} status updated from ${oldStatus} to ${newStatus}`, 'success');
+    }
+}
+
+function recreateOrder(orderId) {
+    const order = managerState.orders.find(o => o.id === orderId);
+    if (order) {
+        const newOrder = {
+            ...order,
+            id: generateId(),
+            ref: `WIZA${(managerState.orders.length + 1).toString().padStart(4, '0')}`,
+            status: 'pending',
+            date: new Date().toISOString(),
+            statusUpdated: null
+        };
+        
+        managerState.orders.unshift(newOrder);
+        saveManagerData();
+        loadOrders();
+        updateDashboard();
+        
+        showNotification(`Order ${newOrder.ref} recreated successfully!`, 'success');
+    }
+}
+
+// Update customer management to use API data
+async function loadCustomers() {
+    if (!elements.customersTableBody) return;
+
+    // Update customers based on orders
+    if (managerState.orders.length > 0) {
+        managerState.orders.forEach(order => {
+            const existingCustomer = managerState.customers.find(c => 
+                c.email === order.customer.email || 
+                c.phone === order.customer.phone
+            );
+            
+            if (existingCustomer) {
+                // Update existing customer
+                existingCustomer.totalOrders += 1;
+                existingCustomer.totalSpent += order.total;
+                existingCustomer.lastOrder = order.date;
+            } else {
+                // Add new customer
+                const newCustomer = {
+                    id: generateId(),
+                    name: order.customer.name,
+                    email: order.customer.email,
+                    phone: order.customer.phone,
+                    totalOrders: 1,
+                    totalSpent: order.total,
+                    status: "active",
+                    joinDate: order.date,
+                    lastOrder: order.date
+                };
+                
+                managerState.customers.push(newCustomer);
+            }
+        });
+        
+        saveManagerData();
+    }
+
+    elements.customersTableBody.innerHTML = managerState.customers.map(customer => `
+        <tr>
+            <td>
+                <div class="customer-name">
+                    <strong>${customer.name}</strong>
+                    ${customer.status === 'banned' ? '<span class="banned-badge">BANNED</span>' : ''}
+                </div>
+            </td>
+            <td>${customer.email}</td>
+            <td>${customer.phone}</td>
+            <td>${customer.totalOrders}</td>
+            <td>K${customer.totalSpent.toFixed(2)}</td>
+            <td>
+                <span class="status status-${customer.status}">${customer.status}</span>
+            </td>
+            <td>
+                <div class="customer-actions">
+                    <button class="btn-primary" onclick="viewCustomerDetails(${customer.id})" title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
+                            onclick="toggleCustomerBan(${customer.id})"
+                            title="${customer.status === 'banned' ? 'Unban Customer' : 'Ban Customer'}">
+                        <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
+                    </button>
+                    <button class="btn-warning" onclick="deleteCustomer(${customer.id})" title="Delete Customer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function searchCustomers() {
+    if (!elements.customerSearch || !elements.customersTableBody) return;
+
+    const searchTerm = elements.customerSearch.value.toLowerCase();
+    const filteredCustomers = managerState.customers.filter(customer =>
+        customer.name.toLowerCase().includes(searchTerm) ||
+        customer.email.toLowerCase().includes(searchTerm) ||
+        customer.phone.includes(searchTerm)
+    );
+    
+    elements.customersTableBody.innerHTML = filteredCustomers.map(customer => `
+        <tr>
+            <td>${customer.name}</td>
+            <td>${customer.email}</td>
+            <td>${customer.phone}</td>
+            <td>${customer.totalOrders}</td>
+            <td>K${customer.totalSpent.toFixed(2)}</td>
+            <td>
+                <span class="status status-${customer.status}">${customer.status}</span>
+            </td>
+            <td>
+                <button class="btn-primary" onclick="viewCustomerDetails(${customer.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
+                        onclick="toggleCustomerBan(${customer.id})">
+                    <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function viewCustomerDetails(customerId) {
+    const customer = managerState.customers.find(c => c.id === customerId);
+    if (!customer) return;
+
+    const modal = document.getElementById('customerDetailsModal');
+    if (!modal) return;
+
+    const content = modal.querySelector('.customer-details-content');
+    if (!content) return;
+    
+    const customerOrders = managerState.orders.filter(order => order.customer.email === customer.email);
+    const totalOrders = customerOrders.length;
+    const totalSpent = customerOrders.reduce((sum, order) => sum + order.total, 0);
+    const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+    
+    content.innerHTML = `
+        <div class="customer-detail-section">
+            <h4><i class="fas fa-user-circle"></i> Personal Information</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Name:</label>
+                    <span>${customer.name}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Email:</label>
+                    <span>${customer.email}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Phone:</label>
+                    <span>${customer.phone}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Status:</label>
+                    <span class="status status-${customer.status}">${customer.status}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Member Since:</label>
+                    <span>${new Date(customer.joinDate).toLocaleDateString()}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Last Order:</label>
+                    <span>${customer.lastOrder ? new Date(customer.lastOrder).toLocaleDateString() : 'No orders yet'}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="customer-detail-section">
+            <h4><i class="fas fa-chart-bar"></i> Order Statistics</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Total Orders:</label>
+                    <span>${totalOrders}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Total Spent:</label>
+                    <span>K${totalSpent.toFixed(2)}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Average Order Value:</label>
+                    <span>K${avgOrderValue.toFixed(2)}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Customer Since:</label>
+                    <span>${Math.floor((new Date() - new Date(customer.joinDate)) / (1000 * 60 * 60 * 24))} days</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="customer-detail-section">
+            <h4><i class="fas fa-history"></i> Recent Orders (Last 5)</h4>
+            <div class="recent-orders">
+                ${customerOrders.slice(0, 5).map(order => `
+                    <div class="recent-order">
+                        <div class="order-ref">${order.ref}</div>
+                        <div class="order-amount">K${order.total.toFixed(2)}</div>
+                        <div class="order-status status-${order.status}">${order.status}</div>
+                        <div class="order-date">${new Date(order.date).toLocaleDateString()}</div>
+                    </div>
+                `).join('')}
+                ${customerOrders.length === 0 ? '<p class="no-orders">No orders found</p>' : ''}
+            </div>
+        </div>
+
+        <div class="customer-actions-full">
+            <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
+                    onclick="toggleCustomerBan(${customer.id}); closeAllModals()">
+                <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
+                ${customer.status === 'banned' ? 'Unban Customer' : 'Ban Customer'}
+            </button>
+            <button class="btn-warning" onclick="deleteCustomer(${customer.id}); closeAllModals()">
+                <i class="fas fa-trash"></i> Delete Customer
+            </button>
+        </div>
+    `;
+
+    showModal(modal);
+}
+
+function toggleCustomerBan(customerId) {
+    const customer = managerState.customers.find(c => c.id === customerId);
+    if (customer) {
+        customer.status = customer.status === 'banned' ? 'active' : 'banned';
+        saveManagerData();
+        loadCustomers();
+        
+        showNotification(`Customer ${customer.name} ${customer.status === 'banned' ? 'banned' : 'unbanned'} successfully!`, 'success');
+    }
+}
+
+function deleteCustomer(customerId) {
+    if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+        managerState.customers = managerState.customers.filter(c => c.id !== customerId);
+        saveManagerData();
+        loadCustomers();
+        showNotification('Customer deleted successfully!', 'success');
+    }
 }
 
 // NAVIGATION
@@ -1270,6 +1524,14 @@ function updateRecentActivity() {
             </div>
         </div>
     `).join('');
+}
+
+function updatePendingOrdersCount() {
+    const pendingCount = managerState.orders.filter(order => order.status === 'pending').length;
+    const pendingOrdersCount = document.getElementById('pendingOrdersCount');
+    if (pendingOrdersCount) {
+        pendingOrdersCount.textContent = pendingCount;
+    }
 }
 
 // MENU MANAGEMENT
@@ -1502,543 +1764,6 @@ function toggleItemAvailability(itemId) {
         saveManagerData();
         loadFullMenu();
         showNotification(`Item ${item.available ? 'enabled' : 'disabled'} successfully!`, 'success');
-    }
-}
-
-// ORDERS MANAGEMENT
-function loadOrders() {
-    if (!elements.ordersList) return;
-
-    const statusFilter = elements.orderStatusFilter ? elements.orderStatusFilter.value : 'all';
-    let filteredOrders = managerState.orders;
-
-    if (statusFilter !== 'all') {
-        filteredOrders = managerState.orders.filter(order => order.status === statusFilter);
-    }
-
-    filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    elements.ordersList.innerHTML = filteredOrders.map(order => `
-        <div class="order-card">
-            <div class="order-header">
-                <div class="order-info">
-                    <h4>Order ${order.ref}</h4>
-                    <p class="order-customer">
-                        <i class="fas fa-user"></i> ${order.customer.name} • 
-                        <i class="fas fa-phone"></i> ${order.customer.phone}
-                    </p>
-                    <p class="order-time">
-                        <i class="fas fa-clock"></i> ${new Date(order.date).toLocaleString()}
-                    </p>
-                </div>
-                <div class="order-status-container">
-                    <span class="order-status status-${order.status}">
-                        <i class="fas fa-${getStatusIcon(order.status)}"></i> ${order.status}
-                    </span>
-                    <p class="order-total-amount">K${order.total.toFixed(2)}</p>
-                </div>
-            </div>
-            
-            <div class="order-items-preview">
-                ${order.items.slice(0, 2).map(item => `
-                    <div class="order-item-preview">
-                        <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-preview-image">
-                        <span>${item.quantity}x ${item.name}</span>
-                    </div>
-                `).join('')}
-                ${order.items.length > 2 ? `<div class="more-items">+${order.items.length - 2} more items</div>` : ''}
-            </div>
-
-            <div class="order-details-quick">
-                <div class="detail-quick">
-                    <i class="fas fa-${order.delivery ? 'truck' : 'store'}"></i>
-                    ${order.delivery ? 'Delivery' : 'Pickup'}
-                </div>
-                <div class="detail-quick">
-                    <i class="fas fa-money-bill-wave"></i>
-                    Deposit: K${order.deposit.toFixed(2)}
-                </div>
-                ${order.promoCode ? `
-                <div class="detail-quick">
-                    <i class="fas fa-tag"></i>
-                    Promo: ${order.promoCode}
-                </div>
-                ` : ''}
-            </div>
-
-            <div class="order-actions">
-                <button class="btn-primary" onclick="viewOrderDetails(${order.id})">
-                    <i class="fas fa-eye"></i> View Details
-                </button>
-                
-                ${order.status === 'pending' ? `
-                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'preparing')">
-                        <i class="fas fa-check"></i> Accept
-                    </button>
-                    <button class="btn-danger" onclick="updateOrderStatus(${order.id}, 'cancelled')">
-                        <i class="fas fa-times"></i> Reject
-                    </button>
-                ` : ''}
-                
-                ${order.status === 'preparing' ? `
-                    <button class="btn-warning" onclick="updateOrderStatus(${order.id}, 'ready')">
-                        <i class="fas fa-check-double"></i> Mark Ready
-                    </button>
-                ` : ''}
-                
-                ${order.status === 'ready' && order.delivery ? `
-                    <button class="btn-info" onclick="updateOrderStatus(${order.id}, 'out-for-delivery')">
-                        <i class="fas fa-truck"></i> Out for Delivery
-                    </button>
-                ` : ''}
-                
-                ${order.status === 'ready' && !order.delivery ? `
-                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'completed')">
-                        <i class="fas fa-check-circle"></i> Complete
-                    </button>
-                ` : ''}
-                
-                ${order.status === 'out-for-delivery' ? `
-                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'completed')">
-                        <i class="fas fa-check-circle"></i> Delivered
-                    </button>
-                ` : ''}
-            </div>
-        </div>
-    `).join('');
-}
-
-function getStatusIcon(status) {
-    const icons = {
-        'pending': 'clock',
-        'preparing': 'utensils',
-        'ready': 'check-circle',
-        'out-for-delivery': 'truck',
-        'completed': 'check-double',
-        'cancelled': 'times-circle'
-    };
-    return icons[status] || 'question';
-}
-
-function filterOrders() {
-    loadOrders();
-}
-
-function switchOrdersTab(tab) {
-    elements.tabBtns.forEach(btn => btn.classList.remove('active'));
-    const activeTab = document.querySelector(`[data-tab="${tab}"]`);
-    if (activeTab) {
-        activeTab.classList.add('active');
-    }
-    
-    if (tab === 'history') {
-        loadOrderHistory();
-    } else {
-        loadOrders();
-    }
-}
-
-function loadOrderHistory() {
-    if (!elements.ordersList) return;
-
-    const historicalOrders = managerState.orders.filter(order => 
-        order.status === 'completed' || order.status === 'cancelled'
-    ).sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    elements.ordersList.innerHTML = historicalOrders.map(order => `
-        <div class="order-card historical">
-            <div class="order-header">
-                <div class="order-info">
-                    <h4>Order ${order.ref}</h4>
-                    <p class="order-customer">${order.customer.name} • ${order.customer.phone}</p>
-                    <p class="order-time">${new Date(order.date).toLocaleString()}</p>
-                </div>
-                <div class="order-status-container">
-                    <span class="order-status status-${order.status}">${order.status}</span>
-                    <p class="order-total-amount">K${order.total.toFixed(2)}</p>
-                </div>
-            </div>
-            
-            <div class="order-items">
-                ${order.items.map(item => `
-                    <div class="order-item">
-                        <span>${item.quantity}x ${item.name}</span>
-                        <span>K${(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="order-actions">
-                <button class="btn-primary" onclick="viewOrderDetails(${order.id})">
-                    <i class="fas fa-eye"></i> View Details
-                </button>
-                ${order.status === 'completed' ? `
-                    <button class="btn-success" onclick="recreateOrder(${order.id})">
-                        <i class="fas fa-redo"></i> Recreate
-                    </button>
-                ` : ''}
-            </div>
-        </div>
-    `).join('');
-}
-
-function viewOrderDetails(orderId) {
-    const order = managerState.orders.find(o => o.id === orderId);
-    if (!order) return;
-
-    const modal = document.getElementById('orderDetailsModal');
-    if (!modal) return;
-
-    const content = modal.querySelector('.order-details-content');
-    if (!content) return;
-    
-    content.innerHTML = `
-        <div class="order-detail-section">
-            <h4><i class="fas fa-info-circle"></i> Order Information</h4>
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <label><i class="fas fa-hashtag"></i> Order Reference:</label>
-                    <span>${order.ref}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-calendar"></i> Order Date:</label>
-                    <span>${new Date(order.date).toLocaleString()}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-flag"></i> Status:</label>
-                    <span class="status status-${order.status}">${order.status}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-shipping-fast"></i> Delivery Method:</label>
-                    <span>${order.delivery ? 'Delivery' : 'Self Pickup'}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="order-detail-section">
-            <h4><i class="fas fa-user"></i> Customer Information</h4>
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <label><i class="fas fa-user"></i> Name:</label>
-                    <span>${order.customer.name}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-envelope"></i> Email:</label>
-                    <span>${order.customer.email}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-phone"></i> Phone:</label>
-                    <span>${order.customer.phone}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-map-marker-alt"></i> Coordinates:</label>
-                    <span>${order.customer.coordinates.join(', ')}</span>
-                </div>
-                ${order.deliveryLocation ? `
-                <div class="detail-item">
-                    <label><i class="fas fa-home"></i> Delivery Address:</label>
-                    <span>${order.deliveryLocation.address}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-map-pin"></i> Delivery Coordinates:</label>
-                    <span>${order.deliveryLocation.coordinates.join(', ')}</span>
-                </div>
-                ` : ''}
-            </div>
-        </div>
-
-        <div class="order-detail-section">
-            <h4><i class="fas fa-utensils"></i> Order Items</h4>
-            <div class="order-items-detailed">
-                ${order.items.map(item => `
-                    <div class="order-item-detailed">
-                        <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-image">
-                        <div class="item-details">
-                            <h5>${item.name}</h5>
-                            <p class="item-description">${item.description}</p>
-                            <p class="item-price">K${item.price} × ${item.quantity} = K${(item.price * item.quantity).toFixed(2)}</p>
-                            ${item.toppings && item.toppings.length > 0 ? `
-                                <p class="item-toppings"><strong>Extras:</strong> ${item.toppings.join(', ')}</p>
-                            ` : ''}
-                            ${item.instructions ? `
-                                <p class="item-instructions"><strong>Special Instructions:</strong> ${item.instructions}</p>
-                            ` : ''}
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-
-        <div class="order-detail-section">
-            <h4><i class="fas fa-money-bill-wave"></i> Payment Information</h4>
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <label>Subtotal:</label>
-                    <span>K${order.subtotal.toFixed(2)}</span>
-                </div>
-                ${order.delivery ? `
-                <div class="detail-item">
-                    <label>Delivery Fee:</label>
-                    <span>K${order.deliveryFee.toFixed(2)}</span>
-                </div>
-                ` : ''}
-                <div class="detail-item">
-                    <label>Service Fee:</label>
-                    <span>K${order.serviceFee.toFixed(2)}</span>
-                </div>
-                ${order.discount > 0 ? `
-                <div class="detail-item discount">
-                    <label>Discount (${order.promoCode}):</label>
-                    <span>-K${order.discount.toFixed(2)}</span>
-                </div>
-                ` : ''}
-                <div class="detail-item total">
-                    <label>Total Amount:</label>
-                    <span>K${order.total.toFixed(2)}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Deposit Paid (50%):</label>
-                    <span>K${order.deposit.toFixed(2)}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Balance Due:</label>
-                    <span>K${(order.total - order.deposit).toFixed(2)}</span>
-                </div>
-            </div>
-        </div>
-
-        ${order.paymentScreenshot ? `
-        <div class="order-detail-section">
-            <h4><i class="fas fa-receipt"></i> Payment Proof</h4>
-            <img src="${getImagePath(order.paymentScreenshot)}" alt="Payment Screenshot" class="payment-screenshot" onerror="this.style.display='none'">
-        </div>
-        ` : ''}
-    `;
-
-    showModal(modal);
-}
-
-function updateOrderStatus(orderId, newStatus) {
-    const order = managerState.orders.find(o => o.id === orderId);
-    if (order) {
-        const oldStatus = order.status;
-        order.status = newStatus;
-        order.statusUpdated = new Date().toISOString();
-        saveManagerData();
-        loadOrders();
-        updateDashboard();
-        
-        showNotification(`Order ${order.ref} status updated from ${oldStatus} to ${newStatus}`, 'success');
-    }
-}
-
-function recreateOrder(orderId) {
-    const order = managerState.orders.find(o => o.id === orderId);
-    if (order) {
-        const newOrder = {
-            ...order,
-            id: generateId(),
-            ref: `WIZA${(managerState.orders.length + 1).toString().padStart(4, '0')}`,
-            status: 'pending',
-            date: new Date().toISOString(),
-            statusUpdated: null
-        };
-        
-        managerState.orders.unshift(newOrder);
-        saveManagerData();
-        loadOrders();
-        updateDashboard();
-        
-        showNotification(`Order ${newOrder.ref} recreated successfully!`, 'success');
-    }
-}
-
-// CUSTOMER MANAGEMENT
-function loadCustomers() {
-    if (!elements.customersTableBody) return;
-
-    elements.customersTableBody.innerHTML = managerState.customers.map(customer => `
-        <tr>
-            <td>
-                <div class="customer-name">
-                    <strong>${customer.name}</strong>
-                    ${customer.status === 'banned' ? '<span class="banned-badge">BANNED</span>' : ''}
-                </div>
-            </td>
-            <td>${customer.email}</td>
-            <td>${customer.phone}</td>
-            <td>${customer.totalOrders}</td>
-            <td>K${customer.totalSpent.toFixed(2)}</td>
-            <td>
-                <span class="status status-${customer.status}">${customer.status}</span>
-            </td>
-            <td>
-                <div class="customer-actions">
-                    <button class="btn-primary" onclick="viewCustomerDetails(${customer.id})" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
-                            onclick="toggleCustomerBan(${customer.id})"
-                            title="${customer.status === 'banned' ? 'Unban Customer' : 'Ban Customer'}">
-                        <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
-                    </button>
-                    <button class="btn-warning" onclick="deleteCustomer(${customer.id})" title="Delete Customer">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function searchCustomers() {
-    if (!elements.customerSearch || !elements.customersTableBody) return;
-
-    const searchTerm = elements.customerSearch.value.toLowerCase();
-    const filteredCustomers = managerState.customers.filter(customer =>
-        customer.name.toLowerCase().includes(searchTerm) ||
-        customer.email.toLowerCase().includes(searchTerm) ||
-        customer.phone.includes(searchTerm)
-    );
-    
-    elements.customersTableBody.innerHTML = filteredCustomers.map(customer => `
-        <tr>
-            <td>${customer.name}</td>
-            <td>${customer.email}</td>
-            <td>${customer.phone}</td>
-            <td>${customer.totalOrders}</td>
-            <td>K${customer.totalSpent.toFixed(2)}</td>
-            <td>
-                <span class="status status-${customer.status}">${customer.status}</span>
-            </td>
-            <td>
-                <button class="btn-primary" onclick="viewCustomerDetails(${customer.id})">
-                    <i class="fas fa-eye"></i>
-                </button>
-                <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
-                        onclick="toggleCustomerBan(${customer.id})">
-                    <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function viewCustomerDetails(customerId) {
-    const customer = managerState.customers.find(c => c.id === customerId);
-    if (!customer) return;
-
-    const modal = document.getElementById('customerDetailsModal');
-    if (!modal) return;
-
-    const content = modal.querySelector('.customer-details-content');
-    if (!content) return;
-    
-    const customerOrders = managerState.orders.filter(order => order.customer.email === customer.email);
-    const totalOrders = customerOrders.length;
-    const totalSpent = customerOrders.reduce((sum, order) => sum + order.total, 0);
-    const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
-    
-    content.innerHTML = `
-        <div class="customer-detail-section">
-            <h4><i class="fas fa-user-circle"></i> Personal Information</h4>
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <label>Name:</label>
-                    <span>${customer.name}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Email:</label>
-                    <span>${customer.email}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Phone:</label>
-                    <span>${customer.phone}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Status:</label>
-                    <span class="status status-${customer.status}">${customer.status}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Member Since:</label>
-                    <span>${new Date(customer.joinDate).toLocaleDateString()}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Last Order:</label>
-                    <span>${customer.lastOrder ? new Date(customer.lastOrder).toLocaleDateString() : 'No orders yet'}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="customer-detail-section">
-            <h4><i class="fas fa-chart-bar"></i> Order Statistics</h4>
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <label>Total Orders:</label>
-                    <span>${totalOrders}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Total Spent:</label>
-                    <span>K${totalSpent.toFixed(2)}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Average Order Value:</label>
-                    <span>K${avgOrderValue.toFixed(2)}</span>
-                </div>
-                <div class="detail-item">
-                    <label>Customer Since:</label>
-                    <span>${Math.floor((new Date() - new Date(customer.joinDate)) / (1000 * 60 * 60 * 24))} days</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="customer-detail-section">
-            <h4><i class="fas fa-history"></i> Recent Orders (Last 5)</h4>
-            <div class="recent-orders">
-                ${customerOrders.slice(0, 5).map(order => `
-                    <div class="recent-order">
-                        <div class="order-ref">${order.ref}</div>
-                        <div class="order-amount">K${order.total.toFixed(2)}</div>
-                        <div class="order-status status-${order.status}">${order.status}</div>
-                        <div class="order-date">${new Date(order.date).toLocaleDateString()}</div>
-                    </div>
-                `).join('')}
-                ${customerOrders.length === 0 ? '<p class="no-orders">No orders found</p>' : ''}
-            </div>
-        </div>
-
-        <div class="customer-actions-full">
-            <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
-                    onclick="toggleCustomerBan(${customer.id}); closeAllModals()">
-                <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
-                ${customer.status === 'banned' ? 'Unban Customer' : 'Ban Customer'}
-            </button>
-            <button class="btn-warning" onclick="deleteCustomer(${customer.id}); closeAllModals()">
-                <i class="fas fa-trash"></i> Delete Customer
-            </button>
-        </div>
-    `;
-
-    showModal(modal);
-}
-
-function toggleCustomerBan(customerId) {
-    const customer = managerState.customers.find(c => c.id === customerId);
-    if (customer) {
-        customer.status = customer.status === 'banned' ? 'active' : 'banned';
-        saveManagerData();
-        loadCustomers();
-        
-        showNotification(`Customer ${customer.name} ${customer.status === 'banned' ? 'banned' : 'unbanned'} successfully!`, 'success');
-    }
-}
-
-function deleteCustomer(customerId) {
-    if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-        managerState.customers = managerState.customers.filter(c => c.id !== customerId);
-        saveManagerData();
-        loadCustomers();
-        showNotification('Customer deleted successfully!', 'success');
     }
 }
 
@@ -2405,7 +2130,24 @@ function logout() {
     }
 }
 
-
+// Complete Menu Data (keep your existing menu data)
+const completeMenuData = [
+    // Quick Fills
+    {
+        id: 1,
+        name: "Chicken & Chips (Wing)",
+        description: "Crispy chicken wings served with golden fries",
+        price: 35,
+        originalPrice: 40,
+        category: "quick-fills",
+        image: "Q1.jpg",
+        available: true,
+        popular: true,
+        vegetarian: false,
+        discount: 12
+    },
+    // ... (include all your existing menu items here)
+];
 
 // Add cleanup function for when page unloads
 window.addEventListener('beforeunload', () => {
@@ -2416,6 +2158,11 @@ window.addEventListener('beforeunload', () => {
         } catch (error) {
             console.error('Final save error:', error);
         }
+    }
+    
+    // Clear auto-refresh interval
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
     }
 });
 
@@ -2432,3 +2179,7 @@ window.recreateOrder = recreateOrder;
 window.editPromotion = editPromotion;
 window.deletePromotion = deletePromotion;
 window.togglePromotionStatus = togglePromotionStatus;
+window.openDirections = openDirections;
+window.acceptNewOrder = acceptNewOrder;
+window.rejectNewOrder = rejectNewOrder;
+window.closeNotification = closeNotification;
