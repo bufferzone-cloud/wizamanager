@@ -9,9 +9,12 @@ const managerState = {
     settings: {
         appOnline: true,
         acceptOrders: true,
-        deliveryEnabled: true
+        deliveryEnabled: true,
+        notificationSound: true,
+        autoRefresh: true
     },
-    restaurantLocation: [-15.402235977316481, 28.329942522202668] // Wiza Food Cafe coordinates
+    restaurantLocation: [-15.402235977316481, 28.329942522202668], // Wiza Food Cafe coordinates
+    orderCounter: 1
 };
 
 // DOM Elements
@@ -22,15 +25,12 @@ let newOrderNotification = null;
 let notificationSound = null;
 let isNotificationActive = false;
 
-// Save timeout
-let saveTimeout = null;
-const SAVE_DELAY = 500;
-
 // Auto-refresh interval
 let autoRefreshInterval = null;
+const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
 
 // Initialize Manager App
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     initializeManagerApp();
 });
 
@@ -38,6 +38,10 @@ function initializeManagerApp() {
     initializeElements();
     setupEventListeners();
     loadManagerData();
+    setupOrderListener();
+    startAutoRefresh();
+    
+    // Initialize sections
     updateDashboard();
     loadFullMenu();
     loadOrders();
@@ -48,57 +52,100 @@ function initializeManagerApp() {
     // Initialize notification sound
     createNotificationSound();
     
-    // Start auto-refresh for orders
-    startAutoRefresh();
-    
     showNotification('Manager dashboard loaded successfully!', 'success');
 }
 
 function initializeElements() {
     elements = {
+        // Navigation
         navItems: document.querySelectorAll('.nav-item'),
         contentSections: document.querySelectorAll('.content-section'),
         logoutBtn: document.getElementById('logoutBtn'),
+        
+        // Dashboard
         totalRevenue: document.getElementById('totalRevenue'),
         totalOrders: document.getElementById('totalOrders'),
         activeCustomers: document.getElementById('activeCustomers'),
         pendingOrders: document.getElementById('pendingOrders'),
         readyOrders: document.getElementById('readyOrders'),
         pendingOrdersCount: document.getElementById('pendingOrdersCount'),
+        orderStatusCounts: document.getElementById('orderStatusCounts'),
+        revenueBreakdown: document.getElementById('revenueBreakdown'),
+        recentActivity: document.getElementById('recentActivity'),
+        
+        // Menu Management
         menuItemsGrid: document.getElementById('menuItemsGrid'),
         addMenuItemBtn: document.getElementById('addMenuItemBtn'),
         categoryBtns: document.querySelectorAll('.category-btn'),
+        totalMenuItems: document.getElementById('totalMenuItems'),
+        availableItems: document.getElementById('availableItems'),
+        popularItems: document.getElementById('popularItems'),
+        newItems: document.getElementById('newItems'),
+        
+        // Orders
         ordersList: document.getElementById('ordersList'),
         orderStatusFilter: document.getElementById('orderStatusFilter'),
         tabBtns: document.querySelectorAll('.tab-btn'),
-        addPromotionBtn: document.getElementById('addPromotionBtn'),
-        promotionForm: document.getElementById('promotionForm'),
+        
+        // Customers
         customersTableBody: document.getElementById('customersTableBody'),
         customerSearch: document.getElementById('customerSearch'),
+        
+        // Promotions
+        promotionsGrid: document.getElementById('promotionsGrid'),
+        addPromotionBtn: document.getElementById('addPromotionBtn'),
+        promotionForm: document.getElementById('promotionForm'),
+        
+        // Settings
         appStatusToggle: document.getElementById('appStatusToggle'),
         orderingToggle: document.getElementById('orderingToggle'),
         deliveryToggle: document.getElementById('deliveryToggle'),
+        notificationToggle: document.getElementById('notificationToggle'),
+        autoRefreshToggle: document.getElementById('autoRefreshToggle'),
+        
+        // Modals
         modals: document.querySelectorAll('.modal'),
         closeModalBtns: document.querySelectorAll('.close-modal'),
-        overlay: document.querySelector('.overlay')
+        overlay: document.querySelector('.overlay'),
+        
+        // Order Details Modal
+        orderDetailsModal: document.getElementById('orderDetailsModal'),
+        orderDetailsContent: document.getElementById('orderDetailsContent'),
+        
+        // Customer Details Modal
+        customerDetailsModal: document.getElementById('customerDetailsModal'),
+        customerDetailsContent: document.getElementById('customerDetailsContent'),
+        
+        // Menu Item Modal
+        menuItemModal: document.getElementById('menuItemModal'),
+        menuModalTitle: document.getElementById('menuModalTitle'),
+        menuItemForm: document.getElementById('menuItemForm'),
+        
+        // Analytics
+        analyticsPeriod: document.getElementById('analyticsPeriod'),
+        avgOrderValue: document.getElementById('avgOrderValue'),
+        conversionRate: document.getElementById('conversionRate'),
+        retentionRate: document.getElementById('retentionRate'),
+        peakHours: document.getElementById('peakHours')
     };
 }
 
-// NOTIFICATION FUNCTIONS
+// NOTIFICATION SYSTEM
 function createNotificationSound() {
     try {
-        notificationSound = new Audio('mixkit-marimba-waiting-ringtone-1360.wav');
-        notificationSound.loop = true;
-        notificationSound.volume = 1.0;
-        notificationSound.preload = 'auto';
+        notificationSound = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA');
+        notificationSound.volume = 0.7;
     } catch (error) {
         console.error('Error creating notification sound:', error);
     }
 }
 
 function showNewOrderNotification(order) {
+    if (!managerState.settings.notificationSound) return;
+    
     isNotificationActive = true;
     
+    // Create notification element
     newOrderNotification = document.createElement('div');
     newOrderNotification.className = 'new-order-notification';
     newOrderNotification.innerHTML = `
@@ -114,7 +161,6 @@ function showNewOrderNotification(order) {
             </div>
             
             <div class="order-preview">
-                <!-- Customer Information -->
                 <div class="customer-section">
                     <h4 class="section-title">Customer Details</h4>
                     <div class="customer-info-grid">
@@ -142,113 +188,39 @@ function showNewOrderNotification(order) {
                     </div>
                 </div>
 
-                <!-- Order Items with Details -->
                 <div class="items-section">
                     <h4 class="section-title">Order Items</h4>
-                    <div class="order-items-detailed">
-                        ${order.items.map(item => `
-                            <div class="order-item-detailed">
-                                <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-image" onerror="this.src='https://via.placeholder.com/300x200/FF6B35/white?text=Food+Image'">
-                                <div class="item-details">
-                                    <div class="item-header">
-                                        <h5>${item.name}</h5>
-                                        <span class="item-price">K${item.price} × ${item.quantity}</span>
-                                    </div>
-                                    <p class="item-description">${item.description}</p>
-                                    ${item.toppings && item.toppings.length > 0 ? `
-                                        <div class="item-extras">
-                                            <strong>Extras:</strong> ${item.toppings.join(', ')}
-                                        </div>
-                                    ` : ''}
-                                    ${item.instructions ? `
-                                        <div class="item-instructions">
-                                            <strong>Instructions:</strong> ${item.instructions}
-                                        </div>
-                                    ` : ''}
-                                </div>
+                    <div class="order-items-preview">
+                        ${order.items.slice(0, 3).map(item => `
+                            <div class="order-item-preview">
+                                <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-preview-image">
+                                <span>${item.quantity}x ${item.name}</span>
+                                <span class="item-price">K${(item.price * item.quantity).toFixed(2)}</span>
                             </div>
                         `).join('')}
+                        ${order.items.length > 3 ? `<div class="more-items">+${order.items.length - 3} more items</div>` : ''}
                     </div>
                 </div>
 
-                <!-- Order Summary -->
                 <div class="summary-section">
                     <h4 class="section-title">Order Summary</h4>
                     <div class="summary-grid">
                         <div class="summary-item">
-                            <span>Subtotal:</span>
-                            <span>K${order.subtotal.toFixed(2)}</span>
-                        </div>
-                        ${order.delivery ? `
-                        <div class="summary-item">
-                            <span>Delivery Fee:</span>
-                            <span>K${order.deliveryFee.toFixed(2)}</span>
-                        </div>
-                        ` : ''}
-                        <div class="summary-item">
-                            <span>Service Fee:</span>
-                            <span>K${order.serviceFee.toFixed(2)}</span>
-                        </div>
-                        ${order.discount > 0 ? `
-                        <div class="summary-item discount">
-                            <span>Discount (${order.promoCode}):</span>
-                            <span>-K${order.discount.toFixed(2)}</span>
-                        </div>
-                        ` : ''}
-                        <div class="summary-item total">
                             <span>Total Amount:</span>
                             <span>K${order.total.toFixed(2)}</span>
                         </div>
                         <div class="summary-item">
-                            <span>Deposit (50%):</span>
-                            <span>K${order.deposit.toFixed(2)}</span>
+                            <span>Delivery Method:</span>
+                            <span>${order.delivery ? 'Delivery' : 'Pickup'}</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Order Details -->
-                <div class="details-section">
-                    <h4 class="section-title">Order Details</h4>
-                    <div class="details-grid">
-                        <div class="detail-item">
-                            <i class="fas fa-${order.delivery ? 'truck' : 'store'}"></i>
-                            <div>
-                                <strong>Type:</strong>
-                                <span>${order.delivery ? 'Delivery' : 'Pickup'}</span>
-                            </div>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fas fa-clock"></i>
-                            <div>
-                                <strong>Status:</strong>
-                                <span class="status-pending">Pending</span>
-                            </div>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fas fa-hashtag"></i>
-                            <div>
-                                <strong>Order Ref:</strong>
-                                <span>${order.ref}</span>
-                            </div>
-                        </div>
-                        ${order.promoCode ? `
-                        <div class="detail-item">
-                            <i class="fas fa-tag"></i>
-                            <div>
-                                <strong>Promo Used:</strong>
-                                <span>${order.promoCode}</span>
-                            </div>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-
-                <!-- Actions -->
                 <div class="actions-section">
-                    <button class="btn-accept" onclick="acceptNewOrder(${order.id})">
+                    <button class="btn-accept" onclick="acceptNewOrder('${order.id}')">
                         <i class="fas fa-check-circle"></i> Accept Order
                     </button>
-                    <button class="btn-reject" onclick="rejectNewOrder(${order.id})">
+                    <button class="btn-reject" onclick="rejectNewOrder('${order.id}')">
                         <i class="fas fa-times-circle"></i> Reject Order
                     </button>
                 </div>
@@ -259,16 +231,19 @@ function showNewOrderNotification(order) {
     document.body.appendChild(newOrderNotification);
     playNotificationSound();
     
-    if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200, 100, 200]);
-    }
+    // Auto-close after 30 seconds
+    setTimeout(() => {
+        if (isNotificationActive) {
+            closeNotification();
+        }
+    }, 30000);
 }
 
 function playNotificationSound() {
-    if (notificationSound) {
+    if (notificationSound && managerState.settings.notificationSound) {
         notificationSound.currentTime = 0;
         notificationSound.play().catch(error => {
-            console.log('Autoplay blocked:', error);
+            console.log('Notification sound play failed:', error);
         });
     }
 }
@@ -285,10 +260,6 @@ function closeNotification() {
         newOrderNotification.remove();
         newOrderNotification = null;
     }
-    
-    if (navigator.vibrate) {
-        navigator.vibrate(0);
-    }
 }
 
 function acceptNewOrder(orderId) {
@@ -303,21 +274,133 @@ function rejectNewOrder(orderId) {
     showNotification('Order rejected successfully!', 'warning');
 }
 
-// Auto-refresh functionality
-function startAutoRefresh() {
-    // Clear existing interval
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
+// ORDER LISTENER SYSTEM
+function setupOrderListener() {
+    // Listen for postMessage orders
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'NEW_ORDER') {
+            console.log('Received new order via postMessage:', event.data.order);
+            handleNewOrder(event.data.order);
+        }
+    });
+
+    // Listen for BroadcastChannel orders
+    if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('wiza_orders');
+        channel.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'NEW_ORDER') {
+                console.log('Received new order via BroadcastChannel:', event.data.order);
+                handleNewOrder(event.data.order);
+            }
+        });
     }
+
+    // Check localStorage for new orders
+    checkForNewOrders();
     
-    // Set new interval to refresh every 5 seconds
-    autoRefreshInterval = setInterval(() => {
+    // Set up periodic checking
+    setInterval(() => {
+        checkForNewOrders();
+    }, 3000);
+}
+
+function checkForNewOrders() {
+    try {
+        // Check localStorage for orders
+        const orders = JSON.parse(localStorage.getItem('wizaFoodOrders') || '[]');
+        const lastProcessedOrder = localStorage.getItem('lastProcessedOrder') || '0';
+        
+        const newOrders = orders.filter(order => order.id > parseInt(lastProcessedOrder));
+        
+        newOrders.forEach(order => {
+            handleNewOrder(order);
+            localStorage.setItem('lastProcessedOrder', order.id.toString());
+        });
+        
+        // Check for localStorage events
+        const newOrderEvent = localStorage.getItem('wizaNewOrder');
+        if (newOrderEvent) {
+            try {
+                const order = JSON.parse(newOrderEvent);
+                handleNewOrder(order);
+                localStorage.removeItem('wizaNewOrder');
+            } catch (e) {
+                console.error('Error parsing new order event:', e);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error checking for new orders:', error);
+    }
+}
+
+function handleNewOrder(order) {
+    // Check if order already exists
+    const existingOrder = managerState.orders.find(o => o.id === order.id || o.ref === order.ref);
+    
+    if (!existingOrder) {
+        // Add timestamp if not present
+        if (!order.timestamp) {
+            order.timestamp = new Date().toISOString();
+        }
+        
+        // Add to orders array
+        managerState.orders.unshift(order);
+        
+        // Update order counter
+        if (order.id && order.id > managerState.orderCounter) {
+            managerState.orderCounter = order.id + 1;
+        }
+        
+        // Save data
+        saveManagerData();
+        
+        // Update UI
         if (managerState.currentSection === 'orders') {
             loadOrders();
         }
         updateDashboard();
-        updatePendingOrdersCount();
-    }, 5000);
+        
+        // Show notification
+        if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
+            showNewOrderNotification(order);
+        }
+        
+        console.log('New order processed:', order);
+    }
+}
+
+// AUTO-REFRESH SYSTEM
+function startAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    if (managerState.settings.autoRefresh) {
+        autoRefreshInterval = setInterval(() => {
+            if (managerState.currentSection === 'orders') {
+                loadOrders();
+            }
+            updateDashboard();
+            updatePendingOrdersCount();
+        }, AUTO_REFRESH_INTERVAL);
+    }
+}
+
+function toggleAutoRefresh() {
+    managerState.settings.autoRefresh = elements.autoRefreshToggle.checked;
+    saveManagerData();
+    
+    if (managerState.settings.autoRefresh) {
+        startAutoRefresh();
+        showNotification('Auto-refresh enabled', 'success');
+    } else {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
+        showNotification('Auto-refresh disabled', 'warning');
+    }
 }
 
 // EVENT LISTENERS
@@ -358,10 +441,6 @@ function setupEventListeners() {
     if (elements.addPromotionBtn) {
         elements.addPromotionBtn.addEventListener('click', () => togglePromotionForm());
     }
-    
-    if (elements.promotionForm) {
-        elements.promotionForm.addEventListener('submit', handlePromotionSubmit);
-    }
 
     // Settings
     if (elements.appStatusToggle) {
@@ -374,6 +453,14 @@ function setupEventListeners() {
     
     if (elements.deliveryToggle) {
         elements.deliveryToggle.addEventListener('change', toggleDelivery);
+    }
+    
+    if (elements.notificationToggle) {
+        elements.notificationToggle.addEventListener('change', toggleNotifications);
+    }
+    
+    if (elements.autoRefreshToggle) {
+        elements.autoRefreshToggle.addEventListener('change', toggleAutoRefresh);
     }
 
     // Modals
@@ -390,29 +477,56 @@ function setupEventListeners() {
         elements.customerSearch.addEventListener('input', searchCustomers);
     }
 
-    // Add event listener for cancel promotion button
-    const cancelPromotionBtn = document.getElementById('cancelPromotionBtn');
-    if (cancelPromotionBtn) {
-        cancelPromotionBtn.addEventListener('click', () => {
-            const form = document.getElementById('addPromotionForm');
-            if (form) form.style.display = 'none';
-        });
+    // Analytics period
+    if (elements.analyticsPeriod) {
+        elements.analyticsPeriod.addEventListener('change', updateAnalytics);
     }
 
-    // Add event listeners for danger zone buttons
-    const clearAllDataBtn = document.getElementById('clearAllData');
-    const resetSystemBtn = document.getElementById('resetSystem');
-    const exportAllDataBtn = document.getElementById('exportAllData');
-
-    if (clearAllDataBtn) {
-        clearAllDataBtn.addEventListener('click', () => confirmAction('clearAllData', 'Are you sure you want to clear all data? This cannot be undone!'));
-    }
-    if (resetSystemBtn) {
-        resetSystemBtn.addEventListener('click', () => confirmAction('resetSystem', 'Are you sure you want to reset the system? All data will be lost!'));
-    }
-    if (exportAllDataBtn) {
-        exportAllDataBtn.addEventListener('click', exportAllData);
-    }
+    // Event delegation for dynamic elements
+    document.addEventListener('click', function(e) {
+        // View order details
+        if (e.target.closest('.view-order-btn')) {
+            const button = e.target.closest('.view-order-btn');
+            const orderId = button.dataset.id;
+            viewOrderDetails(orderId);
+        }
+        
+        // Update order status
+        if (e.target.closest('.status-btn')) {
+            const button = e.target.closest('.status-btn');
+            const orderId = button.dataset.id;
+            const status = button.dataset.status;
+            updateOrderStatus(orderId, status);
+        }
+        
+        // Edit menu item
+        if (e.target.closest('.edit-menu-btn')) {
+            const button = e.target.closest('.edit-menu-btn');
+            const itemId = button.dataset.id;
+            openMenuItemModal(itemId);
+        }
+        
+        // Delete menu item
+        if (e.target.closest('.delete-menu-btn')) {
+            const button = e.target.closest('.delete-menu-btn');
+            const itemId = button.dataset.id;
+            deleteMenuItem(itemId);
+        }
+        
+        // Toggle menu item availability
+        if (e.target.closest('.toggle-availability-btn')) {
+            const button = e.target.closest('.toggle-availability-btn');
+            const itemId = button.dataset.id;
+            toggleItemAvailability(itemId);
+        }
+        
+        // View customer details
+        if (e.target.closest('.view-customer-btn')) {
+            const button = e.target.closest('.view-customer-btn');
+            const customerId = button.dataset.id;
+            viewCustomerDetails(customerId);
+        }
+    });
 }
 
 // DATA MANAGEMENT
@@ -422,19 +536,35 @@ function loadManagerData() {
     if (savedData) {
         try {
             const data = JSON.parse(savedData);
-            managerState.menuItems = data.menuItems || completeMenuData;
-            managerState.orders = data.orders || [];
-            managerState.customers = data.customers || [];
-            managerState.promotions = data.promotions || [];
-            managerState.settings = data.settings || managerState.settings;
+            Object.assign(managerState, data);
+            
+            // Initialize settings if not present
+            if (!managerState.settings) {
+                managerState.settings = {
+                    appOnline: true,
+                    acceptOrders: true,
+                    deliveryEnabled: true,
+                    notificationSound: true,
+                    autoRefresh: true
+                };
+            }
+            
+            // Initialize order counter if not present
+            if (!managerState.orderCounter) {
+                managerState.orderCounter = managerState.orders.length > 0 ? 
+                    Math.max(...managerState.orders.map(o => o.id)) + 1 : 1;
+            }
+            
         } catch (e) {
             console.error('Error parsing saved data:', e);
             initializeDefaultData();
-            showNotification('Data corrupted. Reset to default menu.', 'error');
         }
     } else {
         initializeDefaultData();
     }
+    
+    // Update UI to reflect loaded settings
+    updateSettingsUI();
 }
 
 function initializeDefaultData() {
@@ -442,287 +572,225 @@ function initializeDefaultData() {
     managerState.orders = [];
     managerState.customers = [];
     managerState.promotions = [];
+    managerState.settings = {
+        appOnline: true,
+        acceptOrders: true,
+        deliveryEnabled: true,
+        notificationSound: true,
+        autoRefresh: true
+    };
+    managerState.orderCounter = 1;
 
     saveManagerData();
 }
 
 function saveManagerData() {
-    if (saveTimeout) {
-        clearTimeout(saveTimeout);
-    }
-    
-    saveTimeout = setTimeout(() => {
-        try {
-            localStorage.setItem('wizaManagerData', JSON.stringify(managerState));
-        } catch (error) {
-            console.error('Error saving data:', error);
-            showNotification('Error saving data. Storage might be full.', 'error');
-        }
-    }, SAVE_DELAY);
-}
-
-// Fetch orders from the provided URL
-async function fetchOrdersFromAPI() {
     try {
-        const response = await fetch('https://bufferzone-cloud.github.io/wizafoodcafe/wiza.html');
-        if (!response.ok) {
-            throw new Error('Failed to fetch orders');
-        }
-        
-        const htmlText = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-        
-        // Extract orders from the HTML
-        const orders = extractOrdersFromHTML(doc);
-        return orders;
+        localStorage.setItem('wizaManagerData', JSON.stringify(managerState));
     } catch (error) {
-        console.error('Error fetching orders:', error);
-        return [];
+        console.error('Error saving data:', error);
+        showNotification('Error saving data. Storage might be full.', 'error');
     }
 }
 
-// Extract orders from HTML
-function extractOrdersFromHTML(doc) {
-    const orders = [];
-    
-    // Look for order elements in the HTML
-    // This is a simplified implementation - you'll need to adjust selectors based on actual HTML structure
-    const orderElements = doc.querySelectorAll('.order, [class*="order"], .cart-item, [class*="cart"]');
-    
-    if (orderElements.length === 0) {
-        // If no specific order elements found, create sample orders from the page content
-        return createSampleOrdersFromPage(doc);
+function updateSettingsUI() {
+    if (elements.appStatusToggle) {
+        elements.appStatusToggle.checked = managerState.settings.appOnline;
     }
-    
-    orderElements.forEach((orderElement, index) => {
-        const order = createOrderFromElement(orderElement, index);
-        if (order) {
-            orders.push(order);
-        }
-    });
-    
-    return orders;
-}
-
-// Create sample orders when no specific order structure is found
-function createSampleOrdersFromPage(doc) {
-    const orders = [];
-    const menuItems = doc.querySelectorAll('.menu-item, .food-item, [class*="item"]');
-    
-    // Create 3 sample orders
-    for (let i = 0; i < 3; i++) {
-        const order = {
-            id: generateId(),
-            ref: `WIZA${(orders.length + 1).toString().padStart(4, '0')}`,
-            customer: {
-                name: `Customer ${i + 1}`,
-                email: `customer${i + 1}@email.com`,
-                phone: `0977${Math.floor(100000 + Math.random() * 900000)}`,
-                coordinates: getRandomCoordinates()
-            },
-            items: [],
-            subtotal: 0,
-            deliveryFee: 25,
-            serviceFee: 2,
-            discount: 0,
-            total: 0,
-            deposit: 0,
-            status: "pending",
-            delivery: Math.random() > 0.5,
-            deliveryLocation: {
-                address: `Address ${i + 1}, Lusaka`,
-                coordinates: getRandomCoordinates()
-            },
-            promoCode: "",
-            date: new Date().toISOString(),
-            paymentScreenshot: "payment-default.jpg"
-        };
-        
-        // Add 1-3 random items
-        const itemCount = Math.floor(Math.random() * 3) + 1;
-        for (let j = 0; j < itemCount; j++) {
-            const item = createSampleItem(j);
-            order.items.push(item);
-            order.subtotal += item.price * item.quantity;
-        }
-        
-        // Calculate final totals
-        order.total = order.subtotal - order.discount + order.deliveryFee + order.serviceFee;
-        order.deposit = order.total * 0.5;
-        
-        orders.push(order);
+    if (elements.orderingToggle) {
+        elements.orderingToggle.checked = managerState.settings.acceptOrders;
     }
-    
-    return orders;
-}
-
-// Create order from HTML element
-function createOrderFromElement(element, index) {
-    try {
-        const order = {
-            id: generateId(),
-            ref: `WIZA${(index + 1).toString().padStart(4, '0')}`,
-            customer: {
-                name: extractText(element, '.customer-name, .name, [class*="name"]') || 'Customer ' + (index + 1),
-                email: extractText(element, '.customer-email, .email, [class*="email"]') || `customer${index + 1}@email.com`,
-                phone: extractText(element, '.customer-phone, .phone, [class*="phone"]') || `0977${Math.floor(100000 + Math.random() * 900000)}`,
-                coordinates: getRandomCoordinates()
-            },
-            items: extractOrderItems(element),
-            subtotal: extractPrice(element, '.subtotal, .total, [class*="total"]'),
-            deliveryFee: 25,
-            serviceFee: 2,
-            discount: extractPrice(element, '.discount, [class*="discount"]'),
-            total: 0,
-            deposit: 0,
-            status: "pending",
-            delivery: Math.random() > 0.5,
-            deliveryLocation: {
-                address: extractText(element, '.address, [class*="address"]') || 'Unknown Address, Lusaka',
-                coordinates: getRandomCoordinates()
-            },
-            promoCode: extractText(element, '.promo-code, .voucher, [class*="promo"]') || '',
-            date: new Date().toISOString(),
-            paymentScreenshot: "payment-default.jpg"
-        };
-        
-        // Calculate final totals
-        order.total = order.subtotal - order.discount + order.deliveryFee + order.serviceFee;
-        order.deposit = order.total * 0.5;
-        
-        return order;
-    } catch (error) {
-        console.error('Error creating order from element:', error);
-        return null;
+    if (elements.deliveryToggle) {
+        elements.deliveryToggle.checked = managerState.settings.deliveryEnabled;
+    }
+    if (elements.notificationToggle) {
+        elements.notificationToggle.checked = managerState.settings.notificationSound;
+    }
+    if (elements.autoRefreshToggle) {
+        elements.autoRefreshToggle.checked = managerState.settings.autoRefresh;
     }
 }
 
-// Extract order items from element
-function extractOrderItems(element) {
-    const items = [];
-    const itemElements = element.querySelectorAll('.order-item, .cart-item, .item, [class*="item"]');
-    
-    itemElements.forEach((itemElement, index) => {
-        const item = {
-            id: generateId(),
-            name: extractText(itemElement, '.item-name, .name, [class*="name"]') || 'Item ' + (index + 1),
-            description: extractText(itemElement, '.item-description, .description, [class*="desc"]') || 'No description available',
-            price: extractPrice(itemElement, '.item-price, .price, [class*="price"]') || 10 + Math.random() * 40,
-            quantity: parseInt(extractText(itemElement, '.quantity, [class*="quantity"]') || '1'),
-            image: extractAttribute(itemElement, '.item-image, img', 'src') || 'https://via.placeholder.com/300x200/FF6B35/white?text=Food+Image',
-            toppings: extractToppings(itemElement),
-            instructions: extractText(itemElement, '.instructions, [class*="instruction"]') || ''
-        };
-        
-        items.push(item);
-    });
-    
-    // If no items found, create sample items
-    if (items.length === 0) {
-        items.push(createSampleItem(0));
+// NAVIGATION
+function navigateToSection(section) {
+    // Update navigation
+    elements.navItems.forEach(item => item.classList.remove('active'));
+    const activeNavItem = document.querySelector(`[data-section="${section}"]`);
+    if (activeNavItem) {
+        activeNavItem.classList.add('active');
     }
-    
-    return items;
+
+    // Update content
+    elements.contentSections.forEach(contentSection => contentSection.classList.remove('active'));
+    const activeSection = document.getElementById(section);
+    if (activeSection) {
+        activeSection.classList.add('active');
+    }
+
+    managerState.currentSection = section;
+
+    // Refresh section data
+    switch(section) {
+        case 'dashboard':
+            updateDashboard();
+            break;
+        case 'menu-management':
+            loadFullMenu();
+            break;
+        case 'orders':
+            loadOrders();
+            break;
+        case 'customers':
+            loadCustomers();
+            break;
+        case 'analytics':
+            updateAnalytics();
+            break;
+        case 'promotions':
+            loadPromotions();
+            break;
+        case 'settings':
+            // Settings doesn't need refresh
+            break;
+    }
 }
 
-// Create sample menu item
-function createSampleItem(index) {
-    const sampleItems = [
-        { name: "Chicken & Chips", description: "Crispy chicken with golden fries", price: 35 },
-        { name: "Shawarma", description: "Delicious wrap with spiced meat", price: 33 },
-        { name: "Pizza", description: "Cheesy pizza with your favorite toppings", price: 70 },
-        { name: "Burger", description: "Juicy beef burger with fresh veggies", price: 45 },
-        { name: "Mojo Drink", description: "Refreshing energy drink", price: 8 }
-    ];
+// DASHBOARD FUNCTIONS
+function updateDashboard() {
+    const stats = calculateDashboardStats();
     
-    const item = sampleItems[index % sampleItems.length];
+    // Update main stats
+    if (elements.totalRevenue) elements.totalRevenue.textContent = `K${stats.totalRevenue.toFixed(2)}`;
+    if (elements.totalOrders) elements.totalOrders.textContent = stats.totalOrders;
+    if (elements.activeCustomers) elements.activeCustomers.textContent = stats.activeCustomers;
+    if (elements.pendingOrders) elements.pendingOrders.textContent = stats.pendingOrders;
+    if (elements.readyOrders) elements.readyOrders.textContent = stats.readyOrders;
+    if (elements.pendingOrdersCount) elements.pendingOrdersCount.textContent = stats.pendingOrders;
+
+    updateOrderStatusCounts();
+    updateRevenueAnalytics();
+    updateRecentActivity();
+}
+
+function calculateDashboardStats() {
+    const today = new Date().toDateString();
+    const todayOrders = managerState.orders.filter(order => 
+        new Date(order.date).toDateString() === today
+    );
+    
+    const lastWeek = new Date(Date.now() - 7 * 86400000);
+    const weekOrders = managerState.orders.filter(order => 
+        new Date(order.date) >= lastWeek
+    );
+
+    const lastMonth = new Date(Date.now() - 30 * 86400000);
+    const monthOrders = managerState.orders.filter(order => 
+        new Date(order.date) >= lastMonth
+    );
+
     return {
-        id: generateId(),
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        quantity: Math.floor(Math.random() * 3) + 1,
-        image: 'https://via.placeholder.com/300x200/FF6B35/white?text=Food+Image',
-        toppings: ['Extra Sauce', 'Spicy'],
-        instructions: 'Make it extra crispy'
+        totalRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0),
+        totalOrders: todayOrders.length,
+        activeCustomers: managerState.customers.filter(c => c.status === 'active').length,
+        pendingOrders: managerState.orders.filter(o => o.status === 'pending').length,
+        readyOrders: managerState.orders.filter(o => o.status === 'ready').length,
+        outForDelivery: managerState.orders.filter(o => o.status === 'out-for-delivery').length,
+        weekRevenue: weekOrders.reduce((sum, order) => sum + order.total, 0),
+        monthRevenue: monthOrders.reduce((sum, order) => sum + order.total, 0),
+        weekOrders: weekOrders.length,
+        monthOrders: monthOrders.length
     };
 }
 
-// Helper functions for HTML extraction
-function extractText(element, selector) {
-    const found = element.querySelector(selector);
-    return found ? found.textContent.trim() : null;
-}
-
-function extractPrice(element, selector) {
-    const text = extractText(element, selector);
-    if (!text) return 0;
+function updateOrderStatusCounts() {
+    const stats = calculateDashboardStats();
     
-    // Extract number from price text (e.g., "K35.00" -> 35.00)
-    const match = text.match(/(\d+\.?\d*)/);
-    return match ? parseFloat(match[1]) : 0;
-}
-
-function extractAttribute(element, selector, attribute) {
-    const found = element.querySelector(selector);
-    return found ? found.getAttribute(attribute) : null;
-}
-
-function extractToppings(element) {
-    const toppings = [];
-    const toppingElements = element.querySelectorAll('.topping, .extra, [class*="topping"]');
-    
-    toppingElements.forEach(toppingElement => {
-        toppings.push(toppingElement.textContent.trim());
-    });
-    
-    return toppings.length > 0 ? toppings : ['Extra Sauce', 'Spicy'];
-}
-
-// Helper function to generate random coordinates near the restaurant
-function getRandomCoordinates() {
-    const lat = managerState.restaurantLocation[0] + (Math.random() * 0.02 - 0.01);
-    const lng = managerState.restaurantLocation[1] + (Math.random() * 0.02 - 0.01);
-    return [lat, lng];
-}
-
-// Load orders from API
-async function loadOrders() {
-    if (!elements.ordersList) return;
-
-    // Fetch orders from API
-    const apiOrders = await fetchOrdersFromAPI();
-    
-    // Merge with existing orders
-    if (apiOrders.length > 0) {
-        let newOrdersCount = 0;
-        
-        apiOrders.forEach(apiOrder => {
-            const existingOrder = managerState.orders.find(order => 
-                order.ref === apiOrder.ref || 
-                (order.customer.name === apiOrder.customer.name && 
-                 Math.abs(new Date(order.date) - new Date(apiOrder.date)) < 60000) // Within 1 minute
-            );
-            
-            if (!existingOrder) {
-                managerState.orders.unshift(apiOrder);
-                newOrdersCount++;
-                
-                // Show notification for new orders
-                if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
-                    setTimeout(() => {
-                        showNewOrderNotification(apiOrder);
-                    }, 1000);
-                }
-            }
-        });
-        
-        if (newOrdersCount > 0) {
-            saveManagerData();
-            showNotification(`${newOrdersCount} new order(s) loaded`, 'success');
-        }
+    if (elements.orderStatusCounts) {
+        elements.orderStatusCounts.innerHTML = `
+            <div class="status-count">
+                <span class="count">${stats.pendingOrders}</span>
+                <span class="label">Pending</span>
+            </div>
+            <div class="status-count">
+                <span class="count">${managerState.orders.filter(o => o.status === 'preparing').length}</span>
+                <span class="label">Preparing</span>
+            </div>
+            <div class="status-count">
+                <span class="count">${stats.readyOrders}</span>
+                <span class="label">Ready</span>
+            </div>
+            <div class="status-count">
+                <span class="count">${stats.outForDelivery}</span>
+                <span class="label">Out for Delivery</span>
+            </div>
+        `;
     }
+}
+
+function updateRevenueAnalytics() {
+    const stats = calculateDashboardStats();
+    
+    if (elements.revenueBreakdown) {
+        elements.revenueBreakdown.innerHTML = `
+            <div class="revenue-item">
+                <span>Today:</span>
+                <span>K${stats.totalRevenue.toFixed(2)}</span>
+            </div>
+            <div class="revenue-item">
+                <span>This Week:</span>
+                <span>K${stats.weekRevenue.toFixed(2)}</span>
+            </div>
+            <div class="revenue-item">
+                <span>This Month:</span>
+                <span>K${stats.monthRevenue.toFixed(2)}</span>
+            </div>
+        `;
+    }
+}
+
+function updateRecentActivity() {
+    if (!elements.recentActivity) return;
+
+    const recentOrders = managerState.orders
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+
+    if (recentOrders.length === 0) {
+        elements.recentActivity.innerHTML = `
+            <div class="no-activity">
+                <i class="fas fa-clock"></i>
+                <p>No recent activity</p>
+            </div>
+        `;
+        return;
+    }
+
+    elements.recentActivity.innerHTML = recentOrders.map(order => `
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="activity-content">
+                <p><strong>Order ${order.ref}</strong> - ${order.customer.name}</p>
+                <p class="activity-time">${new Date(order.date).toLocaleString()}</p>
+            </div>
+            <div class="activity-status status-${order.status}">
+                ${order.status}
+            </div>
+        </div>
+    `).join('');
+}
+
+function updatePendingOrdersCount() {
+    const pendingCount = managerState.orders.filter(order => order.status === 'pending').length;
+    if (elements.pendingOrdersCount) {
+        elements.pendingOrdersCount.textContent = pendingCount;
+    }
+}
+
+// ORDERS MANAGEMENT
+function loadOrders() {
+    if (!elements.ordersList) return;
 
     const statusFilter = elements.orderStatusFilter ? elements.orderStatusFilter.value : 'all';
     let filteredOrders = managerState.orders;
@@ -732,6 +800,17 @@ async function loadOrders() {
     }
 
     filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (filteredOrders.length === 0) {
+        elements.ordersList.innerHTML = `
+            <div class="no-orders">
+                <i class="fas fa-shopping-cart fa-3x"></i>
+                <h3>No Orders Found</h3>
+                <p>${statusFilter === 'all' ? 'No orders have been placed yet.' : `No ${statusFilter} orders found.`}</p>
+            </div>
+        `;
+        return;
+    }
 
     elements.ordersList.innerHTML = filteredOrders.map(order => `
         <div class="order-card">
@@ -771,7 +850,7 @@ async function loadOrders() {
                 </div>
                 <div class="detail-quick">
                     <i class="fas fa-money-bill-wave"></i>
-                    Deposit: K${order.deposit.toFixed(2)}
+                    Total: K${order.total.toFixed(2)}
                 </div>
                 ${order.promoCode ? `
                 <div class="detail-quick">
@@ -782,45 +861,66 @@ async function loadOrders() {
             </div>
 
             <div class="order-actions">
-                <button class="btn-primary" onclick="viewOrderDetails(${order.id})">
+                <button class="btn-primary view-order-btn" data-id="${order.id}">
                     <i class="fas fa-eye"></i> View Details
                 </button>
                 
-                ${order.status === 'pending' ? `
-                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'preparing')">
-                        <i class="fas fa-check"></i> Accept
-                    </button>
-                    <button class="btn-danger" onclick="updateOrderStatus(${order.id}, 'cancelled')">
-                        <i class="fas fa-times"></i> Reject
-                    </button>
-                ` : ''}
-                
-                ${order.status === 'preparing' ? `
-                    <button class="btn-warning" onclick="updateOrderStatus(${order.id}, 'ready')">
-                        <i class="fas fa-check-double"></i> Mark Ready
-                    </button>
-                ` : ''}
-                
-                ${order.status === 'ready' && order.delivery ? `
-                    <button class="btn-info" onclick="updateOrderStatus(${order.id}, 'out-for-delivery')">
-                        <i class="fas fa-truck"></i> Out for Delivery
-                    </button>
-                ` : ''}
-                
-                ${order.status === 'ready' && !order.delivery ? `
-                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'completed')">
-                        <i class="fas fa-check-circle"></i> Complete
-                    </button>
-                ` : ''}
-                
-                ${order.status === 'out-for-delivery' ? `
-                    <button class="btn-success" onclick="updateOrderStatus(${order.id}, 'completed')">
-                        <i class="fas fa-check-circle"></i> Delivered
-                    </button>
-                ` : ''}
+                ${getStatusButtons(order)}
             </div>
         </div>
     `).join('');
+}
+
+function getStatusButtons(order) {
+    const status = order.status;
+    let buttons = '';
+    
+    switch(status) {
+        case 'pending':
+            buttons = `
+                <button class="btn-success status-btn" data-id="${order.id}" data-status="preparing">
+                    <i class="fas fa-check"></i> Accept
+                </button>
+                <button class="btn-danger status-btn" data-id="${order.id}" data-status="cancelled">
+                    <i class="fas fa-times"></i> Reject
+                </button>
+            `;
+            break;
+            
+        case 'preparing':
+            buttons = `
+                <button class="btn-warning status-btn" data-id="${order.id}" data-status="ready">
+                    <i class="fas fa-check-double"></i> Mark Ready
+                </button>
+            `;
+            break;
+            
+        case 'ready':
+            if (order.delivery) {
+                buttons = `
+                    <button class="btn-info status-btn" data-id="${order.id}" data-status="out-for-delivery">
+                        <i class="fas fa-truck"></i> Out for Delivery
+                    </button>
+                `;
+            } else {
+                buttons = `
+                    <button class="btn-success status-btn" data-id="${order.id}" data-status="completed">
+                        <i class="fas fa-check-circle"></i> Complete
+                    </button>
+                `;
+            }
+            break;
+            
+        case 'out-for-delivery':
+            buttons = `
+                <button class="btn-success status-btn" data-id="${order.id}" data-status="completed">
+                    <i class="fas fa-check-circle"></i> Delivered
+                </button>
+            `;
+            break;
+    }
+    
+    return buttons;
 }
 
 function getStatusIcon(status) {
@@ -860,6 +960,17 @@ function loadOrderHistory() {
         order.status === 'completed' || order.status === 'cancelled'
     ).sort((a, b) => new Date(b.date) - new Date(a.date));
     
+    if (historicalOrders.length === 0) {
+        elements.ordersList.innerHTML = `
+            <div class="no-orders">
+                <i class="fas fa-history fa-3x"></i>
+                <h3>No Order History</h3>
+                <p>Completed and cancelled orders will appear here</p>
+            </div>
+        `;
+        return;
+    }
+    
     elements.ordersList.innerHTML = historicalOrders.map(order => `
         <div class="order-card historical">
             <div class="order-header">
@@ -884,11 +995,11 @@ function loadOrderHistory() {
             </div>
 
             <div class="order-actions">
-                <button class="btn-primary" onclick="viewOrderDetails(${order.id})">
+                <button class="btn-primary view-order-btn" data-id="${order.id}">
                     <i class="fas fa-eye"></i> View Details
                 </button>
                 ${order.status === 'completed' ? `
-                    <button class="btn-success" onclick="recreateOrder(${order.id})">
+                    <button class="btn-success" onclick="recreateOrder('${order.id}')">
                         <i class="fas fa-redo"></i> Recreate
                     </button>
                 ` : ''}
@@ -897,29 +1008,13 @@ function loadOrderHistory() {
     `).join('');
 }
 
-// View order details with map
 function viewOrderDetails(orderId) {
-    const order = managerState.orders.find(o => o.id === orderId);
+    const order = managerState.orders.find(o => o.id == orderId);
     if (!order) return;
 
-    const modal = document.getElementById('orderDetailsModal');
-    if (!modal) return;
-
-    const content = modal.querySelector('.order-details-content');
-    if (!content) return;
+    if (!elements.orderDetailsModal || !elements.orderDetailsContent) return;
     
-    // Create map HTML
-    const mapHtml = order.delivery ? `
-        <div class="order-detail-section">
-            <h4><i class="fas fa-map-marked-alt"></i> Delivery Location</h4>
-            <div class="order-map" id="orderMap-${order.id}"></div>
-            <button class="map-directions-btn" onclick="openDirections(${order.id})">
-                <i class="fas fa-directions"></i> Get Directions
-            </button>
-        </div>
-    ` : '';
-    
-    content.innerHTML = `
+    elements.orderDetailsContent.innerHTML = `
         <div class="order-detail-section">
             <h4><i class="fas fa-info-circle"></i> Order Information</h4>
             <div class="detail-grid">
@@ -957,10 +1052,12 @@ function viewOrderDetails(orderId) {
                     <label><i class="fas fa-phone"></i> Phone:</label>
                     <span>${order.customer.phone}</span>
                 </div>
+                ${order.customer.coordinates ? `
                 <div class="detail-item">
                     <label><i class="fas fa-map-marker-alt"></i> Coordinates:</label>
                     <span>${order.customer.coordinates.join(', ')}</span>
                 </div>
+                ` : ''}
                 ${order.deliveryLocation ? `
                 <div class="detail-item">
                     <label><i class="fas fa-home"></i> Delivery Address:</label>
@@ -970,6 +1067,12 @@ function viewOrderDetails(orderId) {
                     <label><i class="fas fa-map-pin"></i> Delivery Coordinates:</label>
                     <span>${order.deliveryLocation.coordinates.join(', ')}</span>
                 </div>
+                ${order.deliveryLocation.notes ? `
+                <div class="detail-item">
+                    <label><i class="fas fa-sticky-note"></i> Delivery Notes:</label>
+                    <span>${order.deliveryLocation.notes}</span>
+                </div>
+                ` : ''}
                 ` : ''}
             </div>
         </div>
@@ -982,7 +1085,7 @@ function viewOrderDetails(orderId) {
                         <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-image">
                         <div class="item-details">
                             <h5>${item.name}</h5>
-                            <p class="item-description">${item.description}</p>
+                            <p class="item-description">${item.description || 'No description available'}</p>
                             <p class="item-price">K${item.price} × ${item.quantity} = K${(item.price * item.quantity).toFixed(2)}</p>
                             ${item.toppings && item.toppings.length > 0 ? `
                                 <p class="item-toppings"><strong>Extras:</strong> ${item.toppings.join(', ')}</p>
@@ -1024,37 +1127,41 @@ function viewOrderDetails(orderId) {
                     <span>K${order.total.toFixed(2)}</span>
                 </div>
                 <div class="detail-item">
-                    <label>Deposit Paid (50%):</label>
-                    <span>K${order.deposit.toFixed(2)}</span>
+                    <label>Payment Method:</label>
+                    <span>${order.paymentMethod || 'Airtel Money'}</span>
                 </div>
+                ${order.paymentScreenshot ? `
                 <div class="detail-item">
-                    <label>Balance Due:</label>
-                    <span>K${(order.total - order.deposit).toFixed(2)}</span>
+                    <label>Payment Proof:</label>
+                    <div class="payment-screenshot-container">
+                        <img src="${order.paymentScreenshot}" alt="Payment Screenshot" class="payment-screenshot">
+                    </div>
                 </div>
+                ` : ''}
             </div>
         </div>
 
-        ${mapHtml}
-
-        ${order.paymentScreenshot ? `
+        ${order.delivery && order.deliveryLocation ? `
         <div class="order-detail-section">
-            <h4><i class="fas fa-receipt"></i> Payment Proof</h4>
-            <img src="${getImagePath(order.paymentScreenshot)}" alt="Payment Screenshot" class="payment-screenshot" onerror="this.style.display='none'">
+            <h4><i class="fas fa-map-marked-alt"></i> Delivery Location</h4>
+            <div class="order-map" id="orderMap-${order.id}"></div>
+            <button class="map-directions-btn" onclick="openDirections('${order.id}')">
+                <i class="fas fa-directions"></i> Get Directions
+            </button>
         </div>
         ` : ''}
     `;
 
     // Initialize map if delivery order
-    if (order.delivery) {
+    if (order.delivery && order.deliveryLocation) {
         setTimeout(() => {
             initializeOrderMap(order);
         }, 100);
     }
     
-    showModal(modal);
+    showModal(elements.orderDetailsModal);
 }
 
-// Initialize Leaflet map for order
 function initializeOrderMap(order) {
     const mapElement = document.getElementById(`orderMap-${order.id}`);
     if (!mapElement) return;
@@ -1062,38 +1169,43 @@ function initializeOrderMap(order) {
     // Clear any existing map
     mapElement.innerHTML = '';
     
-    // Create map
-    const map = L.map(mapElement).setView(managerState.restaurantLocation, 13);
-    
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-    
-    // Add markers
-    const wizaMarker = L.marker(managerState.restaurantLocation).addTo(map)
-        .bindPopup('<b>WIZA FOOD CAFE</b><br>Restaurant Location')
-        .openPopup();
-    
-    const customerMarker = L.marker(order.deliveryLocation.coordinates).addTo(map)
-        .bindPopup(`<b>Customer:</b> ${order.customer.name}<br>${order.deliveryLocation.address}`);
-    
-    // Add line between restaurant and customer
-    const line = L.polyline([managerState.restaurantLocation, order.deliveryLocation.coordinates], {
-        color: 'red',
-        weight: 3,
-        opacity: 0.7,
-        dashArray: '10, 10'
-    }).addTo(map);
-    
-    // Fit map to show both markers
-    const group = new L.featureGroup([wizaMarker, customerMarker]);
-    map.fitBounds(group.getBounds().pad(0.1));
+    try {
+        // Create map
+        const map = L.map(mapElement).setView(managerState.restaurantLocation, 13);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add markers
+        const wizaMarker = L.marker(managerState.restaurantLocation).addTo(map)
+            .bindPopup('<b>WIZA FOOD CAFE</b><br>Restaurant Location')
+            .openPopup();
+        
+        const customerMarker = L.marker(order.deliveryLocation.coordinates).addTo(map)
+            .bindPopup(`<b>Customer:</b> ${order.customer.name}<br>${order.deliveryLocation.address}`);
+        
+        // Add line between restaurant and customer
+        const line = L.polyline([managerState.restaurantLocation, order.deliveryLocation.coordinates], {
+            color: 'red',
+            weight: 3,
+            opacity: 0.7,
+            dashArray: '10, 10'
+        }).addTo(map);
+        
+        // Fit map to show both markers
+        const group = new L.featureGroup([wizaMarker, customerMarker]);
+        map.fitBounds(group.getBounds().pad(0.1));
+        
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        mapElement.innerHTML = '<p class="map-error">Unable to load map. Please check your internet connection.</p>';
+    }
 }
 
-// Open directions in Google Maps
 function openDirections(orderId) {
-    const order = managerState.orders.find(o => o.id === orderId);
+    const order = managerState.orders.find(o => o.id == orderId);
     if (!order || !order.delivery) return;
     
     const origin = `${managerState.restaurantLocation[0]},${managerState.restaurantLocation[1]}`;
@@ -1104,7 +1216,7 @@ function openDirections(orderId) {
 }
 
 function updateOrderStatus(orderId, newStatus) {
-    const order = managerState.orders.find(o => o.id === orderId);
+    const order = managerState.orders.find(o => o.id == orderId);
     if (order) {
         const oldStatus = order.status;
         order.status = newStatus;
@@ -1118,12 +1230,12 @@ function updateOrderStatus(orderId, newStatus) {
 }
 
 function recreateOrder(orderId) {
-    const order = managerState.orders.find(o => o.id === orderId);
+    const order = managerState.orders.find(o => o.id == orderId);
     if (order) {
         const newOrder = {
-            ...order,
-            id: generateId(),
-            ref: `WIZA${(managerState.orders.length + 1).toString().padStart(4, '0')}`,
+            ...JSON.parse(JSON.stringify(order)), // Deep clone
+            id: managerState.orderCounter++,
+            ref: `WIZA${managerState.orderCounter.toString().padStart(4, '0')}`,
             status: 'pending',
             date: new Date().toISOString(),
             statusUpdated: null
@@ -1138,42 +1250,24 @@ function recreateOrder(orderId) {
     }
 }
 
-// Update customer management to use API data
-async function loadCustomers() {
+// CUSTOMERS MANAGEMENT
+function loadCustomers() {
     if (!elements.customersTableBody) return;
 
-    // Update customers based on orders
-    if (managerState.orders.length > 0) {
-        managerState.orders.forEach(order => {
-            const existingCustomer = managerState.customers.find(c => 
-                c.email === order.customer.email || 
-                c.phone === order.customer.phone
-            );
-            
-            if (existingCustomer) {
-                // Update existing customer
-                existingCustomer.totalOrders += 1;
-                existingCustomer.totalSpent += order.total;
-                existingCustomer.lastOrder = order.date;
-            } else {
-                // Add new customer
-                const newCustomer = {
-                    id: generateId(),
-                    name: order.customer.name,
-                    email: order.customer.email,
-                    phone: order.customer.phone,
-                    totalOrders: 1,
-                    totalSpent: order.total,
-                    status: "active",
-                    joinDate: order.date,
-                    lastOrder: order.date
-                };
-                
-                managerState.customers.push(newCustomer);
-            }
-        });
-        
-        saveManagerData();
+    // Update customers from orders
+    updateCustomersFromOrders();
+
+    if (managerState.customers.length === 0) {
+        elements.customersTableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="no-data">
+                    <i class="fas fa-users fa-2x"></i>
+                    <h4>No Customers Yet</h4>
+                    <p>Customer data will appear here after orders are placed</p>
+                </td>
+            </tr>
+        `;
+        return;
     }
 
     elements.customersTableBody.innerHTML = managerState.customers.map(customer => `
@@ -1193,21 +1287,48 @@ async function loadCustomers() {
             </td>
             <td>
                 <div class="customer-actions">
-                    <button class="btn-primary" onclick="viewCustomerDetails(${customer.id})" title="View Details">
+                    <button class="btn-primary view-customer-btn" data-id="${customer.id}" title="View Details">
                         <i class="fas fa-eye"></i>
                     </button>
                     <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
-                            onclick="toggleCustomerBan(${customer.id})"
+                            onclick="toggleCustomerBan('${customer.id}')"
                             title="${customer.status === 'banned' ? 'Unban Customer' : 'Ban Customer'}">
                         <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
-                    </button>
-                    <button class="btn-warning" onclick="deleteCustomer(${customer.id})" title="Delete Customer">
-                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </td>
         </tr>
     `).join('');
+}
+
+function updateCustomersFromOrders() {
+    const customersMap = new Map();
+    
+    managerState.orders.forEach(order => {
+        const customerKey = order.customer.email || order.customer.phone;
+        
+        if (customersMap.has(customerKey)) {
+            const existingCustomer = customersMap.get(customerKey);
+            existingCustomer.totalOrders += 1;
+            existingCustomer.totalSpent += order.total;
+            existingCustomer.lastOrder = order.date;
+        } else {
+            customersMap.set(customerKey, {
+                id: generateId(),
+                name: order.customer.name,
+                email: order.customer.email,
+                phone: order.customer.phone,
+                totalOrders: 1,
+                totalSpent: order.total,
+                status: "active",
+                joinDate: order.date,
+                lastOrder: order.date
+            });
+        }
+    });
+    
+    managerState.customers = Array.from(customersMap.values());
+    saveManagerData();
 }
 
 function searchCustomers() {
@@ -1220,6 +1341,19 @@ function searchCustomers() {
         customer.phone.includes(searchTerm)
     );
     
+    if (filteredCustomers.length === 0) {
+        elements.customersTableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="no-data">
+                    <i class="fas fa-search fa-2x"></i>
+                    <h4>No Customers Found</h4>
+                    <p>Try adjusting your search terms</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
     elements.customersTableBody.innerHTML = filteredCustomers.map(customer => `
         <tr>
             <td>${customer.name}</td>
@@ -1231,11 +1365,11 @@ function searchCustomers() {
                 <span class="status status-${customer.status}">${customer.status}</span>
             </td>
             <td>
-                <button class="btn-primary" onclick="viewCustomerDetails(${customer.id})">
+                <button class="btn-primary view-customer-btn" data-id="${customer.id}">
                     <i class="fas fa-eye"></i>
                 </button>
                 <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
-                        onclick="toggleCustomerBan(${customer.id})">
+                        onclick="toggleCustomerBan('${customer.id}')">
                     <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
                 </button>
             </td>
@@ -1244,21 +1378,19 @@ function searchCustomers() {
 }
 
 function viewCustomerDetails(customerId) {
-    const customer = managerState.customers.find(c => c.id === customerId);
+    const customer = managerState.customers.find(c => c.id == customerId);
     if (!customer) return;
 
-    const modal = document.getElementById('customerDetailsModal');
-    if (!modal) return;
-
-    const content = modal.querySelector('.customer-details-content');
-    if (!content) return;
+    if (!elements.customerDetailsModal || !elements.customerDetailsContent) return;
     
-    const customerOrders = managerState.orders.filter(order => order.customer.email === customer.email);
+    const customerOrders = managerState.orders.filter(order => 
+        order.customer.email === customer.email || order.customer.phone === customer.phone
+    );
     const totalOrders = customerOrders.length;
     const totalSpent = customerOrders.reduce((sum, order) => sum + order.total, 0);
     const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
     
-    content.innerHTML = `
+    elements.customerDetailsContent.innerHTML = `
         <div class="customer-detail-section">
             <h4><i class="fas fa-user-circle"></i> Personal Information</h4>
             <div class="detail-grid">
@@ -1328,209 +1460,24 @@ function viewCustomerDetails(customerId) {
 
         <div class="customer-actions-full">
             <button class="btn-${customer.status === 'banned' ? 'success' : 'danger'}" 
-                    onclick="toggleCustomerBan(${customer.id}); closeAllModals()">
+                    onclick="toggleCustomerBan('${customer.id}'); closeAllModals()">
                 <i class="fas fa-${customer.status === 'banned' ? 'check' : 'ban'}"></i>
                 ${customer.status === 'banned' ? 'Unban Customer' : 'Ban Customer'}
-            </button>
-            <button class="btn-warning" onclick="deleteCustomer(${customer.id}); closeAllModals()">
-                <i class="fas fa-trash"></i> Delete Customer
             </button>
         </div>
     `;
 
-    showModal(modal);
+    showModal(elements.customerDetailsModal);
 }
 
 function toggleCustomerBan(customerId) {
-    const customer = managerState.customers.find(c => c.id === customerId);
+    const customer = managerState.customers.find(c => c.id == customerId);
     if (customer) {
         customer.status = customer.status === 'banned' ? 'active' : 'banned';
         saveManagerData();
         loadCustomers();
         
         showNotification(`Customer ${customer.name} ${customer.status === 'banned' ? 'banned' : 'unbanned'} successfully!`, 'success');
-    }
-}
-
-function deleteCustomer(customerId) {
-    if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-        managerState.customers = managerState.customers.filter(c => c.id !== customerId);
-        saveManagerData();
-        loadCustomers();
-        showNotification('Customer deleted successfully!', 'success');
-    }
-}
-
-// NAVIGATION
-function navigateToSection(section) {
-    // Update navigation
-    elements.navItems.forEach(item => item.classList.remove('active'));
-    const activeNavItem = document.querySelector(`[data-section="${section}"]`);
-    if (activeNavItem) {
-        activeNavItem.classList.add('active');
-    }
-
-    // Update content
-    elements.contentSections.forEach(contentSection => contentSection.classList.remove('active'));
-    const activeSection = document.getElementById(section);
-    if (activeSection) {
-        activeSection.classList.add('active');
-    }
-
-    managerState.currentSection = section;
-
-    // Refresh section data
-    switch(section) {
-        case 'dashboard':
-            updateDashboard();
-            break;
-        case 'menu-management':
-            loadFullMenu();
-            break;
-        case 'orders':
-            loadOrders();
-            break;
-        case 'customers':
-            loadCustomers();
-            break;
-        case 'analytics':
-            updateAnalytics();
-            break;
-        case 'promotions':
-            loadPromotions();
-            break;
-    }
-}
-
-// DASHBOARD FUNCTIONS
-function updateDashboard() {
-    const stats = calculateDashboardStats();
-    
-    if (elements.totalRevenue) elements.totalRevenue.textContent = `K${stats.totalRevenue.toFixed(2)}`;
-    if (elements.totalOrders) elements.totalOrders.textContent = stats.totalOrders;
-    if (elements.activeCustomers) elements.activeCustomers.textContent = stats.activeCustomers;
-    if (elements.pendingOrders) elements.pendingOrders.textContent = stats.pendingOrders;
-    if (elements.readyOrders) elements.readyOrders.textContent = stats.readyOrders;
-    if (elements.pendingOrdersCount) elements.pendingOrdersCount.textContent = stats.pendingOrders;
-
-    updateRecentActivity();
-    updateOrderStatusCounts();
-    updateRevenueAnalytics();
-}
-
-function calculateDashboardStats() {
-    const today = new Date().toDateString();
-    
-    const todayOrders = managerState.orders.filter(order => 
-        new Date(order.date).toDateString() === today
-    );
-    
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    const yesterdayOrders = managerState.orders.filter(order => 
-        new Date(order.date).toDateString() === yesterday
-    );
-
-    const lastWeek = new Date(Date.now() - 7 * 86400000);
-    const weekOrders = managerState.orders.filter(order => 
-        new Date(order.date) >= lastWeek
-    );
-
-    const lastMonth = new Date(Date.now() - 30 * 86400000);
-    const monthOrders = managerState.orders.filter(order => 
-        new Date(order.date) >= lastMonth
-    );
-
-    return {
-        totalRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0),
-        totalOrders: todayOrders.length,
-        activeCustomers: managerState.customers.filter(c => c.status === 'active').length,
-        pendingOrders: managerState.orders.filter(o => o.status === 'pending').length,
-        readyOrders: managerState.orders.filter(o => o.status === 'ready').length,
-        outForDelivery: managerState.orders.filter(o => o.status === 'out-for-delivery').length,
-        weekRevenue: weekOrders.reduce((sum, order) => sum + order.total, 0),
-        monthRevenue: monthOrders.reduce((sum, order) => sum + order.total, 0),
-        weekOrders: weekOrders.length,
-        monthOrders: monthOrders.length
-    };
-}
-
-function updateOrderStatusCounts() {
-    const stats = calculateDashboardStats();
-    
-    const statusCountsElement = document.getElementById('orderStatusCounts');
-    if (statusCountsElement) {
-        statusCountsElement.innerHTML = `
-            <div class="status-count">
-                <span class="count">${stats.pendingOrders}</span>
-                <span class="label">Pending</span>
-            </div>
-            <div class="status-count">
-                <span class="count">${managerState.orders.filter(o => o.status === 'preparing').length}</span>
-                <span class="label">Preparing</span>
-            </div>
-            <div class="status-count">
-                <span class="count">${stats.readyOrders}</span>
-                <span class="label">Ready</span>
-            </div>
-            <div class="status-count">
-                <span class="count">${stats.outForDelivery}</span>
-                <span class="label">Out for Delivery</span>
-            </div>
-        `;
-    }
-}
-
-function updateRevenueAnalytics() {
-    const stats = calculateDashboardStats();
-    
-    const revenueBreakdown = document.getElementById('revenueBreakdown');
-    if (revenueBreakdown) {
-        revenueBreakdown.innerHTML = `
-            <div class="revenue-item">
-                <span>Today:</span>
-                <span>K${stats.totalRevenue.toFixed(2)}</span>
-            </div>
-            <div class="revenue-item">
-                <span>This Week:</span>
-                <span>K${stats.weekRevenue.toFixed(2)}</span>
-            </div>
-            <div class="revenue-item">
-                <span>This Month:</span>
-                <span>K${stats.monthRevenue.toFixed(2)}</span>
-            </div>
-        `;
-    }
-}
-
-function updateRecentActivity() {
-    const activityList = document.getElementById('recentActivity');
-    if (!activityList) return;
-
-    const recentOrders = managerState.orders
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 10);
-
-    activityList.innerHTML = recentOrders.map(order => `
-        <div class="activity-item">
-            <div class="activity-icon">
-                <i class="fas fa-shopping-cart"></i>
-            </div>
-            <div class="activity-content">
-                <p><strong>Order ${order.ref}</strong> - ${order.customer.name}</p>
-                <p class="activity-time">${new Date(order.date).toLocaleString()}</p>
-            </div>
-            <div class="activity-status status-${order.status}">
-                ${order.status}
-            </div>
-        </div>
-    `).join('');
-}
-
-function updatePendingOrdersCount() {
-    const pendingCount = managerState.orders.filter(order => order.status === 'pending').length;
-    const pendingOrdersCount = document.getElementById('pendingOrdersCount');
-    if (pendingOrdersCount) {
-        pendingOrdersCount.textContent = pendingCount;
     }
 }
 
@@ -1545,6 +1492,17 @@ function loadFullMenu(category = 'all') {
     }
 
     updateMenuStats(filteredItems);
+
+    if (filteredItems.length === 0) {
+        elements.menuItemsGrid.innerHTML = `
+            <div class="no-menu-items">
+                <i class="fas fa-utensils fa-3x"></i>
+                <h3>No Menu Items</h3>
+                <p>${category === 'all' ? 'No menu items found. Add some items to get started.' : `No ${category} items found.`}</p>
+            </div>
+        `;
+        return;
+    }
 
     elements.menuItemsGrid.innerHTML = filteredItems.map(item => `
         <div class="menu-item-card">
@@ -1572,14 +1530,14 @@ function loadFullMenu(category = 'all') {
                     ${item.promo ? `<span class="item-promo"><i class="fas fa-tag"></i> Promotion</span>` : ''}
                 </div>
                 <div class="menu-item-actions">
-                    <button class="btn-edit" onclick="editMenuItem(${item.id})">
+                    <button class="btn-edit edit-menu-btn" data-id="${item.id}">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button class="btn-delete" onclick="deleteMenuItem(${item.id})">
+                    <button class="btn-delete delete-menu-btn" data-id="${item.id}">
                         <i class="fas fa-trash"></i> Delete
                     </button>
-                    <button class="btn-toggle ${item.available ? 'btn-warning' : 'btn-success'}" 
-                            onclick="toggleItemAvailability(${item.id})">
+                    <button class="btn-toggle toggle-availability-btn ${item.available ? 'btn-warning' : 'btn-success'}" 
+                            data-id="${item.id}">
                         <i class="fas fa-${item.available ? 'eye-slash' : 'eye'}"></i>
                         ${item.available ? 'Hide' : 'Show'}
                     </button>
@@ -1589,23 +1547,11 @@ function loadFullMenu(category = 'all') {
     `).join('');
 }
 
-function getImagePath(imageName) {
-    if (imageName.startsWith('http') || imageName.startsWith('/') || imageName.startsWith('./')) {
-        return imageName;
-    }
-    return imageName;
-}
-
 function updateMenuStats(items) {
-    const totalItems = document.getElementById('totalMenuItems');
-    const availableItems = document.getElementById('availableItems');
-    const popularItems = document.getElementById('popularItems');
-    const newItems = document.getElementById('newItems');
-
-    if (totalItems) totalItems.textContent = items.length;
-    if (availableItems) availableItems.textContent = items.filter(item => item.available).length;
-    if (popularItems) popularItems.textContent = items.filter(item => item.popular).length;
-    if (newItems) newItems.textContent = items.filter(item => item.new).length;
+    if (elements.totalMenuItems) elements.totalMenuItems.textContent = items.length;
+    if (elements.availableItems) elements.availableItems.textContent = items.filter(item => item.available).length;
+    if (elements.popularItems) elements.popularItems.textContent = items.filter(item => item.popular).length;
+    if (elements.newItems) elements.newItems.textContent = items.filter(item => item.new).length;
 }
 
 function formatCategoryName(category) {
@@ -1630,86 +1576,63 @@ function filterMenuByCategory(category) {
 }
 
 function openMenuItemModal(itemId = null) {
-    const modal = document.getElementById('menuItemModal');
-    if (!modal) return;
+    if (!elements.menuItemModal) return;
 
-    const title = document.getElementById('menuModalTitle');
-    const form = document.getElementById('menuItemForm');
-    
     if (itemId) {
-        if (title) title.textContent = 'Edit Menu Item';
-        const item = managerState.menuItems.find(i => i.id === itemId);
+        if (elements.menuModalTitle) elements.menuModalTitle.textContent = 'Edit Menu Item';
+        const item = managerState.menuItems.find(i => i.id == itemId);
         if (item) {
             populateMenuItemForm(item);
         }
     } else {
-        if (title) title.textContent = 'Add Menu Item';
-        if (form) form.reset();
+        if (elements.menuModalTitle) elements.menuModalTitle.textContent = 'Add Menu Item';
+        if (elements.menuItemForm) elements.menuItemForm.reset();
     }
     
-    if (form) {
-        form.onsubmit = (e) => handleMenuItemSubmit(e, itemId);
+    if (elements.menuItemForm) {
+        elements.menuItemForm.onsubmit = (e) => handleMenuItemSubmit(e, itemId);
     }
     
-    showModal(modal);
+    showModal(elements.menuItemModal);
 }
 
 function populateMenuItemForm(item) {
-    const nameInput = document.getElementById('itemName');
-    const descInput = document.getElementById('itemDescription');
-    const priceInput = document.getElementById('itemPrice');
-    const origPriceInput = document.getElementById('itemOriginalPrice');
-    const categoryInput = document.getElementById('itemCategory');
-    const availableInput = document.getElementById('itemAvailable');
-    const popularInput = document.getElementById('itemPopular');
-    const vegetarianInput = document.getElementById('itemVegetarian');
-    const newInput = document.getElementById('itemNew');
-    const promoInput = document.getElementById('itemPromo');
-    const discountInput = document.getElementById('itemDiscount');
-
-    if (nameInput) nameInput.value = item.name;
-    if (descInput) descInput.value = item.description;
-    if (priceInput) priceInput.value = item.price;
-    if (origPriceInput) origPriceInput.value = item.originalPrice || '';
-    if (categoryInput) categoryInput.value = item.category;
-    if (availableInput) availableInput.checked = item.available;
-    if (popularInput) popularInput.checked = item.popular;
-    if (vegetarianInput) vegetarianInput.checked = item.vegetarian;
-    if (newInput) newInput.checked = item.new || false;
-    if (promoInput) promoInput.checked = item.promo || false;
-    if (discountInput) discountInput.value = item.discount || '';
+    const form = elements.menuItemForm;
+    if (!form) return;
+    
+    form.itemName.value = item.name || '';
+    form.itemDescription.value = item.description || '';
+    form.itemPrice.value = item.price || '';
+    form.itemOriginalPrice.value = item.originalPrice || '';
+    form.itemCategory.value = item.category || '';
+    form.itemAvailable.checked = item.available !== false;
+    form.itemPopular.checked = item.popular || false;
+    form.itemVegetarian.checked = item.vegetarian || false;
+    form.itemNew.checked = item.new || false;
+    form.itemPromo.checked = item.promo || false;
+    form.itemDiscount.value = item.discount || '';
+    form.itemImage.value = item.image || '';
 }
 
 function handleMenuItemSubmit(e, itemId = null) {
     e.preventDefault();
     
-    const nameInput = document.getElementById('itemName');
-    const descInput = document.getElementById('itemDescription');
-    const priceInput = document.getElementById('itemPrice');
-    const origPriceInput = document.getElementById('itemOriginalPrice');
-    const categoryInput = document.getElementById('itemCategory');
-    const availableInput = document.getElementById('itemAvailable');
-    const popularInput = document.getElementById('itemPopular');
-    const vegetarianInput = document.getElementById('itemVegetarian');
-    const newInput = document.getElementById('itemNew');
-    const promoInput = document.getElementById('itemPromo');
-    const discountInput = document.getElementById('itemDiscount');
+    const form = elements.menuItemForm;
+    if (!form) return;
 
     const formData = {
-        name: nameInput ? nameInput.value : '',
-        description: descInput ? descInput.value : '',
-        price: priceInput ? parseFloat(priceInput.value) : 0,
-        originalPrice: origPriceInput && origPriceInput.value ? 
-                      parseFloat(origPriceInput.value) : null,
-        category: categoryInput ? categoryInput.value : '',
-        available: availableInput ? availableInput.checked : true,
-        popular: popularInput ? popularInput.checked : false,
-        vegetarian: vegetarianInput ? vegetarianInput.checked : false,
-        new: newInput ? newInput.checked : false,
-        promo: promoInput ? promoInput.checked : false,
-        discount: discountInput && discountInput.value ? 
-                 parseFloat(discountInput.value) : null,
-        image: 'https://via.placeholder.com/300x200/FF6B35/white?text=Food+Image'
+        name: form.itemName.value,
+        description: form.itemDescription.value,
+        price: parseFloat(form.itemPrice.value) || 0,
+        originalPrice: form.itemOriginalPrice.value ? parseFloat(form.itemOriginalPrice.value) : null,
+        category: form.itemCategory.value,
+        available: form.itemAvailable.checked,
+        popular: form.itemPopular.checked,
+        vegetarian: form.itemVegetarian.checked,
+        new: form.itemNew.checked,
+        promo: form.itemPromo.checked,
+        discount: form.itemDiscount.value ? parseFloat(form.itemDiscount.value) : null,
+        image: form.itemImage.value || 'https://via.placeholder.com/300x200/FF6B35/white?text=Food+Image'
     };
 
     if (itemId) {
@@ -1735,7 +1658,7 @@ function addNewMenuItem(itemData) {
 }
 
 function updateMenuItem(itemId, updatedData) {
-    const itemIndex = managerState.menuItems.findIndex(item => item.id === itemId);
+    const itemIndex = managerState.menuItems.findIndex(item => item.id == itemId);
     if (itemIndex !== -1) {
         managerState.menuItems[itemIndex] = {
             ...managerState.menuItems[itemIndex],
@@ -1750,7 +1673,7 @@ function updateMenuItem(itemId, updatedData) {
 
 function deleteMenuItem(itemId) {
     if (confirm('Are you sure you want to delete this menu item?')) {
-        managerState.menuItems = managerState.menuItems.filter(item => item.id !== itemId);
+        managerState.menuItems = managerState.menuItems.filter(item => item.id != itemId);
         saveManagerData();
         loadFullMenu();
         showNotification('Menu item deleted successfully!', 'success');
@@ -1758,7 +1681,7 @@ function deleteMenuItem(itemId) {
 }
 
 function toggleItemAvailability(itemId) {
-    const item = managerState.menuItems.find(item => item.id === itemId);
+    const item = managerState.menuItems.find(item => item.id == itemId);
     if (item) {
         item.available = !item.available;
         saveManagerData();
@@ -1769,18 +1692,28 @@ function toggleItemAvailability(itemId) {
 
 // PROMOTIONS MANAGEMENT
 function loadPromotions() {
-    const promotionsGrid = document.getElementById('promotionsGrid');
-    if (!promotionsGrid) return;
+    if (!elements.promotionsGrid) return;
 
-    promotionsGrid.innerHTML = managerState.promotions.map(promo => `
+    if (managerState.promotions.length === 0) {
+        elements.promotionsGrid.innerHTML = `
+            <div class="no-promotions">
+                <i class="fas fa-tag fa-3x"></i>
+                <h3>No Promotions</h3>
+                <p>Create promotions to attract more customers</p>
+            </div>
+        `;
+        return;
+    }
+
+    elements.promotionsGrid.innerHTML = managerState.promotions.map(promo => `
         <div class="promotion-card">
             <div class="promotion-header">
                 <h3>${promo.title}</h3>
                 <div class="promotion-actions">
-                    <button class="btn-edit" onclick="editPromotion(${promo.id})">
+                    <button class="btn-edit" onclick="editPromotion('${promo.id}')">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-delete" onclick="deletePromotion(${promo.id})">
+                    <button class="btn-delete" onclick="deletePromotion('${promo.id}')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -1799,7 +1732,7 @@ function loadPromotions() {
             </div>
             <div class="promotion-actions-full">
                 <button class="btn-${promo.active ? 'warning' : 'success'}" 
-                        onclick="togglePromotionStatus(${promo.id})">
+                        onclick="togglePromotionStatus('${promo.id}')">
                     <i class="fas fa-${promo.active ? 'pause' : 'play'}"></i>
                     ${promo.active ? 'Pause' : 'Activate'}
                 </button>
@@ -1815,54 +1748,13 @@ function togglePromotionForm() {
     }
 }
 
-function handlePromotionSubmit(e) {
-    e.preventDefault();
-    
-    const titleInput = document.getElementById('promotionTitle');
-    const descInput = document.getElementById('promotionDescription');
-    const typeInput = document.getElementById('promotionType');
-    const codeInput = document.getElementById('promotionCode');
-    const discountInput = document.getElementById('promotionDiscount');
-    const startDateInput = document.getElementById('startDate');
-    const endDateInput = document.getElementById('endDate');
-    const activeInput = document.getElementById('promotionActive');
-
-    const formData = {
-        title: titleInput ? titleInput.value : '',
-        description: descInput ? descInput.value : '',
-        type: typeInput ? typeInput.value : '',
-        code: codeInput ? codeInput.value : '',
-        discount: discountInput ? parseInt(discountInput.value) : 0,
-        startDate: startDateInput ? startDateInput.value : '',
-        endDate: endDateInput ? endDateInput.value : '',
-        active: activeInput ? activeInput.checked : true,
-        image: 'https://via.placeholder.com/300x150/FF6B35/white?text=Promotion'
-    };
-
-    addNewPromotion(formData);
-    togglePromotionForm();
-}
-
-function addNewPromotion(promotionData) {
-    const newPromotion = {
-        id: generateId(),
-        ...promotionData,
-        createdAt: new Date().toISOString()
-    };
-    
-    managerState.promotions.push(newPromotion);
-    saveManagerData();
-    loadPromotions();
-    showNotification('Promotion created successfully!', 'success');
-}
-
 function editPromotion(promotionId) {
     showNotification('Edit promotion functionality coming soon!', 'info');
 }
 
 function deletePromotion(promotionId) {
     if (confirm('Are you sure you want to delete this promotion?')) {
-        managerState.promotions = managerState.promotions.filter(p => p.id !== promotionId);
+        managerState.promotions = managerState.promotions.filter(p => p.id != promotionId);
         saveManagerData();
         loadPromotions();
         showNotification('Promotion deleted successfully!', 'success');
@@ -1870,7 +1762,7 @@ function deletePromotion(promotionId) {
 }
 
 function togglePromotionStatus(promotionId) {
-    const promotion = managerState.promotions.find(p => p.id === promotionId);
+    const promotion = managerState.promotions.find(p => p.id == promotionId);
     if (promotion) {
         promotion.active = !promotion.active;
         saveManagerData();
@@ -1879,195 +1771,85 @@ function togglePromotionStatus(promotionId) {
     }
 }
 
-// SETTINGS MANAGEMENT
-function toggleAppStatus() {
-    if (elements.appStatusToggle) {
-        managerState.settings.appOnline = elements.appStatusToggle.checked;
-        saveManagerData();
-        
-        const statusText = document.getElementById('appStatus');
-        if (statusText) {
-            statusText.textContent = managerState.settings.appOnline ? 'Online' : 'Offline';
-            statusText.className = `app-status ${managerState.settings.appOnline ? 'online' : 'offline'}`;
-        }
-        
-        showNotification(`Customer app ${managerState.settings.appOnline ? 'enabled' : 'disabled'}`, 'success');
-        
-        if (!managerState.settings.appOnline) {
-            managerState.settings.acceptOrders = false;
-            if (elements.orderingToggle) {
-                elements.orderingToggle.checked = false;
-            }
-            closeNotification();
-            saveManagerData();
-        }
-    }
-}
-
-function toggleOrdering() {
-    if (elements.orderingToggle) {
-        managerState.settings.acceptOrders = elements.orderingToggle.checked;
-        saveManagerData();
-        showNotification(`New orders ${managerState.settings.acceptOrders ? 'enabled' : 'disabled'}`, 'success');
-    }
-}
-
-function toggleDelivery() {
-    if (elements.deliveryToggle) {
-        managerState.settings.deliveryEnabled = elements.deliveryToggle.checked;
-        saveManagerData();
-        showNotification(`Delivery service ${managerState.settings.deliveryEnabled ? 'enabled' : 'disabled'}`, 'success');
-    }
-}
-
-// DANGER ZONE FUNCTIONS
-function confirmAction(action, message) {
-    if (confirm(message)) {
-        switch(action) {
-            case 'clearAllData':
-                clearAllData();
-                break;
-            case 'resetSystem':
-                resetSystem();
-                break;
-        }
-    }
-}
-
-function clearAllData() {
-    if (confirm('WARNING: This will delete ALL data including orders, customers, and promotions. This cannot be undone!')) {
-        managerState.orders = [];
-        managerState.customers = [];
-        managerState.promotions = [];
-        saveManagerData();
-        loadOrders();
-        loadCustomers();
-        loadPromotions();
-        showNotification('All data cleared successfully!', 'success');
-    }
-}
-
-function resetSystem() {
-    if (confirm('WARNING: This will reset the entire system to factory defaults. ALL data will be lost!')) {
-        localStorage.removeItem('wizaManagerData');
-        location.reload();
-    }
-}
-
-function exportAllData() {
-    const dataStr = JSON.stringify(managerState, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `wiza-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showNotification('All data exported successfully!', 'success');
-}
-
-// ANALYTICS FUNCTIONS
+// ANALYTICS
 function initializeCharts() {
-    // Revenue Chart
-    const revenueCtx = document.getElementById('revenueChart');
-    if (revenueCtx) {
-        try {
-            new Chart(revenueCtx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    datasets: [{
-                        label: 'Revenue',
-                        data: [1200, 1900, 1500, 2000, 1800, 2500, 2200],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'K' + value;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        } catch (e) {
-            console.error('Error initializing revenue chart:', e);
-        }
-    }
-
-    // Orders Chart
-    const ordersCtx = document.getElementById('ordersChart');
-    if (ordersCtx) {
-        try {
-            new Chart(ordersCtx.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Completed', 'Pending', 'Preparing', 'Ready', 'Cancelled'],
-                    datasets: [{
-                        data: [45, 12, 8, 5, 3],
-                        backgroundColor: ['#27ae60', '#f39c12', '#3498db', '#9b59b6', '#e74c3c']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        } catch (e) {
-            console.error('Error initializing orders chart:', e);
-        }
-    }
+    // This would initialize charts using Chart.js or similar library
+    // For now, we'll just update the analytics data
+    updateAnalytics();
 }
 
 function updateAnalytics() {
-    const periodSelect = document.getElementById('analyticsPeriod');
-    const period = periodSelect ? periodSelect.value : '7';
-    loadAnalyticsData(period);
+    const period = elements.analyticsPeriod ? elements.analyticsPeriod.value : '7';
+    const stats = calculateAnalyticsStats(period);
+    
+    if (elements.avgOrderValue) elements.avgOrderValue.textContent = `K${stats.avgOrderValue.toFixed(2)}`;
+    if (elements.conversionRate) elements.conversionRate.textContent = `${stats.conversionRate}%`;
+    if (elements.retentionRate) elements.retentionRate.textContent = `${stats.retentionRate}%`;
+    if (elements.peakHours) elements.peakHours.textContent = stats.peakHours;
 }
 
-function loadAnalyticsData(period) {
-    const stats = calculateDashboardStats();
+function calculateAnalyticsStats(period) {
+    const days = parseInt(period);
+    const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     
-    const avgOrderValueElem = document.getElementById('avgOrderValue');
-    const conversionRateElem = document.getElementById('conversionRate');
-    const retentionRateElem = document.getElementById('retentionRate');
-    const peakHoursElem = document.getElementById('peakHours');
+    const periodOrders = managerState.orders.filter(order => 
+        new Date(order.date) >= cutoffDate
+    );
     
-    if (avgOrderValueElem) avgOrderValueElem.textContent = `K${(stats.totalRevenue / Math.max(stats.totalOrders, 1)).toFixed(2)}`;
-    if (conversionRateElem) conversionRateElem.textContent = '75%';
-    if (retentionRateElem) retentionRateElem.textContent = '60%';
-    if (peakHoursElem) peakHoursElem.textContent = '12:00 PM - 2:00 PM';
+    const totalRevenue = periodOrders.reduce((sum, order) => sum + order.total, 0);
+    const avgOrderValue = periodOrders.length > 0 ? totalRevenue / periodOrders.length : 0;
+    
+    // Simplified calculations for demo
+    return {
+        avgOrderValue: avgOrderValue,
+        conversionRate: 75, // Placeholder
+        retentionRate: 60,  // Placeholder
+        peakHours: '12:00 PM - 2:00 PM' // Placeholder
+    };
+}
+
+// SETTINGS
+function toggleAppStatus() {
+    managerState.settings.appOnline = elements.appStatusToggle.checked;
+    saveManagerData();
+    
+    showNotification(`Customer app ${managerState.settings.appOnline ? 'enabled' : 'disabled'}`, 'success');
+}
+
+function toggleOrdering() {
+    managerState.settings.acceptOrders = elements.orderingToggle.checked;
+    saveManagerData();
+    showNotification(`New orders ${managerState.settings.acceptOrders ? 'enabled' : 'disabled'}`, 'success');
+}
+
+function toggleDelivery() {
+    managerState.settings.deliveryEnabled = elements.deliveryToggle.checked;
+    saveManagerData();
+    showNotification(`Delivery service ${managerState.settings.deliveryEnabled ? 'enabled' : 'disabled'}`, 'success');
+}
+
+function toggleNotifications() {
+    managerState.settings.notificationSound = elements.notificationToggle.checked;
+    saveManagerData();
+    showNotification(`Notifications ${managerState.settings.notificationSound ? 'enabled' : 'disabled'}`, 'success');
 }
 
 // UTILITY FUNCTIONS
 function generateId() {
-    const menuIds = managerState.menuItems.map(item => item.id);
-    const orderIds = managerState.orders.map(order => order.id);
-    const customerIds = managerState.customers.map(customer => customer.id);
-    const promotionIds = managerState.promotions.map(promo => promo.id);
-    
-    const allIds = [...menuIds, ...orderIds, ...customerIds, ...promotionIds];
+    const allIds = [
+        ...managerState.menuItems.map(item => item.id),
+        ...managerState.orders.map(order => order.id),
+        ...managerState.customers.map(customer => customer.id),
+        ...managerState.promotions.map(promo => promo.id)
+    ];
     return allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+}
+
+function getImagePath(imageName) {
+    if (imageName.startsWith('http') || imageName.startsWith('/') || imageName.startsWith('./')) {
+        return imageName;
+    }
+    return imageName;
 }
 
 function showModal(modal) {
@@ -2080,15 +1862,27 @@ function showModal(modal) {
     document.body.style.overflow = 'hidden';
 }
 
-function closeAllModals() {
-    elements.modals.forEach(modal => modal.classList.remove('active'));
+function hideModal(modal) {
+    if (!modal) return;
+    
+    modal.classList.remove('active');
     if (elements.overlay) {
         elements.overlay.classList.remove('active');
     }
     document.body.style.overflow = 'auto';
 }
 
+function closeAllModals() {
+    elements.modals.forEach(modal => hideModal(modal));
+}
+
 function showNotification(message, type = 'info') {
+    // Remove existing notification
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -2097,27 +1891,17 @@ function showNotification(message, type = 'info') {
             <span>${message}</span>
         </div>
     `;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 1rem 1.5rem;
-        background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};
-        color: white;
-        border-radius: 8px;
-        z-index: 3000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        animation: slideInRight 0.3s ease-out;
-        font-size: 14px;
-        max-width: 300px;
-    `;
     
     document.body.appendChild(notification);
     
+    // Animate in
+    setTimeout(() => notification.classList.add('show'), 10);
+    
+    // Auto remove after 3 seconds
     setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.3s ease-in';
+        notification.classList.remove('show');
         setTimeout(() => {
-            if (document.body.contains(notification)) {
+            if (notification.parentNode) {
                 notification.remove();
             }
         }, 300);
@@ -2126,13 +1910,18 @@ function showNotification(message, type = 'info') {
 
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
-        window.location.href = 'index.html';
+        // Clear any intervals
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
+        
+        // Redirect to login page or main site
+        window.location.href = 'https://bufferzone-cloud.github.io/wizafoodcafe/';
     }
 }
 
-// Complete Menu Data (keep your existing menu data)
+// SAMPLE DATA (You can remove this in production)
 const completeMenuData = [
-    // Quick Fills
     {
         id: 1,
         name: "Chicken & Chips (Wing)",
@@ -2146,40 +1935,57 @@ const completeMenuData = [
         vegetarian: false,
         discount: 12
     },
-    // ... (include all your existing menu items here)
+    {
+        id: 2,
+        name: "Chicken & Chips (Breast)",
+        description: "Juicy chicken breast with crispy fries",
+        price: 40,
+        category: "quick-fills",
+        image: "Q2.jpg",
+        available: true,
+        popular: true,
+        vegetarian: false
+    },
+    {
+        id: 3,
+        name: "Shawarma",
+        description: "Delicious wrap with spiced meat and fresh vegetables",
+        price: 33,
+        category: "savory-bites",
+        image: "S1.jpg",
+        available: true,
+        popular: true,
+        vegetarian: false
+    },
+    {
+        id: 4,
+        name: "Mojo Drink",
+        description: "Refreshing energy drink",
+        price: 8,
+        category: "beverages",
+        image: "https://via.placeholder.com/300x200/4CAF50/white?text=Mojo+Drink",
+        available: true,
+        popular: false,
+        vegetarian: true
+    }
 ];
 
-// Add cleanup function for when page unloads
-window.addEventListener('beforeunload', () => {
-    if (saveTimeout) {
-        clearTimeout(saveTimeout);
-        try {
-            localStorage.setItem('wizaManagerData', JSON.stringify(managerState));
-        } catch (error) {
-            console.error('Final save error:', error);
-        }
-    }
-    
-    // Clear auto-refresh interval
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-    }
-});
-
 // Export functions for global access
-window.editMenuItem = openMenuItemModal;
-window.deleteMenuItem = deleteMenuItem;
-window.toggleItemAvailability = toggleItemAvailability;
+window.acceptNewOrder = acceptNewOrder;
+window.rejectNewOrder = rejectNewOrder;
+window.closeNotification = closeNotification;
 window.viewOrderDetails = viewOrderDetails;
 window.updateOrderStatus = updateOrderStatus;
-window.viewCustomerDetails = viewCustomerDetails;
-window.toggleCustomerBan = toggleCustomerBan;
-window.deleteCustomer = deleteCustomer;
 window.recreateOrder = recreateOrder;
+window.toggleCustomerBan = toggleCustomerBan;
+window.viewCustomerDetails = viewCustomerDetails;
+window.openMenuItemModal = openMenuItemModal;
+window.deleteMenuItem = deleteMenuItem;
+window.toggleItemAvailability = toggleItemAvailability;
 window.editPromotion = editPromotion;
 window.deletePromotion = deletePromotion;
 window.togglePromotionStatus = togglePromotionStatus;
 window.openDirections = openDirections;
-window.acceptNewOrder = acceptNewOrder;
-window.rejectNewOrder = rejectNewOrder;
-window.closeNotification = closeNotification;
+
+// Initialize the app
+console.log('WIZA FOOD CAFE Manager App Initialized');
