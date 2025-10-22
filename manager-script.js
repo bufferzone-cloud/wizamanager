@@ -1,8 +1,3 @@
-// =========================================
-// 🔥 FIREBASE SETUP (ADD THIS TO manager-script.js)
-// =========================================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
 // --- Your Firebase Config ---
 const firebaseConfig = {
@@ -15,9 +10,7 @@ const firebaseConfig = {
   appId: "1:248334218737:web:94fabd0bbdf75bb8410050"
 };
 
-// --- Initialize Firebase ---
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+
 
 // Manager App State
 const managerState = {
@@ -2089,6 +2082,7 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
+
 
 
 
