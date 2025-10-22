@@ -1,4 +1,3 @@
-```javascript
 // --- Your Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyCZEqWRAHW0tW6j0WfBf8lxj61oExa6BwY",
@@ -2083,4 +2082,3 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
-```
