@@ -1,3 +1,24 @@
+// =========================================
+// 🔥 FIREBASE SETUP (ADD THIS TO manager-script.js)
+// =========================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getDatabase, ref, onChildAdded } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+// --- Your Firebase Config ---
+const firebaseConfig = {
+  apiKey: "AIzaSyCZEqWRAHW0tW6j0WfBf8lxj61oExa6BwY",
+  authDomain: "wizafoodcafe.firebaseapp.com",
+  databaseURL: "https://wizafoodcafe-default-rtdb.firebaseio.com",
+  projectId: "wizafoodcafe",
+  storageBucket: "wizafoodcafe.firebasestorage.app",
+  messagingSenderId: "248334218737",
+  appId: "1:248334218737:web:94fabd0bbdf75bb8410050"
+};
+
+// --- Initialize Firebase ---
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 // Manager App State
 const managerState = {
     currentSection: 'dashboard',
@@ -276,70 +297,22 @@ function rejectNewOrder(orderId) {
 
 // ENHANCED ORDER LISTENER SYSTEM
 // ENHANCED ORDER LISTENER FOR MANAGER APP
+// =========================================
+// 🧠 FIREBASE REAL-TIME ORDER LISTENER
+// =========================================
 function setupOrderListener() {
-    console.log('Setting up enhanced order listener...');
-    
-    // Method 1: localStorage event listener
-    window.addEventListener('storage', function(event) {
-        if (event.key === 'wizaNewOrder' && event.newValue) {
-            try {
-                const order = JSON.parse(event.newValue);
-                console.log('💾 Received new order via storage event:', order.ref);
-                handleNewOrder(order);
-                
-                // Clear the storage item
-                setTimeout(() => {
-                    localStorage.removeItem('wizaNewOrder');
-                }, 100);
-            } catch (e) {
-                console.error('Error parsing storage order:', e);
-            }
-        }
-        
-        if (event.key === 'wizaFoodOrders' && event.newValue) {
-            checkForNewOrders();
-        }
-    });
+  console.log("📡 Setting up Firebase order listener...");
+  const ordersRef = ref(db, "orders");
 
-    // Method 2: BroadcastChannel
-    if (typeof BroadcastChannel !== 'undefined') {
-        try {
-            const channel = new BroadcastChannel('wiza_orders');
-            channel.addEventListener('message', function(event) {
-                if (event.data && event.data.type === 'NEW_ORDER') {
-                    console.log('📡 Received new order via BroadcastChannel:', event.data.order.ref);
-                    handleNewOrder(event.data.order);
-                }
-            });
-            console.log('BroadcastChannel initialized');
-        } catch (error) {
-            console.error('BroadcastChannel error:', error);
-        }
+  // Listen for every new child added to "orders"
+  onChildAdded(ordersRef, (snapshot) => {
+    const newOrder = snapshot.val();
+    console.log("🆕 New order received from Firebase:", newOrder);
+
+    if (newOrder && typeof handleNewOrder === "function") {
+      handleNewOrder(newOrder); // Your dashboard’s existing function
     }
-
-    // Method 3: Custom event listener
-    window.addEventListener('wizaNewOrder', function(event) {
-        if (event.detail && event.detail.type === 'NEW_ORDER') {
-            console.log('🎯 Received new order via custom event:', event.detail.order.ref);
-            handleNewOrder(event.detail.order);
-        }
-    });
-
-    // Method 4: Periodic checking (fallback)
-    startOrderPolling();
-    
-    console.log('Order listener setup complete');
-}
-
-// REAL-TIME ORDER POLLING
-function startOrderPolling() {
-    // Check immediately
-    checkForNewOrders();
-    
-    // Then check every 2 seconds (more frequent than 5)
-    setInterval(() => {
-        checkForNewOrders();
-    }, 2000);
+  });
 }
 
 // ENHANCED ORDER CHECKING
@@ -2116,5 +2089,6 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
+
 
 
