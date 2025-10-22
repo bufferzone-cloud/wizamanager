@@ -275,42 +275,16 @@ function rejectNewOrder(orderId) {
 }
 
 // ENHANCED ORDER LISTENER SYSTEM
+// ENHANCED ORDER LISTENER FOR MANAGER APP
 function setupOrderListener() {
     console.log('Setting up enhanced order listener...');
     
-    // Method 1: postMessage listener
-    window.addEventListener('message', function(event) {
-        // Check if the message is from our customer app domain
-        if (event.origin.includes('bufferzone-cloud.github.io')) {
-            if (event.data && event.data.type === 'NEW_ORDER') {
-                console.log('📱 Received new order via postMessage:', event.data.order);
-                handleNewOrder(event.data.order);
-            }
-        }
-    });
-
-    // Method 2: BroadcastChannel for same-origin real-time communication
-    if (typeof BroadcastChannel !== 'undefined') {
-        try {
-            const channel = new BroadcastChannel('wiza_orders');
-            channel.addEventListener('message', function(event) {
-                if (event.data && event.data.type === 'NEW_ORDER') {
-                    console.log('📡 Received new order via BroadcastChannel:', event.data.order);
-                    handleNewOrder(event.data.order);
-                }
-            });
-            console.log('BroadcastChannel initialized');
-        } catch (error) {
-            console.error('BroadcastChannel error:', error);
-        }
-    }
-
-    // Method 3: localStorage event listener for cross-tab communication
+    // Method 1: localStorage event listener
     window.addEventListener('storage', function(event) {
         if (event.key === 'wizaNewOrder' && event.newValue) {
             try {
                 const order = JSON.parse(event.newValue);
-                console.log('💾 Received new order via storage event:', order);
+                console.log('💾 Received new order via storage event:', order.ref);
                 handleNewOrder(order);
                 
                 // Clear the storage item
@@ -327,15 +301,31 @@ function setupOrderListener() {
         }
     });
 
-    // Method 4: Custom event listener
+    // Method 2: BroadcastChannel
+    if (typeof BroadcastChannel !== 'undefined') {
+        try {
+            const channel = new BroadcastChannel('wiza_orders');
+            channel.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'NEW_ORDER') {
+                    console.log('📡 Received new order via BroadcastChannel:', event.data.order.ref);
+                    handleNewOrder(event.data.order);
+                }
+            });
+            console.log('BroadcastChannel initialized');
+        } catch (error) {
+            console.error('BroadcastChannel error:', error);
+        }
+    }
+
+    // Method 3: Custom event listener
     window.addEventListener('wizaNewOrder', function(event) {
         if (event.detail && event.detail.type === 'NEW_ORDER') {
-            console.log('🎯 Received new order via custom event:', event.detail.order);
+            console.log('🎯 Received new order via custom event:', event.detail.order.ref);
             handleNewOrder(event.detail.order);
         }
     });
 
-    // Method 5: Periodic checking (fallback)
+    // Method 4: Periodic checking (fallback)
     startOrderPolling();
     
     console.log('Order listener setup complete');
@@ -2126,4 +2116,5 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
+
 
