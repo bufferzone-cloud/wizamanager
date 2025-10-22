@@ -274,58 +274,115 @@ function rejectNewOrder(orderId) {
     showNotification('Order rejected successfully!', 'warning');
 }
 
-// ORDER LISTENER SYSTEM
+// ENHANCED ORDER LISTENER SYSTEM
 function setupOrderListener() {
-    // Listen for postMessage orders
+    console.log('Setting up enhanced order listener...');
+    
+    // Method 1: postMessage listener
     window.addEventListener('message', function(event) {
-        if (event.data && event.data.type === 'NEW_ORDER') {
-            console.log('Received new order via postMessage:', event.data.order);
-            handleNewOrder(event.data.order);
+        // Check if the message is from our customer app domain
+        if (event.origin.includes('bufferzone-cloud.github.io')) {
+            if (event.data && event.data.type === 'NEW_ORDER') {
+                console.log('📱 Received new order via postMessage:', event.data.order);
+                handleNewOrder(event.data.order);
+            }
         }
     });
 
-    // Listen for BroadcastChannel orders
+    // Method 2: BroadcastChannel for same-origin real-time communication
     if (typeof BroadcastChannel !== 'undefined') {
-        const channel = new BroadcastChannel('wiza_orders');
-        channel.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'NEW_ORDER') {
-                console.log('Received new order via BroadcastChannel:', event.data.order);
-                handleNewOrder(event.data.order);
-            }
-        });
+        try {
+            const channel = new BroadcastChannel('wiza_orders');
+            channel.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'NEW_ORDER') {
+                    console.log('📡 Received new order via BroadcastChannel:', event.data.order);
+                    handleNewOrder(event.data.order);
+                }
+            });
+            console.log('BroadcastChannel initialized');
+        } catch (error) {
+            console.error('BroadcastChannel error:', error);
+        }
     }
 
-    // Check localStorage for new orders
-    checkForNewOrders();
+    // Method 3: localStorage event listener for cross-tab communication
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'wizaNewOrder' && event.newValue) {
+            try {
+                const order = JSON.parse(event.newValue);
+                console.log('💾 Received new order via storage event:', order);
+                handleNewOrder(order);
+                
+                // Clear the storage item
+                setTimeout(() => {
+                    localStorage.removeItem('wizaNewOrder');
+                }, 100);
+            } catch (e) {
+                console.error('Error parsing storage order:', e);
+            }
+        }
+        
+        if (event.key === 'wizaFoodOrders' && event.newValue) {
+            checkForNewOrders();
+        }
+    });
+
+    // Method 4: Custom event listener
+    window.addEventListener('wizaNewOrder', function(event) {
+        if (event.detail && event.detail.type === 'NEW_ORDER') {
+            console.log('🎯 Received new order via custom event:', event.detail.order);
+            handleNewOrder(event.detail.order);
+        }
+    });
+
+    // Method 5: Periodic checking (fallback)
+    startOrderPolling();
     
-    // Set up periodic checking
-    setInterval(() => {
-        checkForNewOrders();
-    }, 3000);
+    console.log('Order listener setup complete');
 }
 
+// REAL-TIME ORDER POLLING
+function startOrderPolling() {
+    // Check immediately
+    checkForNewOrders();
+    
+    // Then check every 2 seconds (more frequent than 5)
+    setInterval(() => {
+        checkForNewOrders();
+    }, 2000);
+}
+
+// ENHANCED ORDER CHECKING
 function checkForNewOrders() {
     try {
         // Check localStorage for orders
         const orders = JSON.parse(localStorage.getItem('wizaFoodOrders') || '[]');
-        const lastProcessedOrder = localStorage.getItem('lastProcessedOrder') || '0';
+        const lastProcessedOrder = parseInt(localStorage.getItem('lastProcessedOrder') || '0');
         
-        const newOrders = orders.filter(order => order.id > parseInt(lastProcessedOrder));
+        const newOrders = orders.filter(order => order.id > lastProcessedOrder);
         
-        newOrders.forEach(order => {
-            handleNewOrder(order);
-            localStorage.setItem('lastProcessedOrder', order.id.toString());
-        });
+        if (newOrders.length > 0) {
+            console.log(`🆕 Found ${newOrders.length} new orders`);
+            
+            newOrders.forEach(order => {
+                console.log('Processing new order:', order.ref);
+                handleNewOrder(order);
+                // Update last processed order
+                localStorage.setItem('lastProcessedOrder', order.id.toString());
+            });
+        }
         
-        // Check for localStorage events
+        // Check for immediate order events
         const newOrderEvent = localStorage.getItem('wizaNewOrder');
         if (newOrderEvent) {
             try {
                 const order = JSON.parse(newOrderEvent);
+                console.log('🚨 Immediate order received:', order.ref);
                 handleNewOrder(order);
                 localStorage.removeItem('wizaNewOrder');
             } catch (e) {
-                console.error('Error parsing new order event:', e);
+                console.error('Error parsing immediate order:', e);
+                localStorage.removeItem('wizaNewOrder');
             }
         }
         
@@ -334,42 +391,54 @@ function checkForNewOrders() {
     }
 }
 
+
+// ENHANCED ORDER HANDLING
 function handleNewOrder(order) {
+    // Validate order
+    if (!order || !order.id) {
+        console.error('Invalid order received:', order);
+        return;
+    }
+    
     // Check if order already exists
     const existingOrder = managerState.orders.find(o => o.id === order.id || o.ref === order.ref);
     
     if (!existingOrder) {
+        console.log('➕ Adding new order to manager:', order.ref);
+        
         // Add timestamp if not present
         if (!order.timestamp) {
             order.timestamp = new Date().toISOString();
         }
         
-        // Add to orders array
+        // Ensure order has all required fields
+        order = enhanceOrderData(order);
+        
+        // Add to orders array at the beginning
         managerState.orders.unshift(order);
         
         // Update order counter
-        if (order.id && order.id > managerState.orderCounter) {
+        if (order.id && order.id >= managerState.orderCounter) {
             managerState.orderCounter = order.id + 1;
         }
         
-        // Save data
+        // Save data immediately
         saveManagerData();
         
-        // Update UI
-        if (managerState.currentSection === 'orders') {
-            loadOrders();
-        }
-        updateDashboard();
+        // Update UI in real-time
+        updateUIForNewOrder(order);
         
         // Show notification
         if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
             showNewOrderNotification(order);
         }
         
-        console.log('New order processed:', order);
+        console.log('✅ New order processed successfully:', order.ref);
+        
+    } else {
+        console.log('⚠️ Order already exists:', order.ref);
     }
 }
-
 // AUTO-REFRESH SYSTEM
 function startAutoRefresh() {
     if (autoRefreshInterval) {
@@ -384,6 +453,74 @@ function startAutoRefresh() {
             updateDashboard();
             updatePendingOrdersCount();
         }, AUTO_REFRESH_INTERVAL);
+    }
+}
+
+// ENHANCE ORDER DATA
+function enhanceOrderData(order) {
+    return {
+        id: order.id || generateId(),
+        ref: order.ref || `WIZA${(order.id || generateId()).toString().padStart(4, '0')}`,
+        items: order.items || [],
+        subtotal: order.subtotal || 0,
+        deliveryFee: order.deliveryFee || 0,
+        serviceFee: order.serviceFee || 0,
+        discount: order.discount || 0,
+        total: order.total || 0,
+        status: order.status || 'pending',
+        date: order.date || new Date().toISOString(),
+        delivery: order.delivery || false,
+        deliveryLocation: order.deliveryLocation || null,
+        customer: order.customer || { name: 'Unknown Customer', email: '', phone: '' },
+        promoCode: order.promoCode || null,
+        paymentMethod: order.paymentMethod || 'Airtel Money',
+        paymentScreenshot: order.paymentScreenshot || null,
+        timestamp: order.timestamp || new Date().toISOString(),
+        // Enhanced fields
+        itemsDetailed: order.itemsDetailed || order.items.map(item => ({
+            ...item,
+            description: item.description || 'Delicious food item',
+            image: item.image || 'default-food.jpg'
+        }))
+    };
+}
+
+// UPDATE UI FOR NEW ORDER
+function updateUIForNewOrder(order) {
+    // Update dashboard if visible
+    if (managerState.currentSection === 'dashboard') {
+        updateDashboard();
+    }
+    
+    // Update orders list if visible
+    if (managerState.currentSection === 'orders') {
+        loadOrders();
+    }
+    
+    // Update pending orders count in navigation
+    updatePendingOrdersCount();
+    
+    // Show visual indicator
+    showNewOrderIndicator();
+}
+
+// VISUAL INDICATOR FOR NEW ORDERS
+function showNewOrderIndicator() {
+    // Create or update notification badge
+    let indicator = document.getElementById('newOrderIndicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'newOrderIndicator';
+        indicator.className = 'new-order-indicator';
+        indicator.innerHTML = '🆕';
+        document.body.appendChild(indicator);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.remove();
+            }
+        }, 3000);
     }
 }
 
@@ -1989,3 +2126,4 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
+
