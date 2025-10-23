@@ -72,44 +72,97 @@ function initializeManagerApp() {
 }
 
 // NEW: Firebase Order Listener
+// 🔥 ENHANCED: Firebase Order Listener for Manager App
 function setupFirebaseOrderListener() {
-    console.log("📡 Setting up Firebase order listener...");
-    const ordersRef = db.ref("orders");
+    console.log("📡 Setting up enhanced Firebase order listener...");
+    
+    try {
+        const db = firebase.database();
+        const ordersRef = db.ref("orders");
 
-    // Listen for new orders
-    ordersRef.on('child_added', (snapshot) => {
-        const newOrder = snapshot.val();
-        console.log("🆕 New order received from Firebase:", newOrder);
+        // Listen for new orders
+        ordersRef.on('child_added', (snapshot) => {
+            const newOrder = snapshot.val();
+            console.log("🆕 New order received from Firebase:", newOrder);
 
-        if (newOrder && typeof handleNewOrder === "function") {
-            handleNewOrder(newOrder);
-        }
-    });
+            if (newOrder && isValidOrder(newOrder)) {
+                handleNewOrder(newOrder);
+            } else {
+                console.error('❌ Invalid order received:', newOrder);
+            }
+        });
 
-    // Listen for order updates
-    ordersRef.on('child_changed', (snapshot) => {
-        const updatedOrder = snapshot.val();
-        console.log("🔄 Order updated:", updatedOrder);
-        
-        // Update the order in the manager state
-        const orderIndex = managerState.orders.findIndex(o => o.id === updatedOrder.id);
-        if (orderIndex !== -1) {
-            managerState.orders[orderIndex] = updatedOrder;
-            updateUIForOrderUpdate(updatedOrder);
-        }
-    });
+        // Listen for order updates
+        ordersRef.on('child_changed', (snapshot) => {
+            const updatedOrder = snapshot.val();
+            console.log("🔄 Order updated:", updatedOrder);
+            
+            if (updatedOrder && isValidOrder(updatedOrder)) {
+                // Update the order in the manager state
+                const orderIndex = managerState.orders.findIndex(o => 
+                    o.id === updatedOrder.id || o.firebaseKey === updatedOrder.firebaseKey
+                );
+                
+                if (orderIndex !== -1) {
+                    managerState.orders[orderIndex] = updatedOrder;
+                    updateUIForOrderUpdate(updatedOrder);
+                } else {
+                    // If not found, add it as new order
+                    handleNewOrder(updatedOrder);
+                }
+            }
+        });
 
-    // Handle connection state
-    const connectedRef = db.ref(".info/connected");
-    connectedRef.on("value", (snap) => {
-        if (snap.val() === true) {
-            console.log("✅ Firebase Realtime Database connected");
-            updateConnectionStatus(true);
-        } else {
-            console.log("❌ Firebase Realtime Database disconnected");
-            updateConnectionStatus(false);
-        }
-    });
+        // Handle connection state
+        const connectedRef = db.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                console.log("✅ Firebase Realtime Database connected (Manager)");
+                updateConnectionStatus(true);
+            } else {
+                console.log("❌ Firebase Realtime Database disconnected (Manager)");
+                updateConnectionStatus(false);
+            }
+        });
+
+        console.log("✅ Firebase order listener setup complete");
+
+    } catch (error) {
+        console.error("❌ Error setting up Firebase listener:", error);
+    }
+}
+
+// 🔥 NEW: Validate incoming orders
+function isValidOrder(order) {
+    return order && 
+           typeof order === 'object' &&
+           order.id !== undefined &&
+           order.ref !== undefined &&
+           Array.isArray(order.items) &&
+           order.customer !== undefined;
+}
+
+// 🔥 NEW: Update UI when order status changes
+function updateUIForOrderUpdate(updatedOrder) {
+    console.log('🔄 Updating UI for order:', updatedOrder.ref);
+    
+    // Refresh orders list if visible
+    if (managerState.currentSection === 'orders') {
+        loadOrders();
+    }
+    
+    // Update dashboard if visible
+    if (managerState.currentSection === 'dashboard') {
+        updateDashboard();
+    }
+    
+    // Update pending orders count
+    updatePendingOrdersCount();
+    
+    // Show notification for status changes
+    if (updatedOrder.status !== 'pending') {
+        showNotification(`Order ${updatedOrder.ref} status: ${updatedOrder.status}`, 'info');
+    }
 }
 
 // NEW: Update connection status in UI
@@ -2238,5 +2291,6 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
+
 
 
