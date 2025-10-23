@@ -6,799 +6,18 @@
     <title>WIZA FOOD CAFE - Manager Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add Leaflet CSS and JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-    <style>
-        :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --light: #ecf0f1;
-            --dark: #2c3e50;
-            --sidebar-width: 250px;
-            --header-height: 70px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f5f7fa;
-            color: #333;
-            overflow-x: hidden;
-        }
-
-        /* Header Styles */
-        .manager-header {
-            background: linear-gradient(135deg, var(--primary), #1a2530);
-            color: white;
-            height: var(--header-height);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 100%;
-            padding: 0 2rem;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo-img {
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .logo h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-
-        .connection-status.connected {
-            background: rgba(46, 204, 113, 0.2);
-            color: #2ecc71;
-        }
-
-        .connection-status.disconnected {
-            background: rgba(231, 76, 60, 0.2);
-            color: #e74c3c;
-        }
-
-        .manager-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .manager-name {
-            font-weight: 500;
-        }
-
-        .logout-btn {
-            background: rgba(231, 76, 60, 0.2);
-            color: #e74c3c;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: rgba(231, 76, 60, 0.3);
-        }
-
-        /* Navigation Styles */
-        .manager-nav {
-            background: white;
-            height: 60px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            position: fixed;
-            top: var(--header-height);
-            left: 0;
-            right: 0;
-            z-index: 999;
-        }
-
-        .nav-items {
-            display: flex;
-            height: 100%;
-            padding: 0 2rem;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0 20px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #666;
-            font-size: 0.95rem;
-            font-weight: 500;
-            height: 100%;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .nav-item:hover {
-            color: var(--primary);
-            background: rgba(44, 62, 80, 0.05);
-        }
-
-        .nav-item.active {
-            color: var(--secondary);
-            border-bottom-color: var(--secondary);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: var(--danger);
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 2s infinite;
-        }
-
-        /* Main Content */
-        .manager-main {
-            margin-top: calc(var(--header-height) + 60px);
-            padding: 2rem;
-            min-height: calc(100vh - var(--header-height) - 60px);
-        }
-
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .section-header h2 {
-            font-size: 1.8rem;
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .btn-primary {
-            background: var(--secondary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .btn-primary:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .search-box {
-            position: relative;
-        }
-
-        .search-box input {
-            padding: 10px 15px 10px 40px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 250px;
-            font-size: 0.95rem;
-            transition: all 0.3s;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--secondary);
-            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #777;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-        }
-
-        .stat-card.revenue .stat-icon {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-        }
-
-        .stat-card.orders .stat-icon {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-        }
-
-        .stat-card.customers .stat-icon {
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-        }
-
-        .stat-card.pending .stat-icon {
-            background: linear-gradient(135deg, #f39c12, #e67e22);
-        }
-
-        .stat-info h3 {
-            font-size: 0.9rem;
-            color: #777;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .stat-change {
-            font-size: 0.85rem;
-        }
-
-        .stat-change.positive {
-            color: #27ae60;
-        }
-
-        .stat-change.negative {
-            color: #e74c3c;
-        }
-
-        /* Order Cards */
-        .orders-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .order-card {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .order-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        }
-
-        .order-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #eee;
-        }
-
-        .order-info h4 {
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-            color: var(--primary);
-        }
-
-        .order-customer, .order-time {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .order-status-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-        }
-
-        .order-status {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .status-pending {
-            background: rgba(243, 156, 18, 0.1);
-            color: #f39c12;
-        }
-
-        .status-preparing {
-            background: rgba(52, 152, 219, 0.1);
-            color: #3498db;
-        }
-
-        .status-ready {
-            background: rgba(46, 204, 113, 0.1);
-            color: #27ae60;
-        }
-
-        .status-out-for-delivery {
-            background: rgba(155, 89, 182, 0.1);
-            color: #9b59b6;
-        }
-
-        .status-completed {
-            background: rgba(39, 174, 96, 0.1);
-            color: #27ae60;
-        }
-
-        .status-cancelled {
-            background: rgba(231, 76, 60, 0.1);
-            color: #e74c3c;
-        }
-
-        .order-total-amount {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .order-items-preview {
-            padding: 1rem 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .order-item-preview {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            font-size: 0.85rem;
-        }
-
-        .item-preview-image {
-            width: 25px;
-            height: 25px;
-            border-radius: 3px;
-            object-fit: cover;
-        }
-
-        .more-items {
-            font-size: 0.8rem;
-            color: #777;
-            font-style: italic;
-        }
-
-        .order-actions {
-            padding: 1rem 1.5rem;
-            background: #f8f9fa;
-            display: flex;
-            gap: 10px;
-        }
-
-        .view-order-btn, .status-btn {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.3s;
-        }
-
-        .view-order-btn {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .view-order-btn:hover {
-            background: #2980b9;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #219653;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background: #e67e22;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background: #138496;
-        }
-
-        /* Notification Styles */
-        .notification-popup {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            z-index: 10000;
-            max-width: 400px;
-            transform: translateX(120%);
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            border-left: 5px solid #ffd700;
-        }
-
-        .notification-popup.show {
-            transform: translateX(0);
-        }
-
-        .notification-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-
-        .notification-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .notification-title i {
-            color: #ffd700;
-            animation: bounce 2s infinite;
-        }
-
-        .notification-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5em;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background 0.3s;
-        }
-
-        .notification-close:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .notification-content {
-            margin-bottom: 15px;
-        }
-
-        .order-highlight {
-            background: rgba(255,255,255,0.1);
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-
-        .order-items-preview {
-            margin: 10px 0;
-        }
-
-        .order-item-notification {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .order-item-notification:last-child {
-            border-bottom: none;
-        }
-
-        .item-preview-image {
-            width: 30px;
-            height: 30px;
-            border-radius: 5px;
-            object-fit: cover;
-        }
-
-        .notification-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .btn-accept {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-
-        .btn-accept:hover {
-            background: #218838;
-        }
-
-        .btn-view {
-            background: #17a2b8;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-
-        .btn-view:hover {
-            background: #138496;
-        }
-
-        /* Sound Controls */
-        .sound-controls {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
-        }
-
-        .sound-toggle {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 25px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-        }
-
-        .sound-toggle:hover {
-            background: #555;
-            transform: translateY(-2px);
-        }
-
-        .sound-toggle.muted {
-            background: #666;
-        }
-
-        .sound-toggle.muted i {
-            color: #ff4757;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0);
-            }
-            40% {
-                transform: translateY(-5px);
-            }
-            60% {
-                transform: translateY(-3px);
-            }
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
-            }
-            70% {
-                transform: scale(1.05);
-                box-shadow: 0 0 0 10px rgba(255, 71, 87, 0);
-            }
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
-            }
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-content {
-                padding: 0 1rem;
-            }
-            
-            .logo h1 {
-                font-size: 1.2rem;
-            }
-            
-            .nav-items {
-                padding: 0 1rem;
-                overflow-x: auto;
-            }
-            
-            .nav-item span {
-                display: none;
-            }
-            
-            .manager-main {
-                padding: 1rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .orders-list {
-                grid-template-columns: 1fr;
-            }
-            
-            .section-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .header-actions {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .search-box input {
-                width: 200px;
-            }
-        }
-    </style>
+    
+    <link rel="stylesheet" href="manager-styles.css">
 </head>
 <body>
-    <!-- Sound Controls -->
-    <div class="sound-controls">
-        <button class="sound-toggle" id="soundToggle">
-            <i class="fas fa-volume-up"></i>
-            <span>Sound On</span>
-        </button>
-    </div>
-
     <!-- Manager Header -->
     <header class="manager-header">
         <div class="header-content">
@@ -873,6 +92,15 @@
                 </div>
             </div>
 
+            <!-- Real-time Orders Alert -->
+            <div class="realtime-alert" id="realtimeAlert" style="display: none;">
+                <div class="alert-content">
+                    <i class="fas fa-bell"></i>
+                    <span id="alertMessage">New order received!</span>
+                    <button class="alert-close" onclick="closeAlert()">&times;</button>
+                </div>
+            </div>
+
             <!-- Enhanced Stats Cards -->
             <div class="stats-grid">
                 <div class="stat-card revenue">
@@ -920,12 +148,100 @@
                 </div>
             </div>
 
+            <!-- Order Status Quick Overview -->
+            <div class="status-overview">
+                <h3>Order Status Overview</h3>
+                <div class="status-counts" id="orderStatusCounts">
+                    <!-- Status counts will be populated here -->
+                </div>
+            </div>
+
+            <!-- Revenue Breakdown -->
+            <div class="revenue-breakdown">
+                <h3>Revenue Breakdown</h3>
+                <div class="revenue-list" id="revenueBreakdown">
+                    <!-- Revenue breakdown will be populated here -->
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Revenue Trend</h3>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Order Status Distribution</h3>
+                    <canvas id="ordersChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Top Selling Items</h3>
+                    <canvas id="topItemsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Customer Growth</h3>
+                    <canvas id="customersChart"></canvas>
+                </div>
+            </div>
+
             <!-- Recent Activity -->
             <div class="recent-activity">
                 <h3>Recent Activity</h3>
                 <div class="activity-list" id="recentActivity">
                     <!-- Activity items will be populated here -->
                 </div>
+            </div>
+        </section>
+
+        <!-- Menu Management Section -->
+        <section class="content-section" id="menu-management">
+            <div class="section-header">
+                <h2>Menu Management</h2>
+                <div class="header-actions">
+                    <button class="btn-primary" id="addMenuItemBtn">
+                        <i class="fas fa-plus"></i> Add New Item
+                    </button>
+                    <div class="search-box">
+                        <input type="text" id="menuSearch" placeholder="Search menu items...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Categories -->
+            <div class="menu-categories">
+                <button class="category-btn active" data-category="all">All Items</button>
+                <button class="category-btn" data-category="quick-fills">Quick Fills</button>
+                <button class="category-btn" data-category="savory-bites">Savory Bites</button>
+                <button class="category-btn" data-category="snacks-treats">Snacks & Treats</button>
+                <button class="category-btn" data-category="beverages">Beverages</button>
+                <button class="category-btn" data-category="light-fresh">Light & Fresh</button>
+                <button class="category-btn" data-category="promo">Promotions</button>
+            </div>
+
+            <!-- Menu Stats -->
+            <div class="menu-stats">
+                <div class="menu-stat">
+                    <span class="stat-number" id="totalMenuItems">0</span>
+                    <span class="stat-label">Total Items</span>
+                </div>
+                <div class="menu-stat">
+                    <span class="stat-number" id="availableItems">0</span>
+                    <span class="stat-label">Available</span>
+                </div>
+                <div class="menu-stat">
+                    <span class="stat-number" id="popularItems">0</span>
+                    <span class="stat-label">Popular</span>
+                </div>
+                <div class="menu-stat">
+                    <span class="stat-number" id="newItems">0</span>
+                    <span class="stat-label">New</span>
+                </div>
+            </div>
+
+            <!-- Menu Items Grid -->
+            <div id="menuItemsGrid" class="menu-items-grid">
+                <!-- Menu items will be populated here -->
             </div>
         </section>
 
@@ -952,72 +268,710 @@
                 </div>
             </div>
 
+            <!-- Orders Summary -->
+            <div class="orders-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Today's Orders</span>
+                    <span class="summary-value" id="todayOrders">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Revenue Today</span>
+                    <span class="summary-value" id="todayRevenue">K0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Avg. Order Value</span>
+                    <span class="summary-value" id="avgOrderValueSummary">K0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Completion Rate</span>
+                    <span class="summary-value" id="completionRate">0%</span>
+                </div>
+            </div>
+
+            <!-- Orders Tabs -->
+            <div class="orders-tabs">
+                <button class="tab-btn active" data-tab="current">Current Orders</button>
+                <button class="tab-btn" data-tab="history">Order History</button>
+                <button class="tab-btn" data-tab="analytics">Order Analytics</button>
+            </div>
+
             <!-- Orders List -->
             <div class="orders-list" id="ordersList">
                 <!-- Orders will be populated here -->
             </div>
-        </section>
 
-        <!-- Other sections would go here -->
-        <section class="content-section" id="menu-management">
-            <div class="section-header">
-                <h2>Menu Management</h2>
-                <p>Menu management content will appear here</p>
+            <!-- Order Analytics -->
+            <div class="order-analytics" id="orderAnalytics" style="display: none;">
+                <div class="analytics-cards">
+                    <div class="analytics-card">
+                        <h4>Order Volume</h4>
+                        <canvas id="orderVolumeChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Order Status Trends</h4>
+                        <canvas id="orderTrendsChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Peak Hours</h4>
+                        <canvas id="peakHoursChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Popular Items</h4>
+                        <div id="popularItemsList">
+                            <!-- Popular items will be populated here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
+        <!-- Promotions Section -->
         <section class="content-section" id="promotions">
             <div class="section-header">
                 <h2>Promotions Management</h2>
-                <p>Promotions management content will appear here</p>
+                <div class="header-actions">
+                    <button class="btn-primary" id="addPromotionBtn">
+                        <i class="fas fa-plus"></i> Add Promotion
+                    </button>
+                    <div class="promotion-stats">
+                        <span class="stat">Active: <strong id="activePromotions">0</strong></span>
+                        <span class="stat">Total: <strong id="totalPromotions">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Promotions Filter -->
+            <div class="promotions-filter">
+                <button class="filter-btn active" data-filter="all">All Promotions</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+                <button class="filter-btn" data-filter="expired">Expired</button>
+            </div>
+
+            <!-- Active Promotions -->
+            <div class="promotions-grid" id="promotionsGrid">
+                <!-- Promotion cards will be populated here -->
+            </div>
+
+            <!-- Add Promotion Form -->
+            <div class="add-promotion-form" id="addPromotionForm" style="display: none;">
+                <h3>Add New Promotion</h3>
+                <form id="promotionForm">
+                    <div class="form-group">
+                        <label for="promotionTitle">Promotion Title *</label>
+                        <input type="text" id="promotionTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="promotionDescription">Description *</label>
+                        <textarea id="promotionDescription" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promotionType">Promotion Type *</label>
+                            <select id="promotionType" required>
+                                <option value="banner">Banner Promotion</option>
+                                <option value="discount">Discount Code</option>
+                                <option value="combo">Combo Deal</option>
+                                <option value="flash">Flash Sale</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="promotionCode">Promo Code</label>
+                            <input type="text" id="promotionCode" placeholder="e.g., WIZA20">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promotionDiscount">Discount (%) *</label>
+                            <input type="number" id="promotionDiscount" min="1" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="minOrderAmount">Minimum Order (K)</label>
+                            <input type="number" id="minOrderAmount" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate">Start Date *</label>
+                            <input type="datetime-local" id="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">End Date *</label>
+                            <input type="datetime-local" id="endDate" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="promotionImage">Promotion Image</label>
+                        <input type="file" id="promotionImage" accept="image/*">
+                        <div class="image-preview" id="promotionImagePreview"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="promotionActive" checked> Active
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="promotionFeatured"> Featured Promotion
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Create Promotion</button>
+                        <button type="button" class="btn-secondary" id="cancelPromotionBtn">Cancel</button>
+                    </div>
+                </form>
             </div>
         </section>
 
+        <!-- Customers Section -->
         <section class="content-section" id="customers">
             <div class="section-header">
                 <h2>Customer Management</h2>
-                <p>Customer management content will appear here</p>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <input type="text" id="customerSearch" placeholder="Search customers...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="customer-stats">
+                        <span class="stat">Total: <strong id="totalCustomers">0</strong></span>
+                        <span class="stat">Active: <strong id="activeCustomersCount">0</strong></span>
+                        <span class="stat">Banned: <strong id="bannedCustomers">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Filters -->
+            <div class="customer-filters">
+                <button class="filter-btn active" data-filter="all">All Customers</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="banned">Banned</button>
+                <button class="filter-btn" data-filter="new">New This Month</button>
+                <button class="filter-btn" data-filter="vip">VIP Customers</button>
+            </div>
+
+            <!-- Customers List -->
+            <div class="customers-table-container">
+                <table class="customers-table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Contact</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Status</th>
+                            <th>Last Order</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersTableBody">
+                        <!-- Customers will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Customer Analytics -->
+            <div class="customer-analytics">
+                <div class="analytics-card">
+                    <h4>Customer Growth</h4>
+                    <canvas id="customerGrowthChart"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h4>Customer Value</h4>
+                    <div class="value-stats">
+                        <div class="value-stat">
+                            <span class="value-label">Average Order Value</span>
+                            <span class="value-amount" id="avgCustomerValue">K0.00</span>
+                        </div>
+                        <div class="value-stat">
+                            <span class="value-label">Customer Lifetime Value</span>
+                            <span class="value-amount" id="lifetimeValue">K0.00</span>
+                        </div>
+                        <div class="value-stat">
+                            <span class="value-label">Repeat Customer Rate</span>
+                            <span class="value-amount" id="repeatRate">0%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
+        <!-- Analytics Section -->
         <section class="content-section" id="analytics">
             <div class="section-header">
                 <h2>Business Analytics</h2>
-                <p>Analytics content will appear here</p>
+                <div class="analytics-controls">
+                    <select id="analyticsPeriod">
+                        <option value="7">Last 7 Days</option>
+                        <option value="30">Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="365">Last Year</option>
+                    </select>
+                    <select id="analyticsType">
+                        <option value="sales">Sales Analytics</option>
+                        <option value="orders">Order Analytics</option>
+                        <option value="customers">Customer Analytics</option>
+                        <option value="menu">Menu Performance</option>
+                    </select>
+                    <button class="btn-secondary" id="exportAnalytics">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="key-metrics">
+                <div class="metric-card">
+                    <div class="metric-icon revenue">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Total Revenue</h3>
+                        <p class="metric-value" id="analyticsRevenue">K0.00</p>
+                        <p class="metric-change" id="revenueChange">+0%</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon orders">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Total Orders</h3>
+                        <p class="metric-value" id="analyticsOrders">0</p>
+                        <p class="metric-change" id="ordersChange">+0%</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon customers">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>New Customers</h3>
+                        <p class="metric-value" id="analyticsCustomers">0</p>
+                        <p class="metric-change" id="customersChange">+0%</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon average">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Average Order Value</h3>
+                        <p class="metric-value" id="analyticsAOV">K0.00</p>
+                        <p class="metric-change" id="aovChange">+0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Charts -->
+            <div class="analytics-charts">
+                <div class="chart-card large">
+                    <h3>Sales Performance</h3>
+                    <canvas id="salesChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Order Volume</h3>
+                    <canvas id="orderVolumeAnalyticsChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Customer Behavior</h3>
+                    <canvas id="customerBehaviorChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Popular Categories</h3>
+                    <canvas id="categoriesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Analytics -->
+            <div class="detailed-analytics">
+                <div class="analytics-section">
+                    <h4>Top Performing Items</h4>
+                    <div class="top-items-list" id="topItemsList">
+                        <!-- Top items will be populated here -->
+                    </div>
+                </div>
+                <div class="analytics-section">
+                    <h4>Peak Performance Hours</h4>
+                    <div class="peak-hours" id="peakHoursList">
+                        <!-- Peak hours will be populated here -->
+                    </div>
+                </div>
+                <div class="analytics-section">
+                    <h4>Customer Segmentation</h4>
+                    <div class="segmentation" id="customerSegmentation">
+                        <!-- Segmentation data will be populated here -->
+                    </div>
+                </div>
             </div>
         </section>
 
+        <!-- Settings Section -->
         <section class="content-section" id="settings">
             <div class="section-header">
                 <h2>System Settings</h2>
-                <p>Settings content will appear here</p>
+                <button class="btn-primary" id="saveSettings">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h3><i class="fas fa-mobile-alt"></i> App Control</h3>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="appStatusToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Customer App Status</span>
+                            <span class="setting-desc">Turn off to disable customer app completely</span>
+                            <span class="setting-status" id="appStatus">Online</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="orderingToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Accept New Orders</span>
+                            <span class="setting-desc">Pause new order requests</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="deliveryToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Delivery Service</span>
+                            <span class="setting-desc">Enable/disable delivery orders</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="pickupToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Pickup Service</span>
+                            <span class="setting-desc">Enable/disable pickup orders</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-clock"></i> Business Hours</h3>
+                    <div class="business-hours-settings">
+                        <div class="hours-day">
+                            <span class="day-label">Monday - Friday</span>
+                            <div class="time-inputs">
+                                <input type="time" value="08:00" class="open-time">
+                                <span>to</span>
+                                <input type="time" value="22:00" class="close-time">
+                            </div>
+                        </div>
+                        <div class="hours-day">
+                            <span class="day-label">Saturday</span>
+                            <div class="time-inputs">
+                                <input type="time" value="09:00" class="open-time">
+                                <span>to</span>
+                                <input type="time" value="23:00" class="close-time">
+                            </div>
+                        </div>
+                        <div class="hours-day">
+                            <span class="day-label">Sunday</span>
+                            <div class="time-inputs">
+                                <input type="time" value="10:00" class="open-time">
+                                <span>to</span>
+                                <input type="time" value="20:00" class="close-time">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-actions">
+                        <button class="btn-secondary" id="applyHours">Apply Hours</button>
+                        <button class="btn-text" id="resetHours">Reset to Default</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-bell"></i> Notifications</h3>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="orderNotifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">New Order Alerts</span>
+                            <span class="setting-desc">Get notified for new orders</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="promoNotifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Promotion Alerts</span>
+                            <span class="setting-desc">Promotion performance updates</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="customerNotifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">Customer Alerts</span>
+                            <span class="setting-desc">New customer registrations</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="systemNotifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="setting-info">
+                            <span class="setting-label">System Alerts</span>
+                            <span class="setting-desc">System status and updates</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-receipt"></i> Order Settings</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Deposit Percentage</span>
+                            <span class="setting-desc">Required deposit for orders</span>
+                        </div>
+                        <input type="number" id="depositPercentage" value="50" min="0" max="100" class="number-input">
+                        <span class="percentage-symbol">%</span>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Service Fee</span>
+                            <span class="setting-desc">Fixed service charge per order</span>
+                        </div>
+                        <span class="currency-symbol">K</span>
+                        <input type="number" id="serviceFee" value="2.00" step="0.01" min="0" class="number-input">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Delivery Base Fee</span>
+                            <span class="setting-desc">Standard delivery charge</span>
+                        </div>
+                        <span class="currency-symbol">K</span>
+                        <input type="number" id="deliveryFee" value="25.00" step="0.01" min="0" class="number-input">
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-shield-alt"></i> Security</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Auto Logout</span>
+                            <span class="setting-desc">Automatic logout after inactivity</span>
+                        </div>
+                        <select id="autoLogout" class="select-input">
+                            <option value="15">15 minutes</option>
+                            <option value="30" selected>30 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Password Change</span>
+                            <span class="setting-desc">Last changed: Never</span>
+                        </div>
+                        <button class="btn-secondary" id="changePassword">Change</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Session Management</span>
+                            <span class="setting-desc">Manage active sessions</span>
+                        </div>
+                        <button class="btn-text" id="viewSessions">View</button>
+                    </div>
+                </div>
+
+                <div class="settings-card danger-zone">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+                    <div class="danger-actions">
+                        <button class="btn-danger" id="clearAllData">
+                            <i class="fas fa-trash"></i> Clear All Data
+                        </button>
+                        <button class="btn-danger" id="resetSystem">
+                            <i class="fas fa-redo"></i> Reset System
+                        </button>
+                        <button class="btn-danger" id="exportAllData">
+                            <i class="fas fa-download"></i> Export All Data
+                        </button>
+                    </div>
+                    <p class="danger-warning">
+                        <i class="fas fa-exclamation-circle"></i>
+                        These actions are irreversible. Please proceed with caution.
+                    </p>
+                </div>
             </div>
         </section>
     </main>
 
-    <!-- New Order Notification Popup -->
-    <div class="notification-popup" id="newOrderNotification">
-        <div class="notification-header">
-            <div class="notification-title">
-                <i class="fas fa-bell"></i>
-                🆕 New Order Received!
+    <!-- Modals -->
+    <!-- Add/Edit Menu Item Modal -->
+    <div class="modal" id="menuItemModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="menuModalTitle">Add Menu Item</h3>
+                <button class="close-modal">&times;</button>
             </div>
-            <button class="notification-close" id="closeNotification">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="notification-content" id="notificationContent">
-            <!-- Content will be populated dynamically -->
-        </div>
-        <div class="notification-actions">
-            <button class="btn-accept" id="acceptOrderBtn">
-                <i class="fas fa-check"></i> Accept Order
-            </button>
-            <button class="btn-view" id="viewOrderBtn">
-                <i class="fas fa-eye"></i> View Details
-            </button>
+            <form id="menuItemForm">
+                <div class="form-group">
+                    <label for="itemName">Item Name *</label>
+                    <input type="text" id="itemName" required placeholder="Enter item name">
+                </div>
+                <div class="form-group">
+                    <label for="itemDescription">Description *</label>
+                    <textarea id="itemDescription" required placeholder="Enter item description"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemPrice">Price (K) *</label>
+                        <input type="number" id="itemPrice" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemOriginalPrice">Original Price (K)</label>
+                        <input type="number" id="itemOriginalPrice" step="0.01" min="0" placeholder="For discounted items">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemCategory">Category *</label>
+                        <select id="itemCategory" required>
+                            <option value="quick-fills">Quick Fills</option>
+                            <option value="savory-bites">Savory Bites</option>
+                            <option value="snacks-treats">Snacks & Treats</option>
+                            <option value="beverages">Beverages</option>
+                            <option value="light-fresh">Light & Fresh</option>
+                            <option value="promo">Promotions</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemDiscount">Discount (%)</label>
+                        <input type="number" id="itemDiscount" min="0" max="100" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="itemImage">Item Image</label>
+                    <input type="file" id="itemImage" accept="image/*">
+                    <div class="image-preview" id="imagePreview"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemAvailable" checked> Available
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemPopular"> Popular Item
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemVegetarian"> Vegetarian
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemNew"> New Item
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemPromo"> Promotion
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="itemFeatured"> Featured
+                        </label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Item</button>
+                    <button type="button" class="btn-secondary close-modal">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderDetailsModal">
+        <div class="modal-content x-large">
+            <div class="modal-header">
+                <h3>Order Details - <span id="orderRef"></span></h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="order-details-content">
+                <!-- Order details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- New Order Notification Modal -->
+    <div class="modal" id="newOrderNotificationModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>🆕 New Order Received!</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="notification-content" id="newOrderNotificationContent">
+                <!-- New order details will be populated here -->
+            </div>
+            <div class="notification-actions">
+                <button class="btn-success" id="acceptNewOrderBtn">Accept Order</button>
+                <button class="btn-secondary" id="viewNewOrderBtn">View Details</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Details Modal -->
+    <div class="modal" id="customerDetailsModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Customer Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="customer-details-content">
+                <!-- Customer details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Promotion Details Modal -->
+    <div class="modal" id="promotionDetailsModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Promotion Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="promotion-details-content">
+                <!-- Promotion details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3 id="confirmationTitle">Confirm Action</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="confirmation-content">
+                <p id="confirmationMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="confirmation-actions">
+                <button class="btn-danger" id="confirmAction">Confirm</button>
+                <button class="btn-secondary close-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay"></div>
 
     <script>
         // --- Firebase Configuration ---
@@ -1053,61 +1007,20 @@
             },
             restaurantLocation: [-15.402235977316481, 28.329942522202668],
             orderCounter: 1,
-            currentNewOrder: null,
-            soundEnabled: true
+            currentNewOrder: null
         };
 
         // DOM Elements
         let elements = {};
 
         // Notification variables
+        let newOrderNotification = null;
         let notificationSound = null;
         let isNotificationActive = false;
-        let currentNotificationOrder = null;
 
         // Auto-refresh interval
         let autoRefreshInterval = null;
         const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
-
-        // Sample data for demonstration
-        const sampleOrders = [
-            {
-                id: 1,
-                ref: "WIZA0001",
-                items: [
-                    { name: "Chicken & Chips (Wing)", price: 35, quantity: 2, image: "Q1.jpg" },
-                    { name: "Shawarma", price: 33, quantity: 1, image: "S1.jpg" }
-                ],
-                subtotal: 103,
-                deliveryFee: 25,
-                serviceFee: 2,
-                discount: 0,
-                total: 130,
-                status: "pending",
-                date: new Date().toISOString(),
-                delivery: true,
-                customer: { name: "John Banda", email: "john@example.com", phone: "0971234567" },
-                paymentMethod: "Airtel Money"
-            },
-            {
-                id: 2,
-                ref: "WIZA0002",
-                items: [
-                    { name: "Chicken & Chips (Breast)", price: 40, quantity: 1, image: "Q2.jpg" },
-                    { name: "Coca Cola", price: 8, quantity: 2, image: "default-food.jpg" }
-                ],
-                subtotal: 56,
-                deliveryFee: 0,
-                serviceFee: 2,
-                discount: 0,
-                total: 58,
-                status: "preparing",
-                date: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-                delivery: false,
-                customer: { name: "Mary Phiri", email: "mary@example.com", phone: "0957654321" },
-                paymentMethod: "Cash"
-            }
-        ];
 
         // Initialize Manager App
         document.addEventListener('DOMContentLoaded', function() {
@@ -1120,34 +1033,64 @@
             loadManagerData();
             setupFirebaseListeners();
             startAutoRefresh();
-            initializeNotificationSound();
             
             // Initialize sections
             updateDashboard();
+            loadFullMenu();
             loadOrders();
+            loadCustomers();
+            loadPromotions();
+            initializeCharts();
+            
+            // Initialize notification sound
+            createNotificationSound();
             
             showNotification('Manager dashboard loaded successfully!', 'success');
         }
 
-        // Initialize notification sound
-        function initializeNotificationSound() {
-            // Using the Mixkit marimba waiting ringtone
-            notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-marimba-waiting-ringtone-1360.mp3');
-            notificationSound.preload = 'auto';
-            
-            // Try to load the sound
-            notificationSound.load().catch(error => {
-                console.log('Error loading notification sound:', error);
-            });
-        }
-
-        // ENHANCED: Firebase Real-time Listeners with Sound Notification
+        // ENHANCED: Firebase Real-time Listeners
         function setupFirebaseListeners() {
             console.log("📡 Setting up Firebase real-time listeners...");
             
-            // For demo purposes, we'll simulate new orders
-            simulateNewOrders();
+            // Listen for new orders
+            const ordersRef = db.ref("orders");
             
+            ordersRef.on('child_added', (snapshot) => {
+                const newOrder = snapshot.val();
+                const orderKey = snapshot.key;
+                
+                console.log("🆕 New order received from Firebase:", newOrder);
+                
+                if (newOrder && !orderExists(newOrder.id)) {
+                    // Add Firebase key to order
+                    newOrder.firebaseKey = orderKey;
+                    
+                    // Process the new order
+                    processNewOrder(newOrder);
+                }
+            });
+
+            // Listen for order updates
+            ordersRef.on('child_changed', (snapshot) => {
+                const updatedOrder = snapshot.val();
+                const orderKey = snapshot.key;
+                updatedOrder.firebaseKey = orderKey;
+                
+                console.log("🔄 Order updated:", updatedOrder);
+                
+                // Update the order in the manager state
+                updateExistingOrder(updatedOrder);
+            });
+
+            // Listen for order removals
+            ordersRef.on('child_removed', (snapshot) => {
+                const removedOrder = snapshot.val();
+                console.log("🗑️ Order removed:", removedOrder);
+                
+                // Remove order from local state
+                removeOrderFromState(removedOrder.id);
+            });
+
             // Handle connection state
             const connectedRef = db.ref(".info/connected");
             connectedRef.on("value", (snap) => {
@@ -1161,190 +1104,232 @@
             });
         }
 
-        // Simulate new orders for demonstration
-        function simulateNewOrders() {
-            // Add sample orders to state
-            managerState.orders = [...sampleOrders];
-            updateDashboard();
-            loadOrders();
-            
-            // Simulate a new order every 30 seconds for demo
-            setInterval(() => {
-                if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
-                    const newOrder = createSampleOrder();
-                    processNewOrder(newOrder);
-                }
-            }, 30000);
+        // Check if order already exists
+        function orderExists(orderId) {
+            return managerState.orders.some(order => order.id === orderId || order.firebaseKey === orderId);
         }
 
-        // Create a sample order for demonstration
-        function createSampleOrder() {
-            const customers = [
-                { name: "Peter Mwale", phone: "0961122334" },
-                { name: "Sarah Kachingwe", phone: "0994455667" },
-                { name: "David Banda", phone: "0977788990" },
-                { name: "Grace Tembo", phone: "0950011223" }
-            ];
-            
-            const items = [
-                { name: "Chicken & Chips (Wing)", price: 35, image: "Q1.jpg" },
-                { name: "Chicken & Chips (Breast)", price: 40, image: "Q2.jpg" },
-                { name: "Shawarma", price: 33, image: "S1.jpg" },
-                { name: "Coca Cola", price: 8, image: "default-food.jpg" },
-                { name: "Fanta", price: 8, image: "default-food.jpg" }
-            ];
-            
-            const customer = customers[Math.floor(Math.random() * customers.length)];
-            const itemCount = Math.floor(Math.random() * 3) + 1;
-            const orderItems = [];
-            
-            for (let i = 0; i < itemCount; i++) {
-                const item = items[Math.floor(Math.random() * items.length)];
-                orderItems.push({
-                    ...item,
-                    quantity: Math.floor(Math.random() * 2) + 1
-                });
-            }
-            
-            const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const delivery = Math.random() > 0.5;
-            const deliveryFee = delivery ? 25 : 0;
-            const serviceFee = 2;
-            const total = subtotal + deliveryFee + serviceFee;
-            
-            return {
-                id: managerState.orderCounter++,
-                ref: `WIZA${managerState.orderCounter.toString().padStart(4, '0')}`,
-                items: orderItems,
-                subtotal: subtotal,
-                deliveryFee: deliveryFee,
-                serviceFee: serviceFee,
-                discount: 0,
-                total: total,
-                status: "pending",
-                date: new Date().toISOString(),
-                delivery: delivery,
-                customer: customer,
-                paymentMethod: "Airtel Money"
-            };
-        }
-
-        // Process new order
+        // Process new order from Firebase
         function processNewOrder(order) {
+            // Validate and enhance order data
+            const enhancedOrder = validateAndEnhanceOrder(order);
+            
             // Add to orders array at the beginning
-            managerState.orders.unshift(order);
+            managerState.orders.unshift(enhancedOrder);
+            
+            // Update order counter
+            if (enhancedOrder.id && enhancedOrder.id >= managerState.orderCounter) {
+                managerState.orderCounter = enhancedOrder.id + 1;
+            }
             
             // Save data immediately
             saveManagerData();
             
             // Update UI in real-time
-            updateUIForNewOrder(order);
+            updateUIForNewOrder(enhancedOrder);
             
             // Show notification
             if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
-                showNewOrderNotification(order);
+                showNewOrderNotification(enhancedOrder);
             }
             
-            console.log('✅ New order processed successfully:', order.ref);
+            console.log('✅ New order processed successfully:', enhancedOrder.ref);
         }
 
-        // ENHANCED: Show new order notification with sound
+        // Update existing order
+        function updateExistingOrder(updatedOrder) {
+            const orderIndex = managerState.orders.findIndex(o => 
+                o.id === updatedOrder.id || o.firebaseKey === updatedOrder.firebaseKey
+            );
+            
+            if (orderIndex !== -1) {
+                managerState.orders[orderIndex] = {
+                    ...managerState.orders[orderIndex],
+                    ...updatedOrder
+                };
+                
+                saveManagerData();
+                updateUIForOrderUpdate(updatedOrder);
+                
+                console.log(`✅ Order ${updatedOrder.ref} updated in local state`);
+            }
+        }
+
+        // Remove order from state
+        function removeOrderFromState(orderId) {
+            managerState.orders = managerState.orders.filter(order => 
+                order.id !== orderId && order.firebaseKey !== orderId
+            );
+            
+            saveManagerData();
+            updateDashboard();
+            loadOrders();
+            
+            console.log(`🗑️ Order ${orderId} removed from local state`);
+        }
+
+        // Validate and enhance incoming orders
+        function validateAndEnhanceOrder(order) {
+            const now = new Date().toISOString();
+            
+            return {
+                id: order.id || generateId(),
+                ref: order.ref || `WIZA${(order.id || generateId()).toString().padStart(4, '0')}`,
+                items: order.items || [],
+                subtotal: order.subtotal || 0,
+                deliveryFee: order.deliveryFee || 0,
+                serviceFee: order.serviceFee || 0,
+                discount: order.discount || 0,
+                total: order.total || 0,
+                status: order.status || 'pending',
+                date: order.date || now,
+                delivery: order.delivery || false,
+                deliveryLocation: order.deliveryLocation || null,
+                customer: order.customer || { 
+                    name: 'Unknown Customer', 
+                    email: '', 
+                    phone: '' 
+                },
+                promoCode: order.promoCode || null,
+                paymentMethod: order.paymentMethod || 'Airtel Money',
+                paymentScreenshot: order.paymentScreenshot || null,
+                timestamp: order.timestamp || now,
+                statusUpdated: order.statusUpdated || now,
+                firebaseKey: order.firebaseKey,
+                
+                // Enhanced fields
+                itemsDetailed: order.itemsDetailed || (order.items ? order.items.map(item => ({
+                    ...item,
+                    description: item.description || 'Delicious food item',
+                    image: item.image || 'default-food.jpg'
+                })) : [])
+            };
+        }
+
+        // Update connection status in UI
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (!statusElement) return;
+            
+            if (connected) {
+                statusElement.innerHTML = '<i class="fas fa-wifi"></i><span>Connected</span>';
+                statusElement.className = 'connection-status connected';
+            } else {
+                statusElement.innerHTML = '<i class="fas fa-wifi-slash"></i><span>Offline</span>';
+                statusElement.className = 'connection-status disconnected';
+            }
+        }
+
+        // Update UI when new order is received
+        function updateUIForNewOrder(order) {
+            // Update dashboard if visible
+            updateDashboard();
+            
+            // Update orders list if visible
+            if (managerState.currentSection === 'orders') {
+                loadOrders();
+            }
+            
+            // Update pending orders count in navigation
+            updatePendingOrdersCount();
+            
+            // Show visual indicator
+            showNewOrderIndicator();
+        }
+
+        // Update UI when order is updated
+        function updateUIForOrderUpdate(order) {
+            // Update dashboard
+            updateDashboard();
+            
+            // Update orders list if visible
+            if (managerState.currentSection === 'orders') {
+                loadOrders();
+            }
+            
+            // Update pending orders count
+            updatePendingOrdersCount();
+        }
+
+        // Show new order indicator
+        function showNewOrderIndicator() {
+            const indicator = document.createElement('div');
+            indicator.id = 'newOrderIndicator';
+            indicator.className = 'new-order-indicator';
+            indicator.innerHTML = '🆕 New Order!';
+            document.body.appendChild(indicator);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.remove();
+                }
+            }, 3000);
+        }
+
+        // ENHANCED: Show new order notification
         function showNewOrderNotification(order) {
-            if (isNotificationActive) return; // Don't show multiple notifications
+            if (!managerState.settings.notificationSound) return;
             
             isNotificationActive = true;
-            currentNotificationOrder = order;
+            managerState.currentNewOrder = order;
             
-            // Play notification sound if enabled
-            if (managerState.soundEnabled && notificationSound) {
-                playNotificationSound();
-            }
-            
-            // Update notification content
-            updateNotificationContent(order);
-            
-            // Show the notification popup
-            const notification = document.getElementById('newOrderNotification');
-            if (notification) {
-                notification.classList.add('show');
-                
-                // Auto-hide after 30 seconds if not interacted with
-                setTimeout(() => {
-                    if (isNotificationActive) {
-                        hideNotification();
-                    }
-                }, 30000);
-            }
+            // Play notification sound
+            playNotificationSound();
             
             // Show browser notification if supported
-            if ('Notification' in window) {
-                if (Notification.permission === 'granted') {
-                    new Notification('WIZA FOOD CAFE - New Order!', {
-                        body: `Order ${order.ref} from ${order.customer.name} - K${order.total.toFixed(2)}`,
-                        icon: 'wfc.png',
-                        tag: 'new-order',
-                        requireInteraction: true
-                    });
-                } else if (Notification.permission !== 'denied') {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === 'granted') {
-                            new Notification('WIZA FOOD CAFE - New Order!', {
-                                body: `Order ${order.ref} from ${order.customer.name} - K${order.total.toFixed(2)}`,
-                                icon: 'wfc.png',
-                                tag: 'new-order'
-                            });
-                        }
-                    });
-                }
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('WIZA FOOD CAFE - New Order!', {
+                    body: `Order ${order.ref} from ${order.customer.name}`,
+                    icon: 'wfc.png',
+                    tag: 'new-order'
+                });
+            }
+            
+            // Show in-app notification
+            showInAppOrderNotification(order);
+        }
+
+        // Show in-app order notification
+        function showInAppOrderNotification(order) {
+            const alertElement = document.getElementById('realtimeAlert');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            if (alertElement && alertMessage) {
+                alertMessage.textContent = `New order #${order.ref} from ${order.customer.name} - K${order.total.toFixed(2)}`;
+                alertElement.style.display = 'block';
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    if (alertElement.style.display !== 'none') {
+                        closeAlert();
+                    }
+                }, 10000);
             }
         }
 
-        // Update notification content
-        function updateNotificationContent(order) {
-            const content = document.getElementById('notificationContent');
-            if (!content) return;
-            
-            content.innerHTML = `
-                <div class="order-highlight">
-                    <strong>Order ${order.ref}</strong> from <strong>${order.customer.name}</strong>
-                </div>
-                <div class="order-details">
-                    <p><i class="fas fa-phone"></i> ${order.customer.phone || 'No phone'}</p>
-                    <p><i class="fas fa-money-bill-wave"></i> Total: K${order.total.toFixed(2)}</p>
-                    <p><i class="fas fa-shipping-fast"></i> ${order.delivery ? 'Delivery' : 'Pickup'}</p>
-                </div>
-                <div class="order-items-preview">
-                    <strong>Items:</strong>
-                    ${order.items.slice(0, 3).map(item => `
-                        <div class="order-item-notification">
-                            <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-preview-image">
-                            <span>${item.quantity}x ${item.name}</span>
-                            <span>K${(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                    `).join('')}
-                    ${order.items.length > 3 ? `<p>+ ${order.items.length - 3} more items</p>` : ''}
-                </div>
-                <div class="order-time">
-                    <small><i class="fas fa-clock"></i> ${new Date(order.date).toLocaleTimeString()}</small>
-                </div>
-            `;
+        // Close alert
+        function closeAlert() {
+            const alertElement = document.getElementById('realtimeAlert');
+            if (alertElement) {
+                alertElement.style.display = 'none';
+            }
         }
 
         // Play notification sound
         function playNotificationSound() {
-            if (notificationSound && managerState.soundEnabled) {
+            if (notificationSound && managerState.settings.notificationSound) {
                 notificationSound.currentTime = 0;
                 notificationSound.play().catch(error => {
                     console.log('Notification sound play failed:', error);
-                    // Fallback: Create a simple beep sound
-                    createFallbackSound();
                 });
             }
         }
 
-        // Create fallback sound if audio file fails
-        function createFallbackSound() {
+        // Create notification sound
+        function createNotificationSound() {
             try {
+                // Create a simple notification sound
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
@@ -1357,63 +1342,63 @@
                 
                 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
                 gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1);
-                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
                 
                 oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
+                oscillator.stop(audioContext.currentTime + 0.3);
                 
             } catch (error) {
-                console.error('Error creating fallback sound:', error);
+                console.error('Error creating notification sound:', error);
             }
         }
 
-        // Hide notification
-        function hideNotification() {
-            const notification = document.getElementById('newOrderNotification');
-            if (notification) {
-                notification.classList.remove('show');
+        // ENHANCED: Update order status with Firebase sync
+        async function updateOrderStatus(orderId, newStatus) {
+            const order = managerState.orders.find(o => o.id == orderId || o.firebaseKey === orderId);
+            if (order) {
+                const oldStatus = order.status;
+                order.status = newStatus;
+                order.statusUpdated = new Date().toISOString();
+                
+                // Add timestamps for status changes
+                const statusTimestamps = {};
+                switch(newStatus) {
+                    case 'preparing':
+                        statusTimestamps.acceptedAt = new Date().toISOString();
+                        break;
+                    case 'ready':
+                        statusTimestamps.readyAt = new Date().toISOString();
+                        break;
+                    case 'completed':
+                        statusTimestamps.completedAt = new Date().toISOString();
+                        break;
+                    case 'cancelled':
+                        statusTimestamps.cancelledAt = new Date().toISOString();
+                        break;
+                }
+                
+                // Update in Firebase
+                try {
+                    if (order.firebaseKey) {
+                        const orderRef = db.ref(`orders/${order.firebaseKey}`);
+                        await orderRef.update({
+                            status: newStatus,
+                            statusUpdated: order.statusUpdated,
+                            ...statusTimestamps
+                        });
+                        console.log(`✅ Order ${order.ref} status updated in Firebase`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error updating order status in Firebase:', error);
+                    showNotification('Error updating order status in cloud', 'error');
+                }
+                
+                saveManagerData();
+                loadOrders();
+                updateDashboard();
+                
+                showNotification(`Order ${order.ref} status updated from ${oldStatus} to ${newStatus}`, 'success');
             }
-            isNotificationActive = false;
-            currentNotificationOrder = null;
-        }
-
-        // Accept order from notification
-        function acceptOrderFromNotification() {
-            if (currentNotificationOrder) {
-                updateOrderStatus(currentNotificationOrder.id, 'preparing');
-                hideNotification();
-                showNotification(`Order ${currentNotificationOrder.ref} accepted and moved to preparation`, 'success');
-            }
-        }
-
-        // View order details from notification
-        function viewOrderFromNotification() {
-            if (currentNotificationOrder) {
-                viewOrderDetails(currentNotificationOrder.id);
-                hideNotification();
-            }
-        }
-
-        // Toggle sound
-        function toggleSound() {
-            managerState.soundEnabled = !managerState.soundEnabled;
-            const soundToggle = document.getElementById('soundToggle');
-            const icon = soundToggle.querySelector('i');
-            const text = soundToggle.querySelector('span');
-            
-            if (managerState.soundEnabled) {
-                soundToggle.classList.remove('muted');
-                icon.className = 'fas fa-volume-up';
-                text.textContent = 'Sound On';
-                showNotification('Notification sound enabled', 'success');
-            } else {
-                soundToggle.classList.add('muted');
-                icon.className = 'fas fa-volume-mute';
-                text.textContent = 'Sound Off';
-                showNotification('Notification sound disabled', 'info');
-            }
-            
-            saveManagerData();
         }
 
         // Initialize DOM elements
@@ -1430,18 +1415,21 @@
                 pendingOrders: document.getElementById('pendingOrders'),
                 readyOrders: document.getElementById('readyOrders'),
                 pendingOrdersCount: document.getElementById('pendingOrdersCount'),
+                orderStatusCounts: document.getElementById('orderStatusCounts'),
                 recentActivity: document.getElementById('recentActivity'),
                 
                 // Orders
                 ordersList: document.getElementById('ordersList'),
                 orderStatusFilter: document.getElementById('orderStatusFilter'),
                 
-                // Notification
-                newOrderNotification: document.getElementById('newOrderNotification'),
-                closeNotification: document.getElementById('closeNotification'),
-                acceptOrderBtn: document.getElementById('acceptOrderBtn'),
-                viewOrderBtn: document.getElementById('viewOrderBtn'),
-                soundToggle: document.getElementById('soundToggle'),
+                // Modals
+                modals: document.querySelectorAll('.modal'),
+                closeModalBtns: document.querySelectorAll('.close-modal'),
+                overlay: document.querySelector('.overlay'),
+                orderDetailsModal: document.getElementById('orderDetailsModal'),
+                orderDetailsContent: document.querySelector('.order-details-content'),
+                
+                // Add other elements as needed...
             };
         }
 
@@ -1462,21 +1450,13 @@
                 elements.orderStatusFilter.addEventListener('change', filterOrders);
             }
 
-            // Notification events
-            if (elements.closeNotification) {
-                elements.closeNotification.addEventListener('click', hideNotification);
-            }
+            // Modals
+            elements.closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', closeAllModals);
+            });
             
-            if (elements.acceptOrderBtn) {
-                elements.acceptOrderBtn.addEventListener('click', acceptOrderFromNotification);
-            }
-            
-            if (elements.viewOrderBtn) {
-                elements.viewOrderBtn.addEventListener('click', viewOrderFromNotification);
-            }
-            
-            if (elements.soundToggle) {
-                elements.soundToggle.addEventListener('click', toggleSound);
+            if (elements.overlay) {
+                elements.overlay.addEventListener('click', closeAllModals);
             }
 
             // Event delegation for dynamic elements
@@ -1494,16 +1474,6 @@
                     const orderId = button.dataset.id;
                     const status = button.dataset.status;
                     updateOrderStatus(orderId, status);
-                }
-            });
-
-            // Close notification when clicking outside
-            document.addEventListener('click', function(e) {
-                const notification = document.getElementById('newOrderNotification');
-                if (notification && !notification.contains(e.target) && 
-                    !e.target.closest('.sound-controls') && 
-                    notification.classList.contains('show')) {
-                    hideNotification();
                 }
             });
         }
@@ -1545,8 +1515,8 @@
 
         // Initialize default data
         function initializeDefaultData() {
-            managerState.menuItems = [];
-            managerState.orders = [...sampleOrders];
+            managerState.menuItems = [...completeMenuData];
+            managerState.orders = [];
             managerState.customers = [];
             managerState.promotions = [];
             managerState.settings = {
@@ -1556,8 +1526,7 @@
                 notificationSound: true,
                 autoRefresh: true
             };
-            managerState.orderCounter = sampleOrders.length + 1;
-            managerState.soundEnabled = true;
+            managerState.orderCounter = 1;
 
             saveManagerData();
         }
@@ -1568,6 +1537,7 @@
                 localStorage.setItem('wizaManagerData', JSON.stringify(managerState));
             } catch (error) {
                 console.error('Error saving data:', error);
+                showNotification('Error saving data. Storage might be full.', 'error');
             }
         }
 
@@ -1612,6 +1582,7 @@
             if (elements.readyOrders) elements.readyOrders.textContent = stats.readyOrders;
             if (elements.pendingOrdersCount) elements.pendingOrdersCount.textContent = stats.pendingOrders;
 
+            updateOrderStatusCounts();
             updateRecentActivity();
         }
 
@@ -1625,11 +1596,37 @@
             return {
                 totalRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0),
                 totalOrders: todayOrders.length,
-                activeCustomers: 24, // Sample data
+                activeCustomers: managerState.customers.filter(c => c.status === 'active').length,
                 pendingOrders: managerState.orders.filter(o => o.status === 'pending').length,
                 readyOrders: managerState.orders.filter(o => o.status === 'ready').length,
                 outForDelivery: managerState.orders.filter(o => o.status === 'out-for-delivery').length
             };
+        }
+
+        // Update order status counts
+        function updateOrderStatusCounts() {
+            const stats = calculateDashboardStats();
+            
+            if (elements.orderStatusCounts) {
+                elements.orderStatusCounts.innerHTML = `
+                    <div class="status-count">
+                        <span class="count">${stats.pendingOrders}</span>
+                        <span class="label">Pending</span>
+                    </div>
+                    <div class="status-count">
+                        <span class="count">${managerState.orders.filter(o => o.status === 'preparing').length}</span>
+                        <span class="label">Preparing</span>
+                    </div>
+                    <div class="status-count">
+                        <span class="count">${stats.readyOrders}</span>
+                        <span class="label">Ready</span>
+                    </div>
+                    <div class="status-count">
+                        <span class="count">${stats.outForDelivery}</span>
+                        <span class="label">Out for Delivery</span>
+                    </div>
+                `;
+            }
         }
 
         // Update recent activity
@@ -1664,6 +1661,14 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        // Update pending orders count
+        function updatePendingOrdersCount() {
+            const pendingCount = managerState.orders.filter(order => order.status === 'pending').length;
+            if (elements.pendingOrdersCount) {
+                elements.pendingOrdersCount.textContent = pendingCount;
+            }
         }
 
         // Load orders
@@ -1808,96 +1813,120 @@
             const order = managerState.orders.find(o => o.id == orderId);
             if (!order) return;
 
-            // For demo, we'll just show an alert
-            alert(`Order Details for ${order.ref}\nCustomer: ${order.customer.name}\nTotal: K${order.total}\nStatus: ${order.status}`);
-        }
-
-        // Update order status
-        function updateOrderStatus(orderId, newStatus) {
-            const order = managerState.orders.find(o => o.id == orderId);
-            if (order) {
-                const oldStatus = order.status;
-                order.status = newStatus;
-                order.statusUpdated = new Date().toISOString();
-                
-                saveManagerData();
-                loadOrders();
-                updateDashboard();
-                
-                showNotification(`Order ${order.ref} status updated from ${oldStatus} to ${newStatus}`, 'success');
-            }
-        }
-
-        // Update UI when new order is received
-        function updateUIForNewOrder(order) {
-            // Update dashboard if visible
-            updateDashboard();
+            if (!elements.orderDetailsModal || !elements.orderDetailsContent) return;
             
-            // Update orders list if visible
-            if (managerState.currentSection === 'orders') {
-                loadOrders();
-            }
-            
-            // Update pending orders count in navigation
-            updatePendingOrdersCount();
-            
-            // Show visual indicator
-            showNewOrderIndicator();
-        }
+            elements.orderDetailsContent.innerHTML = `
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-info-circle"></i> Order Information</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label><i class="fas fa-hashtag"></i> Order Reference:</label>
+                            <span>${order.ref}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-calendar"></i> Order Date:</label>
+                            <span>${new Date(order.date).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-flag"></i> Status:</label>
+                            <span class="status status-${order.status}">${order.status}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-shipping-fast"></i> Delivery Method:</label>
+                            <span>${order.delivery ? 'Delivery' : 'Self Pickup'}</span>
+                        </div>
+                    </div>
+                </div>
 
-        // Show new order indicator
-        function showNewOrderIndicator() {
-            const indicator = document.createElement('div');
-            indicator.id = 'newOrderIndicator';
-            indicator.className = 'new-order-indicator';
-            indicator.innerHTML = '🆕 New Order!';
-            indicator.style.cssText = `
-                position: fixed;
-                top: 100px;
-                right: 20px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 10px 15px;
-                border-radius: 5px;
-                z-index: 9999;
-                animation: slideIn 0.5s ease-out;
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-user"></i> Customer Information</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label><i class="fas fa-user"></i> Name:</label>
+                            <span>${order.customer.name}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-envelope"></i> Email:</label>
+                            <span>${order.customer.email}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-phone"></i> Phone:</label>
+                            <span>${order.customer.phone}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-utensils"></i> Order Items</h4>
+                    <div class="order-items-detailed">
+                        ${order.items.map(item => `
+                            <div class="order-item-detailed">
+                                <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-image">
+                                <div class="item-details">
+                                    <h5>${item.name}</h5>
+                                    <p class="item-price">K${item.price} × ${item.quantity} = K${(item.price * item.quantity).toFixed(2)}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-money-bill-wave"></i> Payment Information</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Subtotal:</label>
+                            <span>K${order.subtotal.toFixed(2)}</span>
+                        </div>
+                        ${order.delivery ? `
+                        <div class="detail-item">
+                            <label>Delivery Fee:</label>
+                            <span>K${order.deliveryFee.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item">
+                            <label>Service Fee:</label>
+                            <span>K${order.serviceFee.toFixed(2)}</span>
+                        </div>
+                        ${order.discount > 0 ? `
+                        <div class="detail-item discount">
+                            <label>Discount (${order.promoCode}):</label>
+                            <span>-K${order.discount.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item total">
+                            <label>Total Amount:</label>
+                            <span>K${order.total.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Payment Method:</label>
+                            <span>${order.paymentMethod || 'Airtel Money'}</span>
+                        </div>
+                    </div>
+                </div>
             `;
-            
-            document.body.appendChild(indicator);
-            
-            // Remove after 3 seconds
-            setTimeout(() => {
-                if (indicator.parentNode) {
-                    indicator.style.animation = 'slideOut 0.5s ease-in';
-                    setTimeout(() => {
-                        if (indicator.parentNode) {
-                            indicator.remove();
-                        }
-                    }, 500);
-                }
-            }, 3000);
+
+            showModal(elements.orderDetailsModal);
         }
 
-        // Update connection status in UI
-        function updateConnectionStatus(connected) {
-            const statusElement = document.getElementById('connectionStatus');
-            if (!statusElement) return;
-            
-            if (connected) {
-                statusElement.innerHTML = '<i class="fas fa-wifi"></i><span>Connected</span>';
-                statusElement.className = 'connection-status connected';
-            } else {
-                statusElement.innerHTML = '<i class="fas fa-wifi-slash"></i><span>Offline</span>';
-                statusElement.className = 'connection-status disconnected';
-            }
+        // Load full menu
+        function loadFullMenu(category = 'all') {
+            // Implementation for menu loading
         }
 
-        // Update pending orders count
-        function updatePendingOrdersCount() {
-            const pendingCount = managerState.orders.filter(order => order.status === 'pending').length;
-            if (elements.pendingOrdersCount) {
-                elements.pendingOrdersCount.textContent = pendingCount;
-            }
+        // Load customers
+        function loadCustomers() {
+            // Implementation for customer loading
+        }
+
+        // Load promotions
+        function loadPromotions() {
+            // Implementation for promotion loading
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Implementation for chart initialization
         }
 
         // Start auto-refresh
@@ -1917,6 +1946,33 @@
             }
         }
 
+        // Show modal
+        function showModal(modal) {
+            if (!modal) return;
+            
+            modal.classList.add('active');
+            if (elements.overlay) {
+                elements.overlay.classList.add('active');
+            }
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Hide modal
+        function hideModal(modal) {
+            if (!modal) return;
+            
+            modal.classList.remove('active');
+            if (elements.overlay) {
+                elements.overlay.classList.remove('active');
+            }
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close all modals
+        function closeAllModals() {
+            elements.modals.forEach(modal => hideModal(modal));
+        }
+
         // Show notification
         function showNotification(message, type = 'info') {
             // Remove existing notification
@@ -1934,29 +1990,14 @@
                 </div>
             `;
             
-            // Add styles for notification
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};
-                color: white;
-                padding: 15px 20px;
-                border-radius: 5px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 10001;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                animation: slideIn 0.3s ease-out;
-            `;
-            
             document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => notification.classList.add('show'), 10);
             
             // Auto remove after 3 seconds
             setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease-in';
+                notification.classList.remove('show');
                 setTimeout(() => {
                     if (notification.parentNode) {
                         notification.remove();
@@ -1979,6 +2020,16 @@
         }
 
         // Utility functions
+        function generateId() {
+            const allIds = [
+                ...managerState.menuItems.map(item => item.id),
+                ...managerState.orders.map(order => order.id),
+                ...managerState.customers.map(customer => customer.id),
+                ...managerState.promotions.map(promo => promo.id)
+            ];
+            return allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+        }
+
         function getImagePath(imageName) {
             if (imageName.startsWith('http') || imageName.startsWith('/') || imageName.startsWith('./')) {
                 return imageName;
@@ -1986,12 +2037,48 @@
             return imageName;
         }
 
+        // Sample menu data
+        const completeMenuData = [
+            {
+                id: 1,
+                name: "Chicken & Chips (Wing)",
+                description: "Crispy chicken wings served with golden fries",
+                price: 35,
+                originalPrice: 40,
+                category: "quick-fills",
+                image: "Q1.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false,
+                discount: 12
+            },
+            {
+                id: 2,
+                name: "Chicken & Chips (Breast)",
+                description: "Juicy chicken breast with crispy fries",
+                price: 40,
+                category: "quick-fills",
+                image: "Q2.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false
+            },
+            {
+                id: 3,
+                name: "Shawarma",
+                description: "Delicious wrap with spiced meat and fresh vegetables",
+                price: 33,
+                category: "savory-bites",
+                image: "S1.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false
+            }
+        ];
+
         // Make functions globally available
         window.updateOrderStatus = updateOrderStatus;
-        window.hideNotification = hideNotification;
-        window.acceptOrderFromNotification = acceptOrderFromNotification;
-        window.viewOrderFromNotification = viewOrderFromNotification;
-        window.toggleSound = toggleSound;
+        window.closeAlert = closeAlert;
     </script>
 </body>
 </html>
