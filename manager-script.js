@@ -1308,12 +1308,42 @@ function openDirections(orderId) {
     window.open(url, '_blank');
 }
 
-function updateOrderStatus(orderId, newStatus) {
+// ENHANCED: Update order status with Firebase sync
+async function updateOrderStatus(orderId, newStatus) {
     const order = managerState.orders.find(o => o.id == orderId);
     if (order) {
         const oldStatus = order.status;
         order.status = newStatus;
         order.statusUpdated = new Date().toISOString();
+        
+        // Add timestamps for status changes
+        switch(newStatus) {
+            case 'preparing':
+                order.acceptedAt = new Date().toISOString();
+                break;
+            case 'ready':
+                order.readyAt = new Date().toISOString();
+                break;
+            case 'completed':
+                order.completedAt = new Date().toISOString();
+                break;
+        }
+        
+        // Update in Firebase
+        try {
+            const orderRef = db.ref(`orders/${order.firebaseKey || orderId}`);
+            await orderRef.update({
+                status: newStatus,
+                statusUpdated: order.statusUpdated,
+                ...(order.acceptedAt && { acceptedAt: order.acceptedAt }),
+                ...(order.readyAt && { readyAt: order.readyAt }),
+                ...(order.completedAt && { completedAt: order.completedAt })
+            });
+            console.log(`✅ Order ${order.ref} status updated in Firebase`);
+        } catch (error) {
+            console.error('❌ Error updating order status in Firebase:', error);
+        }
+        
         saveManagerData();
         loadOrders();
         updateDashboard();
@@ -2082,3 +2112,4 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
+
