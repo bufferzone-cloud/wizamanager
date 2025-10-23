@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WIZA FOOD CAFE - Manager Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="manager-styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Add Leaflet CSS and JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    
+    <link rel="stylesheet" href="manager-styles.css">
 </head>
 <body>
     <!-- Manager Header -->
@@ -21,6 +26,10 @@
                 <h1>WIZA FOOD CAFE - Manager</h1>
             </div>
             <div class="header-actions">
+                <div class="connection-status" id="connectionStatus">
+                    <i class="fas fa-wifi"></i>
+                    <span>Connecting...</span>
+                </div>
                 <div class="manager-info">
                     <span class="manager-name">Admin Manager</span>
                     <button class="logout-btn" id="logoutBtn">
@@ -80,6 +89,15 @@
                         <option value="month">This Month</option>
                         <option value="custom">Custom Range</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Real-time Orders Alert -->
+            <div class="realtime-alert" id="realtimeAlert" style="display: none;">
+                <div class="alert-content">
+                    <i class="fas fa-bell"></i>
+                    <span id="alertMessage">New order received!</span>
+                    <button class="alert-close" onclick="closeAlert()">&times;</button>
                 </div>
             </div>
 
@@ -892,6 +910,23 @@
         </div>
     </div>
 
+    <!-- New Order Notification Modal -->
+    <div class="modal" id="newOrderNotificationModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>🆕 New Order Received!</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="notification-content" id="newOrderNotificationContent">
+                <!-- New order details will be populated here -->
+            </div>
+            <div class="notification-actions">
+                <button class="btn-success" id="acceptNewOrderBtn">Accept Order</button>
+                <button class="btn-secondary" id="viewNewOrderBtn">View Details</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Customer Details Modal -->
     <div class="modal" id="customerDetailsModal">
         <div class="modal-content large">
@@ -937,12 +972,1113 @@
 
     <!-- Overlay -->
     <div class="overlay"></div>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-  import { getDatabase } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-</script>
-    <script src="manager-script.js"></script>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZEqWRAHW0tW6j0WfBf8lxj61oExa6BwY",
+            authDomain: "wizafoodcafe.firebaseapp.com",
+            databaseURL: "https://wizafoodcafe-default-rtdb.firebaseio.com",
+            projectId: "wizafoodcafe",
+            storageBucket: "wizafoodcafe.firebasestorage.app",
+            messagingSenderId: "248334218737",
+            appId: "1:248334218737:web:94fabd0bbdf75bb8410050"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
+
+        // Manager App State
+        const managerState = {
+            currentSection: 'dashboard',
+            menuItems: [],
+            orders: [],
+            customers: [],
+            promotions: [],
+            analytics: {},
+            settings: {
+                appOnline: true,
+                acceptOrders: true,
+                deliveryEnabled: true,
+                notificationSound: true,
+                autoRefresh: true
+            },
+            restaurantLocation: [-15.402235977316481, 28.329942522202668],
+            orderCounter: 1,
+            currentNewOrder: null
+        };
+
+        // DOM Elements
+        let elements = {};
+
+        // Notification variables
+        let newOrderNotification = null;
+        let notificationSound = null;
+        let isNotificationActive = false;
+
+        // Auto-refresh interval
+        let autoRefreshInterval = null;
+        const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
+
+        // Initialize Manager App
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeManagerApp();
+        });
+
+        function initializeManagerApp() {
+            initializeElements();
+            setupEventListeners();
+            loadManagerData();
+            setupFirebaseListeners();
+            startAutoRefresh();
+            
+            // Initialize sections
+            updateDashboard();
+            loadFullMenu();
+            loadOrders();
+            loadCustomers();
+            loadPromotions();
+            initializeCharts();
+            
+            // Initialize notification sound
+            createNotificationSound();
+            
+            showNotification('Manager dashboard loaded successfully!', 'success');
+        }
+
+        // ENHANCED: Firebase Real-time Listeners
+        function setupFirebaseListeners() {
+            console.log("📡 Setting up Firebase real-time listeners...");
+            
+            // Listen for new orders
+            const ordersRef = db.ref("orders");
+            
+            ordersRef.on('child_added', (snapshot) => {
+                const newOrder = snapshot.val();
+                const orderKey = snapshot.key;
+                
+                console.log("🆕 New order received from Firebase:", newOrder);
+                
+                if (newOrder && !orderExists(newOrder.id)) {
+                    // Add Firebase key to order
+                    newOrder.firebaseKey = orderKey;
+                    
+                    // Process the new order
+                    processNewOrder(newOrder);
+                }
+            });
+
+            // Listen for order updates
+            ordersRef.on('child_changed', (snapshot) => {
+                const updatedOrder = snapshot.val();
+                const orderKey = snapshot.key;
+                updatedOrder.firebaseKey = orderKey;
+                
+                console.log("🔄 Order updated:", updatedOrder);
+                
+                // Update the order in the manager state
+                updateExistingOrder(updatedOrder);
+            });
+
+            // Listen for order removals
+            ordersRef.on('child_removed', (snapshot) => {
+                const removedOrder = snapshot.val();
+                console.log("🗑️ Order removed:", removedOrder);
+                
+                // Remove order from local state
+                removeOrderFromState(removedOrder.id);
+            });
+
+            // Handle connection state
+            const connectedRef = db.ref(".info/connected");
+            connectedRef.on("value", (snap) => {
+                if (snap.val() === true) {
+                    console.log("✅ Firebase Realtime Database connected");
+                    updateConnectionStatus(true);
+                } else {
+                    console.log("❌ Firebase Realtime Database disconnected");
+                    updateConnectionStatus(false);
+                }
+            });
+        }
+
+        // Check if order already exists
+        function orderExists(orderId) {
+            return managerState.orders.some(order => order.id === orderId || order.firebaseKey === orderId);
+        }
+
+        // Process new order from Firebase
+        function processNewOrder(order) {
+            // Validate and enhance order data
+            const enhancedOrder = validateAndEnhanceOrder(order);
+            
+            // Add to orders array at the beginning
+            managerState.orders.unshift(enhancedOrder);
+            
+            // Update order counter
+            if (enhancedOrder.id && enhancedOrder.id >= managerState.orderCounter) {
+                managerState.orderCounter = enhancedOrder.id + 1;
+            }
+            
+            // Save data immediately
+            saveManagerData();
+            
+            // Update UI in real-time
+            updateUIForNewOrder(enhancedOrder);
+            
+            // Show notification
+            if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
+                showNewOrderNotification(enhancedOrder);
+            }
+            
+            console.log('✅ New order processed successfully:', enhancedOrder.ref);
+        }
+
+        // Update existing order
+        function updateExistingOrder(updatedOrder) {
+            const orderIndex = managerState.orders.findIndex(o => 
+                o.id === updatedOrder.id || o.firebaseKey === updatedOrder.firebaseKey
+            );
+            
+            if (orderIndex !== -1) {
+                managerState.orders[orderIndex] = {
+                    ...managerState.orders[orderIndex],
+                    ...updatedOrder
+                };
+                
+                saveManagerData();
+                updateUIForOrderUpdate(updatedOrder);
+                
+                console.log(`✅ Order ${updatedOrder.ref} updated in local state`);
+            }
+        }
+
+        // Remove order from state
+        function removeOrderFromState(orderId) {
+            managerState.orders = managerState.orders.filter(order => 
+                order.id !== orderId && order.firebaseKey !== orderId
+            );
+            
+            saveManagerData();
+            updateDashboard();
+            loadOrders();
+            
+            console.log(`🗑️ Order ${orderId} removed from local state`);
+        }
+
+        // Validate and enhance incoming orders
+        function validateAndEnhanceOrder(order) {
+            const now = new Date().toISOString();
+            
+            return {
+                id: order.id || generateId(),
+                ref: order.ref || `WIZA${(order.id || generateId()).toString().padStart(4, '0')}`,
+                items: order.items || [],
+                subtotal: order.subtotal || 0,
+                deliveryFee: order.deliveryFee || 0,
+                serviceFee: order.serviceFee || 0,
+                discount: order.discount || 0,
+                total: order.total || 0,
+                status: order.status || 'pending',
+                date: order.date || now,
+                delivery: order.delivery || false,
+                deliveryLocation: order.deliveryLocation || null,
+                customer: order.customer || { 
+                    name: 'Unknown Customer', 
+                    email: '', 
+                    phone: '' 
+                },
+                promoCode: order.promoCode || null,
+                paymentMethod: order.paymentMethod || 'Airtel Money',
+                paymentScreenshot: order.paymentScreenshot || null,
+                timestamp: order.timestamp || now,
+                statusUpdated: order.statusUpdated || now,
+                firebaseKey: order.firebaseKey,
+                
+                // Enhanced fields
+                itemsDetailed: order.itemsDetailed || (order.items ? order.items.map(item => ({
+                    ...item,
+                    description: item.description || 'Delicious food item',
+                    image: item.image || 'default-food.jpg'
+                })) : [])
+            };
+        }
+
+        // Update connection status in UI
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (!statusElement) return;
+            
+            if (connected) {
+                statusElement.innerHTML = '<i class="fas fa-wifi"></i><span>Connected</span>';
+                statusElement.className = 'connection-status connected';
+            } else {
+                statusElement.innerHTML = '<i class="fas fa-wifi-slash"></i><span>Offline</span>';
+                statusElement.className = 'connection-status disconnected';
+            }
+        }
+
+        // Update UI when new order is received
+        function updateUIForNewOrder(order) {
+            // Update dashboard if visible
+            updateDashboard();
+            
+            // Update orders list if visible
+            if (managerState.currentSection === 'orders') {
+                loadOrders();
+            }
+            
+            // Update pending orders count in navigation
+            updatePendingOrdersCount();
+            
+            // Show visual indicator
+            showNewOrderIndicator();
+        }
+
+        // Update UI when order is updated
+        function updateUIForOrderUpdate(order) {
+            // Update dashboard
+            updateDashboard();
+            
+            // Update orders list if visible
+            if (managerState.currentSection === 'orders') {
+                loadOrders();
+            }
+            
+            // Update pending orders count
+            updatePendingOrdersCount();
+        }
+
+        // Show new order indicator
+        function showNewOrderIndicator() {
+            const indicator = document.createElement('div');
+            indicator.id = 'newOrderIndicator';
+            indicator.className = 'new-order-indicator';
+            indicator.innerHTML = '🆕 New Order!';
+            document.body.appendChild(indicator);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.remove();
+                }
+            }, 3000);
+        }
+
+        // ENHANCED: Show new order notification
+        function showNewOrderNotification(order) {
+            if (!managerState.settings.notificationSound) return;
+            
+            isNotificationActive = true;
+            managerState.currentNewOrder = order;
+            
+            // Play notification sound
+            playNotificationSound();
+            
+            // Show browser notification if supported
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('WIZA FOOD CAFE - New Order!', {
+                    body: `Order ${order.ref} from ${order.customer.name}`,
+                    icon: 'wfc.png',
+                    tag: 'new-order'
+                });
+            }
+            
+            // Show in-app notification
+            showInAppOrderNotification(order);
+        }
+
+        // Show in-app order notification
+        function showInAppOrderNotification(order) {
+            const alertElement = document.getElementById('realtimeAlert');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            if (alertElement && alertMessage) {
+                alertMessage.textContent = `New order #${order.ref} from ${order.customer.name} - K${order.total.toFixed(2)}`;
+                alertElement.style.display = 'block';
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    if (alertElement.style.display !== 'none') {
+                        closeAlert();
+                    }
+                }, 10000);
+            }
+        }
+
+        // Close alert
+        function closeAlert() {
+            const alertElement = document.getElementById('realtimeAlert');
+            if (alertElement) {
+                alertElement.style.display = 'none';
+            }
+        }
+
+        // Play notification sound
+        function playNotificationSound() {
+            if (notificationSound && managerState.settings.notificationSound) {
+                notificationSound.currentTime = 0;
+                notificationSound.play().catch(error => {
+                    console.log('Notification sound play failed:', error);
+                });
+            }
+        }
+
+        // Create notification sound
+        function createNotificationSound() {
+            try {
+                // Create a simple notification sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+                
+            } catch (error) {
+                console.error('Error creating notification sound:', error);
+            }
+        }
+
+        // ENHANCED: Update order status with Firebase sync
+        async function updateOrderStatus(orderId, newStatus) {
+            const order = managerState.orders.find(o => o.id == orderId || o.firebaseKey === orderId);
+            if (order) {
+                const oldStatus = order.status;
+                order.status = newStatus;
+                order.statusUpdated = new Date().toISOString();
+                
+                // Add timestamps for status changes
+                const statusTimestamps = {};
+                switch(newStatus) {
+                    case 'preparing':
+                        statusTimestamps.acceptedAt = new Date().toISOString();
+                        break;
+                    case 'ready':
+                        statusTimestamps.readyAt = new Date().toISOString();
+                        break;
+                    case 'completed':
+                        statusTimestamps.completedAt = new Date().toISOString();
+                        break;
+                    case 'cancelled':
+                        statusTimestamps.cancelledAt = new Date().toISOString();
+                        break;
+                }
+                
+                // Update in Firebase
+                try {
+                    if (order.firebaseKey) {
+                        const orderRef = db.ref(`orders/${order.firebaseKey}`);
+                        await orderRef.update({
+                            status: newStatus,
+                            statusUpdated: order.statusUpdated,
+                            ...statusTimestamps
+                        });
+                        console.log(`✅ Order ${order.ref} status updated in Firebase`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error updating order status in Firebase:', error);
+                    showNotification('Error updating order status in cloud', 'error');
+                }
+                
+                saveManagerData();
+                loadOrders();
+                updateDashboard();
+                
+                showNotification(`Order ${order.ref} status updated from ${oldStatus} to ${newStatus}`, 'success');
+            }
+        }
+
+        // Initialize DOM elements
+        function initializeElements() {
+            elements = {
+                // Navigation
+                navItems: document.querySelectorAll('.nav-item'),
+                logoutBtn: document.getElementById('logoutBtn'),
+                
+                // Dashboard
+                totalRevenue: document.getElementById('totalRevenue'),
+                totalOrders: document.getElementById('totalOrders'),
+                activeCustomers: document.getElementById('activeCustomers'),
+                pendingOrders: document.getElementById('pendingOrders'),
+                readyOrders: document.getElementById('readyOrders'),
+                pendingOrdersCount: document.getElementById('pendingOrdersCount'),
+                orderStatusCounts: document.getElementById('orderStatusCounts'),
+                recentActivity: document.getElementById('recentActivity'),
+                
+                // Orders
+                ordersList: document.getElementById('ordersList'),
+                orderStatusFilter: document.getElementById('orderStatusFilter'),
+                
+                // Modals
+                modals: document.querySelectorAll('.modal'),
+                closeModalBtns: document.querySelectorAll('.close-modal'),
+                overlay: document.querySelector('.overlay'),
+                orderDetailsModal: document.getElementById('orderDetailsModal'),
+                orderDetailsContent: document.querySelector('.order-details-content'),
+                
+                // Add other elements as needed...
+            };
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Navigation
+            elements.navItems.forEach(item => {
+                item.addEventListener('click', () => navigateToSection(item.dataset.section));
+            });
+
+            // Logout
+            if (elements.logoutBtn) {
+                elements.logoutBtn.addEventListener('click', logout);
+            }
+
+            // Order status filter
+            if (elements.orderStatusFilter) {
+                elements.orderStatusFilter.addEventListener('change', filterOrders);
+            }
+
+            // Modals
+            elements.closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', closeAllModals);
+            });
+            
+            if (elements.overlay) {
+                elements.overlay.addEventListener('click', closeAllModals);
+            }
+
+            // Event delegation for dynamic elements
+            document.addEventListener('click', function(e) {
+                // View order details
+                if (e.target.closest('.view-order-btn')) {
+                    const button = e.target.closest('.view-order-btn');
+                    const orderId = button.dataset.id;
+                    viewOrderDetails(orderId);
+                }
+                
+                // Update order status
+                if (e.target.closest('.status-btn')) {
+                    const button = e.target.closest('.status-btn');
+                    const orderId = button.dataset.id;
+                    const status = button.dataset.status;
+                    updateOrderStatus(orderId, status);
+                }
+            });
+        }
+
+        // Load manager data from localStorage
+        function loadManagerData() {
+            const savedData = localStorage.getItem('wizaManagerData');
+            
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    Object.assign(managerState, data);
+                    
+                    // Initialize settings if not present
+                    if (!managerState.settings) {
+                        managerState.settings = {
+                            appOnline: true,
+                            acceptOrders: true,
+                            deliveryEnabled: true,
+                            notificationSound: true,
+                            autoRefresh: true
+                        };
+                    }
+                    
+                    // Initialize order counter if not present
+                    if (!managerState.orderCounter) {
+                        managerState.orderCounter = managerState.orders.length > 0 ? 
+                            Math.max(...managerState.orders.map(o => o.id)) + 1 : 1;
+                    }
+                    
+                } catch (e) {
+                    console.error('Error parsing saved data:', e);
+                    initializeDefaultData();
+                }
+            } else {
+                initializeDefaultData();
+            }
+        }
+
+        // Initialize default data
+        function initializeDefaultData() {
+            managerState.menuItems = [...completeMenuData];
+            managerState.orders = [];
+            managerState.customers = [];
+            managerState.promotions = [];
+            managerState.settings = {
+                appOnline: true,
+                acceptOrders: true,
+                deliveryEnabled: true,
+                notificationSound: true,
+                autoRefresh: true
+            };
+            managerState.orderCounter = 1;
+
+            saveManagerData();
+        }
+
+        // Save manager data to localStorage
+        function saveManagerData() {
+            try {
+                localStorage.setItem('wizaManagerData', JSON.stringify(managerState));
+            } catch (error) {
+                console.error('Error saving data:', error);
+                showNotification('Error saving data. Storage might be full.', 'error');
+            }
+        }
+
+        // Navigate to section
+        function navigateToSection(section) {
+            // Update navigation
+            elements.navItems.forEach(item => item.classList.remove('active'));
+            const activeNavItem = document.querySelector(`[data-section="${section}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+
+            // Update content
+            document.querySelectorAll('.content-section').forEach(contentSection => contentSection.classList.remove('active'));
+            const activeSection = document.getElementById(section);
+            if (activeSection) {
+                activeSection.classList.add('active');
+            }
+
+            managerState.currentSection = section;
+
+            // Refresh section data
+            switch(section) {
+                case 'dashboard':
+                    updateDashboard();
+                    break;
+                case 'orders':
+                    loadOrders();
+                    break;
+            }
+        }
+
+        // Update dashboard
+        function updateDashboard() {
+            const stats = calculateDashboardStats();
+            
+            // Update main stats
+            if (elements.totalRevenue) elements.totalRevenue.textContent = `K${stats.totalRevenue.toFixed(2)}`;
+            if (elements.totalOrders) elements.totalOrders.textContent = stats.totalOrders;
+            if (elements.activeCustomers) elements.activeCustomers.textContent = stats.activeCustomers;
+            if (elements.pendingOrders) elements.pendingOrders.textContent = stats.pendingOrders;
+            if (elements.readyOrders) elements.readyOrders.textContent = stats.readyOrders;
+            if (elements.pendingOrdersCount) elements.pendingOrdersCount.textContent = stats.pendingOrders;
+
+            updateOrderStatusCounts();
+            updateRecentActivity();
+        }
+
+        // Calculate dashboard stats
+        function calculateDashboardStats() {
+            const today = new Date().toDateString();
+            const todayOrders = managerState.orders.filter(order => 
+                new Date(order.date).toDateString() === today
+            );
+            
+            return {
+                totalRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0),
+                totalOrders: todayOrders.length,
+                activeCustomers: managerState.customers.filter(c => c.status === 'active').length,
+                pendingOrders: managerState.orders.filter(o => o.status === 'pending').length,
+                readyOrders: managerState.orders.filter(o => o.status === 'ready').length,
+                outForDelivery: managerState.orders.filter(o => o.status === 'out-for-delivery').length
+            };
+        }
+
+        // Update order status counts
+        function updateOrderStatusCounts() {
+            const stats = calculateDashboardStats();
+            
+            if (elements.orderStatusCounts) {
+                elements.orderStatusCounts.innerHTML = `
+                    <div class="status-count">
+                        <span class="count">${stats.pendingOrders}</span>
+                        <span class="label">Pending</span>
+                    </div>
+                    <div class="status-count">
+                        <span class="count">${managerState.orders.filter(o => o.status === 'preparing').length}</span>
+                        <span class="label">Preparing</span>
+                    </div>
+                    <div class="status-count">
+                        <span class="count">${stats.readyOrders}</span>
+                        <span class="label">Ready</span>
+                    </div>
+                    <div class="status-count">
+                        <span class="count">${stats.outForDelivery}</span>
+                        <span class="label">Out for Delivery</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Update recent activity
+        function updateRecentActivity() {
+            if (!elements.recentActivity) return;
+
+            const recentOrders = managerState.orders
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+
+            if (recentOrders.length === 0) {
+                elements.recentActivity.innerHTML = `
+                    <div class="no-activity">
+                        <i class="fas fa-clock"></i>
+                        <p>No recent activity</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.recentActivity.innerHTML = recentOrders.map(order => `
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="activity-content">
+                        <p><strong>Order ${order.ref}</strong> - ${order.customer.name}</p>
+                        <p class="activity-time">${new Date(order.date).toLocaleString()}</p>
+                    </div>
+                    <div class="activity-status status-${order.status}">
+                        ${order.status}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update pending orders count
+        function updatePendingOrdersCount() {
+            const pendingCount = managerState.orders.filter(order => order.status === 'pending').length;
+            if (elements.pendingOrdersCount) {
+                elements.pendingOrdersCount.textContent = pendingCount;
+            }
+        }
+
+        // Load orders
+        function loadOrders() {
+            if (!elements.ordersList) return;
+
+            const statusFilter = elements.orderStatusFilter ? elements.orderStatusFilter.value : 'all';
+            let filteredOrders = managerState.orders;
+
+            if (statusFilter !== 'all') {
+                filteredOrders = managerState.orders.filter(order => order.status === statusFilter);
+            }
+
+            filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filteredOrders.length === 0) {
+                elements.ordersList.innerHTML = `
+                    <div class="no-orders">
+                        <i class="fas fa-shopping-cart fa-3x"></i>
+                        <h3>No Orders Found</h3>
+                        <p>${statusFilter === 'all' ? 'No orders have been placed yet.' : `No ${statusFilter} orders found.`}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.ordersList.innerHTML = filteredOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-info">
+                            <h4>Order ${order.ref}</h4>
+                            <p class="order-customer">
+                                <i class="fas fa-user"></i> ${order.customer.name} • 
+                                <i class="fas fa-phone"></i> ${order.customer.phone}
+                            </p>
+                            <p class="order-time">
+                                <i class="fas fa-clock"></i> ${new Date(order.date).toLocaleString()}
+                            </p>
+                        </div>
+                        <div class="order-status-container">
+                            <span class="order-status status-${order.status}">
+                                <i class="fas fa-${getStatusIcon(order.status)}"></i> ${order.status}
+                            </span>
+                            <p class="order-total-amount">K${order.total.toFixed(2)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="order-items-preview">
+                        ${order.items.slice(0, 2).map(item => `
+                            <div class="order-item-preview">
+                                <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-preview-image">
+                                <span>${item.quantity}x ${item.name}</span>
+                            </div>
+                        `).join('')}
+                        ${order.items.length > 2 ? `<div class="more-items">+${order.items.length - 2} more items</div>` : ''}
+                    </div>
+
+                    <div class="order-actions">
+                        <button class="btn-primary view-order-btn" data-id="${order.id}">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                        
+                        ${getStatusButtons(order)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Get status buttons based on order status
+        function getStatusButtons(order) {
+            const status = order.status;
+            let buttons = '';
+            
+            switch(status) {
+                case 'pending':
+                    buttons = `
+                        <button class="btn-success status-btn" data-id="${order.id}" data-status="preparing">
+                            <i class="fas fa-check"></i> Accept
+                        </button>
+                        <button class="btn-danger status-btn" data-id="${order.id}" data-status="cancelled">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    `;
+                    break;
+                    
+                case 'preparing':
+                    buttons = `
+                        <button class="btn-warning status-btn" data-id="${order.id}" data-status="ready">
+                            <i class="fas fa-check-double"></i> Mark Ready
+                        </button>
+                    `;
+                    break;
+                    
+                case 'ready':
+                    if (order.delivery) {
+                        buttons = `
+                            <button class="btn-info status-btn" data-id="${order.id}" data-status="out-for-delivery">
+                                <i class="fas fa-truck"></i> Out for Delivery
+                            </button>
+                        `;
+                    } else {
+                        buttons = `
+                            <button class="btn-success status-btn" data-id="${order.id}" data-status="completed">
+                                <i class="fas fa-check-circle"></i> Complete
+                            </button>
+                        `;
+                    }
+                    break;
+                    
+                case 'out-for-delivery':
+                    buttons = `
+                        <button class="btn-success status-btn" data-id="${order.id}" data-status="completed">
+                            <i class="fas fa-check-circle"></i> Delivered
+                        </button>
+                    `;
+                    break;
+            }
+            
+            return buttons;
+        }
+
+        // Get status icon
+        function getStatusIcon(status) {
+            const icons = {
+                'pending': 'clock',
+                'preparing': 'utensils',
+                'ready': 'check-circle',
+                'out-for-delivery': 'truck',
+                'completed': 'check-double',
+                'cancelled': 'times-circle'
+            };
+            return icons[status] || 'question';
+        }
+
+        // Filter orders
+        function filterOrders() {
+            loadOrders();
+        }
+
+        // View order details
+        function viewOrderDetails(orderId) {
+            const order = managerState.orders.find(o => o.id == orderId);
+            if (!order) return;
+
+            if (!elements.orderDetailsModal || !elements.orderDetailsContent) return;
+            
+            elements.orderDetailsContent.innerHTML = `
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-info-circle"></i> Order Information</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label><i class="fas fa-hashtag"></i> Order Reference:</label>
+                            <span>${order.ref}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-calendar"></i> Order Date:</label>
+                            <span>${new Date(order.date).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-flag"></i> Status:</label>
+                            <span class="status status-${order.status}">${order.status}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-shipping-fast"></i> Delivery Method:</label>
+                            <span>${order.delivery ? 'Delivery' : 'Self Pickup'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-user"></i> Customer Information</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label><i class="fas fa-user"></i> Name:</label>
+                            <span>${order.customer.name}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-envelope"></i> Email:</label>
+                            <span>${order.customer.email}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-phone"></i> Phone:</label>
+                            <span>${order.customer.phone}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-utensils"></i> Order Items</h4>
+                    <div class="order-items-detailed">
+                        ${order.items.map(item => `
+                            <div class="order-item-detailed">
+                                <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-image">
+                                <div class="item-details">
+                                    <h5>${item.name}</h5>
+                                    <p class="item-price">K${item.price} × ${item.quantity} = K${(item.price * item.quantity).toFixed(2)}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-money-bill-wave"></i> Payment Information</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Subtotal:</label>
+                            <span>K${order.subtotal.toFixed(2)}</span>
+                        </div>
+                        ${order.delivery ? `
+                        <div class="detail-item">
+                            <label>Delivery Fee:</label>
+                            <span>K${order.deliveryFee.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item">
+                            <label>Service Fee:</label>
+                            <span>K${order.serviceFee.toFixed(2)}</span>
+                        </div>
+                        ${order.discount > 0 ? `
+                        <div class="detail-item discount">
+                            <label>Discount (${order.promoCode}):</label>
+                            <span>-K${order.discount.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item total">
+                            <label>Total Amount:</label>
+                            <span>K${order.total.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Payment Method:</label>
+                            <span>${order.paymentMethod || 'Airtel Money'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showModal(elements.orderDetailsModal);
+        }
+
+        // Load full menu
+        function loadFullMenu(category = 'all') {
+            // Implementation for menu loading
+        }
+
+        // Load customers
+        function loadCustomers() {
+            // Implementation for customer loading
+        }
+
+        // Load promotions
+        function loadPromotions() {
+            // Implementation for promotion loading
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Implementation for chart initialization
+        }
+
+        // Start auto-refresh
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            if (managerState.settings.autoRefresh) {
+                autoRefreshInterval = setInterval(() => {
+                    updateDashboard();
+                    if (managerState.currentSection === 'orders') {
+                        loadOrders();
+                    }
+                    updatePendingOrdersCount();
+                }, AUTO_REFRESH_INTERVAL);
+            }
+        }
+
+        // Show modal
+        function showModal(modal) {
+            if (!modal) return;
+            
+            modal.classList.add('active');
+            if (elements.overlay) {
+                elements.overlay.classList.add('active');
+            }
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Hide modal
+        function hideModal(modal) {
+            if (!modal) return;
+            
+            modal.classList.remove('active');
+            if (elements.overlay) {
+                elements.overlay.classList.remove('active');
+            }
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close all modals
+        function closeAllModals() {
+            elements.modals.forEach(modal => hideModal(modal));
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Remove existing notification
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => notification.classList.add('show'), 10);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Clear any intervals
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                }
+                
+                // Redirect to login page or main site
+                window.location.href = 'https://bufferzone-cloud.github.io/wizafoodcafe/';
+            }
+        }
+
+        // Utility functions
+        function generateId() {
+            const allIds = [
+                ...managerState.menuItems.map(item => item.id),
+                ...managerState.orders.map(order => order.id),
+                ...managerState.customers.map(customer => customer.id),
+                ...managerState.promotions.map(promo => promo.id)
+            ];
+            return allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+        }
+
+        function getImagePath(imageName) {
+            if (imageName.startsWith('http') || imageName.startsWith('/') || imageName.startsWith('./')) {
+                return imageName;
+            }
+            return imageName;
+        }
+
+        // Sample menu data
+        const completeMenuData = [
+            {
+                id: 1,
+                name: "Chicken & Chips (Wing)",
+                description: "Crispy chicken wings served with golden fries",
+                price: 35,
+                originalPrice: 40,
+                category: "quick-fills",
+                image: "Q1.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false,
+                discount: 12
+            },
+            {
+                id: 2,
+                name: "Chicken & Chips (Breast)",
+                description: "Juicy chicken breast with crispy fries",
+                price: 40,
+                category: "quick-fills",
+                image: "Q2.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false
+            },
+            {
+                id: 3,
+                name: "Shawarma",
+                description: "Delicious wrap with spiced meat and fresh vegetables",
+                price: 33,
+                category: "savory-bites",
+                image: "S1.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false
+            }
+        ];
+
+        // Make functions globally available
+        window.updateOrderStatus = updateOrderStatus;
+        window.closeAlert = closeAlert;
+    </script>
 </body>
-
 </html>
-
