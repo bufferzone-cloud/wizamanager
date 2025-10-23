@@ -1954,3 +1954,23 @@ select:focus, input:focus, textarea:focus {
     background: var(--orange-dark);
     transform: scale(0.95);
 }
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #4CAF50;
+    color: white;
+    border-radius: 20px;
+    font-size: 14px;
+    margin-right: 15px;
+}
+
+.connection-status.disconnected {
+    background: #f44336;
+}
+
+.connection-status i {
+    font-size: 12px;
+}
