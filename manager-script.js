@@ -4,7 +4,7 @@ const firebaseConfig = {
   authDomain: "wizafoodcafe.firebaseapp.com",
   databaseURL: "https://wizafoodcafe-default-rtdb.firebaseio.com",
   projectId: "wizafoodcafe",
-  storageBucket: "wizafoodcafe.firebasestorage.app",
+  storageBucket: "wizafoodcafe.appspot.com",
   messagingSenderId: "248334218737",
   appId: "1:248334218737:web:94fabd0bbdf75bb8410050"
 };
@@ -2291,6 +2291,7 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
+
 
 
 
