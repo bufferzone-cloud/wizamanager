@@ -1,4 +1,4 @@
-// --- Your Firebase Config ---
+// --- Firebase Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyCZEqWRAHW0tW6j0WfBf8lxj61oExa6BwY",
   authDomain: "wizafoodcafe.firebaseapp.com",
@@ -9,7 +9,10 @@ const firebaseConfig = {
   appId: "1:248334218737:web:94fabd0bbdf75bb8410050"
 };
 
-
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database(app);
+const storage = firebase.storage(app);
 
 // Manager App State
 const managerState = {
@@ -26,7 +29,7 @@ const managerState = {
         notificationSound: true,
         autoRefresh: true
     },
-    restaurantLocation: [-15.402235977316481, 28.329942522202668], // Wiza Food Cafe coordinates
+    restaurantLocation: [-15.402235977316481, 28.329942522202668],
     orderCounter: 1
 };
 
@@ -51,7 +54,7 @@ function initializeManagerApp() {
     initializeElements();
     setupEventListeners();
     loadManagerData();
-    setupOrderListener();
+    setupFirebaseOrderListener(); // NEW: Firebase listener
     startAutoRefresh();
     
     // Initialize sections
@@ -68,79 +71,203 @@ function initializeManagerApp() {
     showNotification('Manager dashboard loaded successfully!', 'success');
 }
 
-function initializeElements() {
-    elements = {
-        // Navigation
-        navItems: document.querySelectorAll('.nav-item'),
-        contentSections: document.querySelectorAll('.content-section'),
-        logoutBtn: document.getElementById('logoutBtn'),
+// NEW: Firebase Order Listener
+function setupFirebaseOrderListener() {
+    console.log("📡 Setting up Firebase order listener...");
+    const ordersRef = db.ref("orders");
+
+    // Listen for new orders
+    ordersRef.on('child_added', (snapshot) => {
+        const newOrder = snapshot.val();
+        console.log("🆕 New order received from Firebase:", newOrder);
+
+        if (newOrder && typeof handleNewOrder === "function") {
+            handleNewOrder(newOrder);
+        }
+    });
+
+    // Listen for order updates
+    ordersRef.on('child_changed', (snapshot) => {
+        const updatedOrder = snapshot.val();
+        console.log("🔄 Order updated:", updatedOrder);
         
-        // Dashboard
-        totalRevenue: document.getElementById('totalRevenue'),
-        totalOrders: document.getElementById('totalOrders'),
-        activeCustomers: document.getElementById('activeCustomers'),
-        pendingOrders: document.getElementById('pendingOrders'),
-        readyOrders: document.getElementById('readyOrders'),
-        pendingOrdersCount: document.getElementById('pendingOrdersCount'),
-        orderStatusCounts: document.getElementById('orderStatusCounts'),
-        revenueBreakdown: document.getElementById('revenueBreakdown'),
-        recentActivity: document.getElementById('recentActivity'),
+        // Update the order in the manager state
+        const orderIndex = managerState.orders.findIndex(o => o.id === updatedOrder.id);
+        if (orderIndex !== -1) {
+            managerState.orders[orderIndex] = updatedOrder;
+            updateUIForOrderUpdate(updatedOrder);
+        }
+    });
+
+    // Handle connection state
+    const connectedRef = db.ref(".info/connected");
+    connectedRef.on("value", (snap) => {
+        if (snap.val() === true) {
+            console.log("✅ Firebase Realtime Database connected");
+            updateConnectionStatus(true);
+        } else {
+            console.log("❌ Firebase Realtime Database disconnected");
+            updateConnectionStatus(false);
+        }
+    });
+}
+
+// NEW: Update connection status in UI
+function updateConnectionStatus(connected) {
+    let statusElement = document.getElementById('connectionStatus');
+    if (!statusElement) {
+        // Create connection status element
+        statusElement = document.createElement('div');
+        statusElement.id = 'connectionStatus';
+        statusElement.className = 'connection-status';
+        statusElement.innerHTML = `
+            <i class="fas fa-wifi"></i>
+            <span>Connected</span>
+        `;
         
-        // Menu Management
-        menuItemsGrid: document.getElementById('menuItemsGrid'),
-        addMenuItemBtn: document.getElementById('addMenuItemBtn'),
-        categoryBtns: document.querySelectorAll('.category-btn'),
-        totalMenuItems: document.getElementById('totalMenuItems'),
-        availableItems: document.getElementById('availableItems'),
-        popularItems: document.getElementById('popularItems'),
-        newItems: document.getElementById('newItems'),
+        // Add to header
+        const headerActions = document.querySelector('.header-actions');
+        if (headerActions) {
+            headerActions.insertBefore(statusElement, headerActions.firstChild);
+        }
+    }
+    
+    if (connected) {
+        statusElement.classList.remove('disconnected');
+        statusElement.innerHTML = '<i class="fas fa-wifi"></i><span>Connected</span>';
+    } else {
+        statusElement.classList.add('disconnected');
+        statusElement.innerHTML = '<i class="fas fa-wifi-slash"></i><span>Offline</span>';
+    }
+}
+
+// ENHANCED ORDER HANDLING
+function handleNewOrder(order) {
+    // Validate order
+    if (!order || !order.id) {
+        console.error('Invalid order received:', order);
+        return;
+    }
+    
+    // Check if order already exists
+    const existingOrder = managerState.orders.find(o => o.id === order.id || o.ref === order.ref);
+    
+    if (!existingOrder) {
+        console.log('➕ Adding new order to manager:', order.ref);
         
-        // Orders
-        ordersList: document.getElementById('ordersList'),
-        orderStatusFilter: document.getElementById('orderStatusFilter'),
-        tabBtns: document.querySelectorAll('.tab-btn'),
+        // Add timestamp if not present
+        if (!order.timestamp) {
+            order.timestamp = new Date().toISOString();
+        }
         
-        // Customers
-        customersTableBody: document.getElementById('customersTableBody'),
-        customerSearch: document.getElementById('customerSearch'),
+        // Ensure order has all required fields
+        order = validateIncomingOrder(order);
         
-        // Promotions
-        promotionsGrid: document.getElementById('promotionsGrid'),
-        addPromotionBtn: document.getElementById('addPromotionBtn'),
-        promotionForm: document.getElementById('promotionForm'),
+        // Add Firebase key for updates
+        order.firebaseKey = order.firebaseKey || generateFirebaseKey();
         
-        // Settings
-        appStatusToggle: document.getElementById('appStatusToggle'),
-        orderingToggle: document.getElementById('orderingToggle'),
-        deliveryToggle: document.getElementById('deliveryToggle'),
-        notificationToggle: document.getElementById('notificationToggle'),
-        autoRefreshToggle: document.getElementById('autoRefreshToggle'),
+        // Add to orders array at the beginning
+        managerState.orders.unshift(order);
         
-        // Modals
-        modals: document.querySelectorAll('.modal'),
-        closeModalBtns: document.querySelectorAll('.close-modal'),
-        overlay: document.querySelector('.overlay'),
+        // Update order counter
+        if (order.id && order.id >= managerState.orderCounter) {
+            managerState.orderCounter = order.id + 1;
+        }
         
-        // Order Details Modal
-        orderDetailsModal: document.getElementById('orderDetailsModal'),
-        orderDetailsContent: document.getElementById('orderDetailsContent'),
+        // Save data immediately
+        saveManagerData();
         
-        // Customer Details Modal
-        customerDetailsModal: document.getElementById('customerDetailsModal'),
-        customerDetailsContent: document.getElementById('customerDetailsContent'),
+        // Update UI in real-time
+        updateUIForNewOrder(order);
         
-        // Menu Item Modal
-        menuItemModal: document.getElementById('menuItemModal'),
-        menuModalTitle: document.getElementById('menuModalTitle'),
-        menuItemForm: document.getElementById('menuItemForm'),
+        // Show notification
+        if (managerState.settings.appOnline && managerState.settings.acceptOrders) {
+            showNewOrderNotification(order);
+        }
         
-        // Analytics
-        analyticsPeriod: document.getElementById('analyticsPeriod'),
-        avgOrderValue: document.getElementById('avgOrderValue'),
-        conversionRate: document.getElementById('conversionRate'),
-        retentionRate: document.getElementById('retentionRate'),
-        peakHours: document.getElementById('peakHours')
+        console.log('✅ New order processed successfully:', order.ref);
+        
+    } else {
+        console.log('⚠️ Order already exists:', order.ref);
+    }
+}
+
+// NEW: Validate incoming orders from Firebase
+function validateIncomingOrder(order) {
+    return {
+        ...order,
+        status: order.status || 'pending',
+        timestamp: order.timestamp || new Date().toISOString(),
+        customer: order.customer || { name: 'Unknown Customer', email: '', phone: '' },
+        items: order.items || [],
+        subtotal: order.subtotal || 0,
+        deliveryFee: order.deliveryFee || 0,
+        serviceFee: order.serviceFee || 0,
+        total: order.total || 0
     };
+}
+
+// NEW: Generate Firebase key
+function generateFirebaseKey() {
+    return Math.random().toString(36).substr(2, 9);
+}
+
+// ENHANCED: Update order status with Firebase sync
+async function updateOrderStatus(orderId, newStatus) {
+    const order = managerState.orders.find(o => o.id == orderId);
+    if (order) {
+        const oldStatus = order.status;
+        order.status = newStatus;
+        order.statusUpdated = new Date().toISOString();
+        
+        // Add timestamps for status changes
+        switch(newStatus) {
+            case 'preparing':
+                order.acceptedAt = new Date().toISOString();
+                break;
+            case 'ready':
+                order.readyAt = new Date().toISOString();
+                break;
+            case 'completed':
+                order.completedAt = new Date().toISOString();
+                break;
+        }
+        
+        // Update in Firebase
+        try {
+            const orderRef = db.ref(`orders`);
+            const snapshot = await orderRef.once('value');
+            const orders = snapshot.val();
+            
+            // Find the order in Firebase by ID
+            let firebaseKey = null;
+            for (const key in orders) {
+                if (orders[key].id === orderId) {
+                    firebaseKey = key;
+                    break;
+                }
+            }
+            
+            if (firebaseKey) {
+                await orderRef.child(firebaseKey).update({
+                    status: newStatus,
+                    statusUpdated: order.statusUpdated,
+                    ...(order.acceptedAt && { acceptedAt: order.acceptedAt }),
+                    ...(order.readyAt && { readyAt: order.readyAt }),
+                    ...(order.completedAt && { completedAt: order.completedAt })
+                });
+                console.log(`✅ Order ${order.ref} status updated in Firebase`);
+            }
+        } catch (error) {
+            console.error('❌ Error updating order status in Firebase:', error);
+        }
+        
+        saveManagerData();
+        loadOrders();
+        updateDashboard();
+        
+        showNotification(`Order ${order.ref} status updated from ${oldStatus} to ${newStatus}`, 'success');
+    }
 }
 
 // NOTIFICATION SYSTEM
@@ -286,7 +413,6 @@ function rejectNewOrder(orderId) {
     closeNotification();
     showNotification('Order rejected successfully!', 'warning');
 }
-
 // ENHANCED ORDER LISTENER SYSTEM
 // ENHANCED ORDER LISTENER FOR MANAGER APP
 // =========================================
@@ -2093,11 +2219,11 @@ const completeMenuData = [
     }
 ];
 
-// Export functions for global access
+// Make functions globally available
 window.acceptNewOrder = acceptNewOrder;
 window.rejectNewOrder = rejectNewOrder;
 window.closeNotification = closeNotification;
-window.viewOrderDetails = viewOrderDetails;
+window.updateOrderStatus = updateOrderStatus;
 window.updateOrderStatus = updateOrderStatus;
 window.recreateOrder = recreateOrder;
 window.toggleCustomerBan = toggleCustomerBan;
@@ -2112,4 +2238,5 @@ window.openDirections = openDirections;
 
 // Initialize the app
 console.log('WIZA FOOD CAFE Manager App Initialized');
+
 
