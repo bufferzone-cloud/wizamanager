@@ -881,6 +881,7 @@
             box-shadow: var(--shadow);
             transition: all var(--transition-normal);
             position: relative;
+            cursor: pointer;
         }
 
         .order-card::before {
@@ -1056,8 +1057,8 @@
             background: var(--bg-card);
             border-radius: var(--border-radius-lg);
             width: 100%;
-            max-width: 500px; /* Smaller modals */
-            max-height: 80vh;
+            max-width: 800px; /* Larger modal for order details */
+            max-height: 90vh;
             overflow-y: auto;
             box-shadow: var(--shadow-lg);
             transform: translateY(-20px) scale(0.95);
@@ -1433,6 +1434,52 @@
             margin-top: var(--spacing-xl);
         }
 
+        /* Customer Table */
+        .customers-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-lg);
+        }
+
+        .customers-table th,
+        .customers-table td {
+            padding: var(--spacing-sm) var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .customers-table th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: var(--font-size-sm);
+        }
+
+        .customers-table td {
+            color: var(--text-secondary);
+            font-size: var(--font-size-xs);
+        }
+
+        .customer-status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(52, 199, 89, 0.2);
+            color: var(--success);
+        }
+
+        .status-inactive {
+            background: rgba(142, 142, 147, 0.2);
+            color: var(--text-muted);
+        }
+
         /* Print Styles */
         @media print {
             .manager-header,
@@ -1440,7 +1487,8 @@
             .btn,
             .notification,
             .new-order-popup,
-            .modal-footer {
+            .modal-footer,
+            .modal-header .close-modal {
                 display: none !important;
             }
             
@@ -1466,12 +1514,28 @@
                 position: relative;
                 background: white;
                 padding: 0;
+                display: block !important;
+                opacity: 1;
+                visibility: visible;
             }
             
             .modal-content {
                 box-shadow: none;
                 max-width: 100%;
                 max-height: none;
+                transform: none;
+            }
+            
+            .order-details-content {
+                color: black;
+            }
+            
+            .order-detail-section {
+                background: #f5f5f5;
+            }
+            
+            .order-detail-section h4 {
+                color: black;
             }
         }
 
@@ -1829,9 +1893,25 @@
                 </div>
             </div>
 
-            <!-- Customers List -->
+            <!-- Customers Table -->
             <div class="customers-table-container">
-                <div class="empty-state">
+                <table class="customers-table" id="customersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Last Order</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersTableBody">
+                        <!-- Customers will be populated here -->
+                    </tbody>
+                </table>
+                <div class="empty-state" id="customersEmptyState">
                     <i class="fas fa-users"></i>
                     <h3>No Customers</h3>
                     <p>Customer data will appear here</p>
@@ -2079,6 +2159,8 @@
                 
                 // Customers
                 customerSearch: document.getElementById('customerSearch'),
+                customersTableBody: document.getElementById('customersTableBody'),
+                customersEmptyState: document.getElementById('customersEmptyState'),
                 
                 // Modals
                 modals: document.querySelectorAll('.modal'),
@@ -2176,8 +2258,8 @@
             // Event delegation for dynamic elements
             document.addEventListener('click', function(e) {
                 // View order details
-                if (e.target.closest('.view-order-btn')) {
-                    const button = e.target.closest('.view-order-btn');
+                if (e.target.closest('.view-order-btn') || e.target.closest('.order-card')) {
+                    const button = e.target.closest('.view-order-btn') || e.target.closest('.order-card');
                     const orderId = button.dataset.id;
                     viewOrderDetails(orderId);
                 }
@@ -2744,7 +2826,7 @@
             }
 
             elements.recentOrdersList.innerHTML = recentOrders.map(order => `
-                <div class="order-card">
+                <div class="order-card" data-id="${order.id}">
                     <div class="order-header">
                         <div class="order-info">
                             <h4>Order ${order.ref}</h4>
@@ -2810,7 +2892,7 @@
             }
 
             elements.ordersList.innerHTML = filteredOrders.map(order => `
-                <div class="order-card ${order.status === 'pending' ? 'new' : ''}">
+                <div class="order-card ${order.status === 'pending' ? 'new' : ''}" data-id="${order.id}">
                     <div class="order-header">
                         <div class="order-info">
                             <h4>Order ${order.ref}</h4>
@@ -3150,7 +3232,7 @@
 
         // Load customers
         function loadCustomers() {
-            // For now, extract customers from orders
+            // Extract customers from orders
             const customerMap = new Map();
             
             managerState.orders.forEach(order => {
@@ -3177,6 +3259,38 @@
             });
 
             managerState.customers = Array.from(customerMap.values());
+            
+            // Update UI
+            updateCustomersTable();
+        }
+
+        // Update customers table
+        function updateCustomersTable() {
+            if (!elements.customersTableBody || !elements.customersEmptyState) return;
+            
+            if (managerState.customers.length === 0) {
+                elements.customersTableBody.innerHTML = '';
+                elements.customersEmptyState.style.display = 'block';
+                return;
+            }
+            
+            elements.customersEmptyState.style.display = 'none';
+            
+            elements.customersTableBody.innerHTML = managerState.customers.map(customer => `
+                <tr>
+                    <td>${customer.name}</td>
+                    <td>${customer.phone}</td>
+                    <td>${customer.email || 'N/A'}</td>
+                    <td>${customer.orderCount}</td>
+                    <td>K${customer.totalSpent.toFixed(2)}</td>
+                    <td>${new Date(customer.lastOrder).toLocaleDateString()}</td>
+                    <td>
+                        <span class="customer-status status-${customer.status}">
+                            ${customer.status === 'active' ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         // Search customers
@@ -3184,6 +3298,7 @@
             const query = elements.customerSearch.value.toLowerCase().trim();
             
             if (query.length < 2) {
+                updateCustomersTable();
                 return;
             }
             
@@ -3193,7 +3308,34 @@
                 customer.phone.includes(query)
             );
             
-            // Display search results would go here
+            if (filteredCustomers.length === 0) {
+                elements.customersTableBody.innerHTML = '';
+                elements.customersEmptyState.style.display = 'block';
+                elements.customersEmptyState.innerHTML = `
+                    <i class="fas fa-search"></i>
+                    <h3>No Customers Found</h3>
+                    <p>No customers match your search for "${query}"</p>
+                `;
+                return;
+            }
+            
+            elements.customersEmptyState.style.display = 'none';
+            
+            elements.customersTableBody.innerHTML = filteredCustomers.map(customer => `
+                <tr>
+                    <td>${customer.name}</td>
+                    <td>${customer.phone}</td>
+                    <td>${customer.email || 'N/A'}</td>
+                    <td>${customer.orderCount}</td>
+                    <td>K${customer.totalSpent.toFixed(2)}</td>
+                    <td>${new Date(customer.lastOrder).toLocaleDateString()}</td>
+                    <td>
+                        <span class="customer-status status-${customer.status}">
+                            ${customer.status === 'active' ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         // Load promotions
