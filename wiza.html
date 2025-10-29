@@ -203,7 +203,7 @@
         .logo-img {
             width: 32px; /* Smaller logo */
             height: 32px;
-            border-radius: var(--border-radius);
+            border-radius: 50%; /* Make logo round */
             object-fit: cover;
             border: 2px solid var(--primary);
             background: var(--primary);
@@ -1589,7 +1589,7 @@
     <header class="manager-header">
         <div class="header-content">
             <div class="logo">
-                <div class="logo-img">W</div>
+                <img src="wfc.png" alt="WFC Logo" class="logo-img">
                 <div class="logo-text">
                     <h1>WIZA FOOD CAFE</h1>
                     <p>Manager Dashboard</p>
@@ -2008,7 +2008,9 @@
             },
             restaurantLocation: [-15.402235977316481, 28.329942522202668],
             orderCounter: 1,
-            currentNewOrder: null
+            currentNewOrder: null,
+            notificationSound: null,
+            notificationInterval: null
         };
 
         // DOM Elements
@@ -2150,12 +2152,14 @@
             // New order popup
             document.getElementById('closePopupBtn').addEventListener('click', () => {
                 hideModal(elements.newOrderPopup);
+                stopNotificationSound(); // Stop sound when popup is closed
             });
 
             document.getElementById('viewOrderBtn').addEventListener('click', () => {
                 if (managerState.currentNewOrder) {
                     viewOrderDetails(managerState.currentNewOrder.id);
                     hideModal(elements.newOrderPopup);
+                    stopNotificationSound(); // Stop sound when viewing order
                 }
             });
 
@@ -2191,6 +2195,7 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeAllModals();
+                    stopNotificationSound(); // Stop sound when escape is pressed
                 }
             });
         }
@@ -2428,13 +2433,28 @@
         function playNotificationSound() {
             try {
                 // Create audio element
-                const audio = new Audio('mixkit-marimba-waiting-ringtone-1360.wav');
-                audio.volume = 0.7;
-                audio.play().catch(e => {
+                managerState.notificationSound = new Audio('mixkit-marimba-waiting-ringtone-1360.wav');
+                managerState.notificationSound.volume = 0.7;
+                
+                // Play sound repeatedly until stopped
+                managerState.notificationSound.addEventListener('ended', function() {
+                    this.currentTime = 0;
+                    this.play();
+                });
+                
+                managerState.notificationSound.play().catch(e => {
                     console.log('Audio play failed:', e);
                 });
             } catch (error) {
                 console.error('Error playing notification sound:', error);
+            }
+        }
+
+        // Stop notification sound
+        function stopNotificationSound() {
+            if (managerState.notificationSound) {
+                managerState.notificationSound.pause();
+                managerState.notificationSound.currentTime = 0;
             }
         }
 
@@ -2463,6 +2483,7 @@
                 setTimeout(() => {
                     if (popup.classList.contains('active')) {
                         hideModal(popup);
+                        stopNotificationSound();
                     }
                 }, 10000);
             }
@@ -2504,6 +2525,7 @@
                 saveManagerData();
                 loadOrders();
                 updateDashboard();
+                stopNotificationSound(); // Stop sound when order is accepted
             }
         }
 
@@ -2544,6 +2566,7 @@
                     case 'cancelled':
                         order.tracking.cancelled = now;
                         order.tracking.currentStatus = 'cancelled';
+                        stopNotificationSound(); // Stop sound when order is cancelled
                         break;
                 }
                 
