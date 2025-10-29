@@ -533,6 +533,12 @@
             justify-content: center;
         }
 
+        .menu-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .menu-item-image i {
             font-size: 36px; /* Smaller icon */
             color: var(--text-muted);
@@ -3926,6 +3932,9 @@
                     <div class="order-items-detailed">
                         ${(order.itemsDetailed || order.items).map(item => `
                             <div class="order-item-detailed">
+                                <div class="item-image">
+                                    <img src="${item.image || 'default-food.jpg'}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--border-radius);">
+                                </div>
                                 <div class="item-details">
                                     <h5>${item.name}</h5>
                                     <p class="item-price">K${item.price} × ${item.quantity} = K${(item.price * item.quantity).toFixed(2)}</p>
@@ -3956,7 +3965,7 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <label>Address:</label>
-                            <span>${order.deliveryLocation.address}</span>
+                            <span>${order.deliveryLocation.address || 'Sibweni Road, Northmead, Lusaka, Lusaka Province, Zambia'}</span>
                         </div>
                         ${order.deliveryLocation.coordinates ? `
                         <div class="detail-item">
@@ -4123,10 +4132,10 @@
             if (!mapContainer) return;
             
             try {
-                const deliveryCoords = [
-                    order.deliveryLocation.coordinates.latitude,
-                    order.deliveryLocation.coordinates.longitude
-                ];
+                // Use actual coordinates if available, otherwise use default
+                const deliveryCoords = order.deliveryLocation.coordinates ? 
+                    [order.deliveryLocation.coordinates.latitude, order.deliveryLocation.coordinates.longitude] :
+                    [-15.402236, 28.329943]; // Default coordinates
                 
                 const map = L.map('deliveryMap').setView(deliveryCoords, 15);
                 
@@ -4188,7 +4197,7 @@
             elements.menuItemsGrid.innerHTML = filteredItems.map(item => `
                 <div class="menu-item-card">
                     <div class="menu-item-image">
-                        <i class="fas fa-utensils"></i>
+                        <img src="${item.image}" alt="${item.name}">
                         ${item.popular ? '<span class="popular-badge">Popular</span>' : ''}
                         ${item.new ? '<span class="new-badge">New</span>' : ''}
                         ${!item.available ? '<div class="unavailable-overlay">Unavailable</div>' : ''}
@@ -4258,7 +4267,7 @@
             elements.menuItemsGrid.innerHTML = items.map(item => `
                 <div class="menu-item-card">
                     <div class="menu-item-image">
-                        <i class="fas fa-utensils"></i>
+                        <img src="${item.image}" alt="${item.name}">
                     </div>
                     <div class="menu-item-info">
                         <h4 class="item-name">${highlightText(item.name, query)}</h4>
