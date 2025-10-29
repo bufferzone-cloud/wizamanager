@@ -584,7 +584,7 @@
             color: var(--text-secondary);
             margin-bottom: var(--spacing-md);
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-amp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -1646,6 +1646,178 @@
                 padding: var(--spacing-md);
             }
         }
+
+        /* Additional styles for enhanced order details */
+        .order-detail-section {
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .order-detail-section h4 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+            font-size: var(--font-size-md);
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-sm);
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-item.total {
+            border-top: 2px solid var(--primary);
+            font-weight: 700;
+            font-size: var(--font-size-md);
+        }
+        
+        .detail-item.discount {
+            color: var(--success);
+        }
+        
+        .order-items-detailed {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .order-item-detailed {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-sm);
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+        }
+        
+        .item-details h5 {
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+        
+        .item-price {
+            color: var(--text-secondary);
+            font-size: var(--font-size-xs);
+        }
+        
+        .order-actions-footer {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: flex-end;
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .customer-notes {
+            background: var(--bg-secondary);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-md);
+            border-left: 3px solid var(--primary);
+        }
+        
+        .notes-label {
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+        
+        .notes-content {
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+        }
+        
+        .order-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+        }
+        
+        .timeline-dot.active {
+            background: var(--primary);
+        }
+        
+        .timeline-content {
+            flex: 1;
+        }
+        
+        .timeline-time {
+            font-size: var(--font-size-xs);
+            color: var(--text-muted);
+        }
+        
+        .order-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+        }
+        
+        .status-badge-pending {
+            background: rgba(204, 85, 0, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(204, 85, 0, 0.3);
+        }
+        
+        .status-badge-accepted {
+            background: rgba(0, 122, 255, 0.2);
+            color: var(--info);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+        }
+        
+        .status-badge-ready {
+            background: rgba(52, 199, 89, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+        
+        .status-badge-completed {
+            background: rgba(142, 142, 147, 0.2);
+            color: var(--text-muted);
+            border: 1px solid rgba(142, 142, 147, 0.3);
+        }
+        
+        .status-badge-cancelled {
+            background: rgba(255, 59, 48, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -1993,7 +2165,7 @@
         </div>
     </nav>
 
-    <!-- Order Details Modal -->
+    <!-- Enhanced Order Details Modal -->
     <div class="modal" id="orderDetailsModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -2001,14 +2173,15 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="order-details-content">
+                <div class="order-details-content" id="orderDetailsContent">
                     <!-- Order details will be populated here -->
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary close-modal">Close</button>
-                <button class="btn btn-primary" id="printOrderBtn">Print</button>
-                <button class="btn btn-success" id="acceptOrderBtn">Accept Order</button>
+                <div class="order-actions-footer">
+                    <button class="btn btn-secondary close-modal">Close</button>
+                    <button class="btn btn-primary" id="printOrderBtn">Print</button>
+                    <button class="btn btn-success" id="acceptOrderBtn">Accept Order</button>
+                    <button class="btn btn-danger" id="rejectOrderBtn">Reject Order</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2090,7 +2263,8 @@
             orderCounter: 1,
             currentNewOrder: null,
             notificationSound: null,
-            notificationInterval: null
+            notificationInterval: null,
+            processedOrderIds: new Set() // Track processed orders to prevent duplicates
         };
 
         // DOM Elements
@@ -2170,9 +2344,13 @@
                 newOrderPopup: document.getElementById('newOrderPopup'),
                 notification: document.getElementById('notification'),
                 
+                // Order Details
+                orderDetailsContent: document.getElementById('orderDetailsContent'),
+                
                 // Print Button
                 printOrderBtn: document.getElementById('printOrderBtn'),
-                acceptOrderBtn: document.getElementById('acceptOrderBtn')
+                acceptOrderBtn: document.getElementById('acceptOrderBtn'),
+                rejectOrderBtn: document.getElementById('rejectOrderBtn')
             };
         }
 
@@ -2255,6 +2433,11 @@
                 elements.acceptOrderBtn.addEventListener('click', acceptCurrentOrder);
             }
 
+            // Reject order button
+            if (elements.rejectOrderBtn) {
+                elements.rejectOrderBtn.addEventListener('click', rejectCurrentOrder);
+            }
+
             // Event delegation for dynamic elements
             document.addEventListener('click', function(e) {
                 // View order details
@@ -2282,23 +2465,28 @@
             });
         }
 
-        // Firebase Real-time Listeners
+        // Firebase Real-time Listeners - FIXED to keep listening
         function setupFirebaseListeners() {
             console.log("📡 Setting up Firebase real-time listeners...");
             
             // Listen for new orders
             const ordersRef = db.ref("orders");
             
+            // This listener will keep running and process all new orders
             ordersRef.on('child_added', (snapshot) => {
                 const newOrder = snapshot.val();
                 const orderKey = snapshot.key;
                 
                 console.log("🆕 New order received from Firebase:", newOrder);
                 
-                if (newOrder && !orderExists(newOrder.orderId)) {
+                // Check if we've already processed this order
+                if (newOrder && !managerState.processedOrderIds.has(orderKey)) {
+                    // Mark this order as processed
+                    managerState.processedOrderIds.add(orderKey);
+                    
                     // Add Firebase key to order
                     newOrder.firebaseKey = orderKey;
-                    newOrder.id = newOrder.orderId;
+                    newOrder.id = newOrder.orderId || generateId();
                     
                     // Process the new order
                     processNewOrder(newOrder);
@@ -2315,7 +2503,7 @@
                 const updatedOrder = snapshot.val();
                 const orderKey = snapshot.key;
                 updatedOrder.firebaseKey = orderKey;
-                updatedOrder.id = updatedOrder.orderId;
+                updatedOrder.id = updatedOrder.orderId || orderKey;
                 
                 console.log("🔄 Order updated:", updatedOrder);
                 
@@ -2336,31 +2524,43 @@
             });
         }
 
-        // Check if order already exists
-        function orderExists(orderId) {
-            return managerState.orders.some(order => order.id === orderId || order.firebaseKey === orderId);
-        }
-
         // Process new order from Firebase
         function processNewOrder(order) {
             // Validate and enhance order data
             const enhancedOrder = validateAndEnhanceOrder(order);
             
-            // Add to orders array at the beginning
-            managerState.orders.unshift(enhancedOrder);
+            // Check if order already exists (by ID or firebase key)
+            const existingOrderIndex = managerState.orders.findIndex(o => 
+                o.id === enhancedOrder.id || o.firebaseKey === enhancedOrder.firebaseKey
+            );
             
-            // Update order counter
-            if (enhancedOrder.id && enhancedOrder.id >= managerState.orderCounter) {
-                managerState.orderCounter = enhancedOrder.id + 1;
+            if (existingOrderIndex === -1) {
+                // Add to orders array at the beginning
+                managerState.orders.unshift(enhancedOrder);
+                
+                // Update order counter
+                if (enhancedOrder.id && enhancedOrder.id >= managerState.orderCounter) {
+                    managerState.orderCounter = enhancedOrder.id + 1;
+                }
+                
+                // Save data immediately
+                saveManagerData();
+                
+                // Update UI in real-time
+                updateUIForNewOrder(enhancedOrder);
+                
+                console.log('✅ New order processed successfully:', enhancedOrder.ref);
+            } else {
+                console.log('⚠️ Order already exists, updating:', enhancedOrder.ref);
+                // Update existing order
+                managerState.orders[existingOrderIndex] = {
+                    ...managerState.orders[existingOrderIndex],
+                    ...enhancedOrder
+                };
+                
+                saveManagerData();
+                updateUIForOrderUpdate(enhancedOrder);
             }
-            
-            // Save data immediately
-            saveManagerData();
-            
-            // Update UI in real-time
-            updateUIForNewOrder(enhancedOrder);
-            
-            console.log('✅ New order processed successfully:', enhancedOrder.ref);
         }
 
         // Update existing order
@@ -2379,6 +2579,10 @@
                 updateUIForOrderUpdate(updatedOrder);
                 
                 console.log(`✅ Order ${updatedOrder.ref} updated in local state`);
+            } else {
+                // If order doesn't exist locally, add it
+                console.log('⚠️ Order not found locally, adding:', updatedOrder.ref);
+                processNewOrder(updatedOrder);
             }
         }
 
@@ -2411,6 +2615,7 @@
                 statusUpdated: order.statusUpdated || now,
                 firebaseKey: order.firebaseKey,
                 managerAccepted: order.managerAccepted || false,
+                customerNotes: order.customerNotes || '',
                 
                 // Enhanced fields
                 itemsDetailed: order.itemsDetailed || (order.items ? order.items.map(item => ({
@@ -2598,6 +2803,9 @@
                         
                         // Show success message
                         showNotification(`Order ${order.ref} accepted!`, 'success');
+                        
+                        // Send notification to customer
+                        sendCustomerNotification(order, 'accepted');
                     }
                 } catch (error) {
                     console.error('❌ Error updating order status in Firebase:', error);
@@ -2611,12 +2819,88 @@
             }
         }
 
+        // Manager rejects order
+        async function rejectOrder(orderId) {
+            const order = managerState.orders.find(o => o.id == orderId || o.firebaseKey === orderId);
+            if (order) {
+                const oldStatus = order.status;
+                order.status = 'cancelled';
+                order.statusUpdated = new Date().toISOString();
+                order.managerAccepted = false;
+                
+                // Update tracking timestamps
+                order.tracking = order.tracking || {};
+                order.tracking.cancelled = new Date().toISOString();
+                order.tracking.currentStatus = 'cancelled';
+                
+                try {
+                    if (order.firebaseKey) {
+                        const orderRef = db.ref(`orders/${order.firebaseKey}`);
+                        await orderRef.update({
+                            status: 'cancelled',
+                            statusUpdated: order.statusUpdated,
+                            managerAccepted: false,
+                            tracking: order.tracking
+                        });
+                        console.log(`❌ Order ${order.ref} rejected`);
+                        
+                        // Show success message
+                        showNotification(`Order ${order.ref} rejected!`, 'error');
+                        
+                        // Send notification to customer
+                        sendCustomerNotification(order, 'rejected');
+                    }
+                } catch (error) {
+                    console.error('❌ Error updating order status in Firebase:', error);
+                    showNotification('Error updating order status in cloud', 'error');
+                }
+                
+                saveManagerData();
+                loadOrders();
+                updateDashboard();
+                stopNotificationSound(); // Stop sound when order is rejected
+            }
+        }
+
+        // Send notification to customer
+        async function sendCustomerNotification(order, action) {
+            try {
+                // Create a notification in Firebase for the customer
+                const notificationRef = db.ref(`notifications/${order.customer.phone}`);
+                await notificationRef.push({
+                    orderId: order.id,
+                    orderRef: order.ref,
+                    action: action,
+                    message: action === 'accepted' 
+                        ? `Your order #${order.ref} has been accepted and is being prepared!`
+                        : `Your order #${order.ref} has been rejected. Please contact us for more information.`,
+                    timestamp: new Date().toISOString(),
+                    read: false
+                });
+                
+                console.log(`📢 Notification sent to customer for order ${order.ref}`);
+            } catch (error) {
+                console.error('Error sending customer notification:', error);
+            }
+        }
+
         // Accept current order in modal
         function acceptCurrentOrder() {
             const orderId = elements.acceptOrderBtn.dataset.orderId;
             if (orderId) {
                 acceptOrder(orderId);
                 hideModal(elements.orderDetailsModal);
+            }
+        }
+
+        // Reject current order in modal
+        function rejectCurrentOrder() {
+            const orderId = elements.rejectOrderBtn.dataset.orderId;
+            if (orderId) {
+                if (confirm('Are you sure you want to reject this order?')) {
+                    rejectOrder(orderId);
+                    hideModal(elements.orderDetailsModal);
+                }
             }
         }
 
@@ -2944,7 +3228,7 @@
                         <button class="btn btn-success status-btn" data-id="${order.id}" data-status="preparing" onclick="acceptOrder('${order.id}')">
                             <i class="fas fa-check"></i> Accept Order
                         </button>
-                        <button class="btn btn-danger status-btn" data-id="${order.id}" data-status="cancelled">
+                        <button class="btn btn-danger status-btn" data-id="${order.id}" data-status="cancelled" onclick="rejectOrder('${order.id}')">
                             <i class="fas fa-times"></i> Reject
                         </button>
                     `;
@@ -3011,7 +3295,7 @@
 
             if (!elements.orderDetailsModal) return;
             
-            const modalContent = elements.orderDetailsModal.querySelector('.order-details-content');
+            const modalContent = elements.orderDetailsContent;
             modalContent.innerHTML = `
                 <div class="order-detail-section">
                     <h4><i class="fas fa-info-circle"></i> Order Information</h4>
@@ -3102,9 +3386,59 @@
                         </div>
                     </div>
                 </div>
+
+                ${order.customerNotes ? `
+                <div class="customer-notes">
+                    <div class="notes-label">Customer Notes:</div>
+                    <div class="notes-content">${order.customerNotes}</div>
+                </div>
+                ` : ''}
+
+                <div class="order-detail-section">
+                    <h4><i class="fas fa-history"></i> Order Timeline</h4>
+                    <div class="order-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot ${order.tracking.received ? 'active' : ''}"></div>
+                            <div class="timeline-content">
+                                <div>Order Received</div>
+                                <div class="timeline-time">${order.tracking.received ? new Date(order.tracking.received).toLocaleString() : 'Pending'}</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot ${order.tracking.preparing ? 'active' : ''}"></div>
+                            <div class="timeline-content">
+                                <div>Preparing</div>
+                                <div class="timeline-time">${order.tracking.preparing ? new Date(order.tracking.preparing).toLocaleString() : 'Pending'}</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot ${order.tracking.ready ? 'active' : ''}"></div>
+                            <div class="timeline-content">
+                                <div>Ready</div>
+                                <div class="timeline-time">${order.tracking.ready ? new Date(order.tracking.ready).toLocaleString() : 'Pending'}</div>
+                            </div>
+                        </div>
+                        ${order.delivery.isDelivery ? `
+                        <div class="timeline-item">
+                            <div class="timeline-dot ${order.tracking.outForDelivery ? 'active' : ''}"></div>
+                            <div class="timeline-content">
+                                <div>Out for Delivery</div>
+                                <div class="timeline-time">${order.tracking.outForDelivery ? new Date(order.tracking.outForDelivery).toLocaleString() : 'Pending'}</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                        <div class="timeline-item">
+                            <div class="timeline-dot ${order.tracking.completed ? 'active' : ''}"></div>
+                            <div class="timeline-content">
+                                <div>Completed</div>
+                                <div class="timeline-time">${order.tracking.completed ? new Date(order.tracking.completed).toLocaleString() : 'Pending'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `;
 
-            // Set the order ID for the accept button
+            // Set the order ID for the accept and reject buttons
             if (elements.acceptOrderBtn) {
                 elements.acceptOrderBtn.dataset.orderId = order.id;
                 // Show/hide accept button based on order status
@@ -3112,6 +3446,16 @@
                     elements.acceptOrderBtn.style.display = 'flex';
                 } else {
                     elements.acceptOrderBtn.style.display = 'none';
+                }
+            }
+
+            if (elements.rejectOrderBtn) {
+                elements.rejectOrderBtn.dataset.orderId = order.id;
+                // Show/hide reject button based on order status
+                if (order.status === 'pending') {
+                    elements.rejectOrderBtn.style.display = 'flex';
+                } else {
+                    elements.rejectOrderBtn.style.display = 'none';
                 }
             }
 
@@ -3540,6 +3884,7 @@
 
         // Make functions globally available
         window.acceptOrder = acceptOrder;
+        window.rejectOrder = rejectOrder;
         window.updateOrderStatus = updateOrderStatus;
         window.navigateToSection = navigateToSection;
         window.printOrderDetails = printOrderDetails;
