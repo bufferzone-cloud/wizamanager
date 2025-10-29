@@ -134,6 +134,11 @@
         }
 
         /* Selection Styling */
+        ::-moz-selection {
+            background-color: var(--primary-extra-light);
+            color: var(--text-primary);
+        }
+
         ::selection {
             background-color: var(--primary-extra-light);
             color: var(--text-primary);
@@ -584,7 +589,7 @@
             color: var(--text-secondary);
             margin-bottom: var(--spacing-md);
             display: -webkit-box;
-            -webkit-line-amp: 2;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -2947,6 +2952,9 @@
                         console.log(`✅ Order ${order.ref} status updated to ${newStatus}`);
                         
                         showNotification(`Order ${order.ref} status updated to ${newStatus}`, 'success');
+                        
+                        // Send notification to customer
+                        sendCustomerNotification(order, newStatus);
                     }
                 } catch (error) {
                     console.error('❌ Error updating order status in Firebase:', error);
