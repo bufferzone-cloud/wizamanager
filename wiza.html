@@ -314,13 +314,27 @@
             backdrop-filter: blur(10px);
         }
 
-        .nav-items {
+        .nav-container {
             display: flex;
-            justify-content: space-around;
-            align-items: center;
             width: 100%;
             max-width: 1400px;
             margin: 0 auto;
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .nav-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: 0 var(--spacing-md);
+            min-width: max-content;
         }
 
         .nav-item {
@@ -338,7 +352,7 @@
             border-radius: var(--border-radius);
             position: relative;
             min-width: 60px; /* Smaller nav items */
-            flex: 1;
+            flex-shrink: 0;
         }
 
         .nav-item.active {
@@ -1106,6 +1120,81 @@
             justify-content: flex-end;
         }
 
+        /* Enhanced Order Details Modal */
+        .order-details-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .order-detail-section {
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+        }
+
+        .order-detail-section h4 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+            font-size: var(--font-size-md);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-sm);
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-item.total {
+            border-top: 2px solid var(--primary);
+            font-weight: 700;
+            font-size: var(--font-size-md);
+        }
+
+        .detail-item.discount {
+            color: var(--success);
+        }
+
+        .order-items-detailed {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .order-item-detailed {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-sm);
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+        }
+
+        .item-details h5 {
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+
+        .item-price {
+            color: var(--text-secondary);
+            font-size: var(--font-size-xs);
+        }
+
         /* New Order Popup */
         .new-order-popup {
             position: fixed;
@@ -1344,6 +1433,48 @@
             margin-top: var(--spacing-xl);
         }
 
+        /* Print Styles */
+        @media print {
+            .manager-header,
+            .manager-nav,
+            .btn,
+            .notification,
+            .new-order-popup,
+            .modal-footer {
+                display: none !important;
+            }
+            
+            .manager-main {
+                padding: 0;
+            }
+            
+            .content-section {
+                display: block !important;
+            }
+            
+            body {
+                background: white;
+                color: black;
+            }
+            
+            .card, .stat-card, .order-card, .menu-item-card {
+                border: 1px solid #000;
+                box-shadow: none;
+            }
+            
+            .modal {
+                position: relative;
+                background: white;
+                padding: 0;
+            }
+            
+            .modal-content {
+                box-shadow: none;
+                max-width: 100%;
+                max-height: none;
+            }
+        }
+
         /* Responsive Design */
         @media (max-width: 1200px) {
             .manager-main {
@@ -1449,35 +1580,6 @@
             
             .modal {
                 padding: var(--spacing-md);
-            }
-        }
-
-        /* Print styles */
-        @media print {
-            .manager-header,
-            .manager-nav,
-            .btn,
-            .notification,
-            .new-order-popup {
-                display: none !important;
-            }
-            
-            .manager-main {
-                padding: 0;
-            }
-            
-            .content-section {
-                display: block !important;
-            }
-            
-            body {
-                background: white;
-                color: black;
-            }
-            
-            .card, .stat-card, .order-card, .menu-item-card {
-                border: 1px solid #000;
-                box-shadow: none;
             }
         }
     </style>
@@ -1776,24 +1878,38 @@
 
     <!-- Manager Navigation -->
     <nav class="manager-nav">
-        <div class="nav-items">
-            <button class="nav-item active" data-section="dashboard">
-                <i class="fas fa-chart-pie"></i>
-                <span>Dashboard</span>
-            </button>
-            <button class="nav-item" data-section="menu-management">
-                <i class="fas fa-utensils"></i>
-                <span>Menu</span>
-            </button>
-            <button class="nav-item" data-section="orders">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Orders</span>
-                <span class="notification-badge" id="pendingOrdersCount">0</span>
-            </button>
-            <button class="nav-item" data-section="promotions">
-                <i class="fas fa-tag"></i>
-                <span>Promotions</span>
-            </button>
+        <div class="nav-container">
+            <div class="nav-items">
+                <button class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-section="menu-management">
+                    <i class="fas fa-utensils"></i>
+                    <span>Menu</span>
+                </button>
+                <button class="nav-item" data-section="orders">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Orders</span>
+                    <span class="notification-badge" id="pendingOrdersCount">0</span>
+                </button>
+                <button class="nav-item" data-section="promotions">
+                    <i class="fas fa-tag"></i>
+                    <span>Promotions</span>
+                </button>
+                <button class="nav-item" data-section="customers">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                </button>
+                <button class="nav-item" data-section="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -1812,6 +1928,7 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary close-modal">Close</button>
                 <button class="btn btn-primary" id="printOrderBtn">Print</button>
+                <button class="btn btn-success" id="acceptOrderBtn">Accept Order</button>
             </div>
         </div>
     </div>
@@ -1967,7 +2084,11 @@
                 orderDetailsModal: document.getElementById('orderDetailsModal'),
                 menuItemModal: document.getElementById('menuItemModal'),
                 newOrderPopup: document.getElementById('newOrderPopup'),
-                notification: document.getElementById('notification')
+                notification: document.getElementById('notification'),
+                
+                // Print Button
+                printOrderBtn: document.getElementById('printOrderBtn'),
+                acceptOrderBtn: document.getElementById('acceptOrderBtn')
             };
         }
 
@@ -2037,6 +2158,16 @@
                     hideModal(elements.newOrderPopup);
                 }
             });
+
+            // Print order button
+            if (elements.printOrderBtn) {
+                elements.printOrderBtn.addEventListener('click', printOrderDetails);
+            }
+
+            // Accept order button
+            if (elements.acceptOrderBtn) {
+                elements.acceptOrderBtn.addEventListener('click', acceptCurrentOrder);
+            }
 
             // Event delegation for dynamic elements
             document.addEventListener('click', function(e) {
@@ -2283,11 +2414,28 @@
             
             // Show popup notification
             showNewOrderPopup(order);
+            
+            // Play notification sound
+            playNotificationSound();
         }
 
         // Show in-app order notification
         function showInAppOrderNotification(order) {
             showNotification(`New order #${order.ref} from ${order.customer.name} - K${order.total.toFixed(2)}`, 'success');
+        }
+
+        // Play notification sound
+        function playNotificationSound() {
+            try {
+                // Create audio element
+                const audio = new Audio('mixkit-marimba-waiting-ringtone-1360.wav');
+                audio.volume = 0.7;
+                audio.play().catch(e => {
+                    console.log('Audio play failed:', e);
+                });
+            } catch (error) {
+                console.error('Error playing notification sound:', error);
+            }
         }
 
         // Show new order popup
@@ -2356,6 +2504,15 @@
                 saveManagerData();
                 loadOrders();
                 updateDashboard();
+            }
+        }
+
+        // Accept current order in modal
+        function acceptCurrentOrder() {
+            const orderId = elements.acceptOrderBtn.dataset.orderId;
+            if (orderId) {
+                acceptOrder(orderId);
+                hideModal(elements.orderDetailsModal);
             }
         }
 
@@ -2784,6 +2941,12 @@
                             <label><i class="fas fa-phone"></i> Phone:</label>
                             <span>${order.customer.phone}</span>
                         </div>
+                        ${order.customer.email ? `
+                        <div class="detail-item">
+                            <label><i class="fas fa-envelope"></i> Email:</label>
+                            <span>${order.customer.email}</span>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
 
@@ -2828,11 +2991,31 @@
                             <label>Total Amount:</label>
                             <span>K${order.total.toFixed(2)}</span>
                         </div>
+                        <div class="detail-item">
+                            <label>Payment Method:</label>
+                            <span>${order.paymentMethod}</span>
+                        </div>
                     </div>
                 </div>
             `;
 
+            // Set the order ID for the accept button
+            if (elements.acceptOrderBtn) {
+                elements.acceptOrderBtn.dataset.orderId = order.id;
+                // Show/hide accept button based on order status
+                if (order.status === 'pending') {
+                    elements.acceptOrderBtn.style.display = 'flex';
+                } else {
+                    elements.acceptOrderBtn.style.display = 'none';
+                }
+            }
+
             showModal(elements.orderDetailsModal);
+        }
+
+        // Print order details
+        function printOrderDetails() {
+            window.print();
         }
 
         // Load full menu
@@ -3194,6 +3377,7 @@
         window.acceptOrder = acceptOrder;
         window.updateOrderStatus = updateOrderStatus;
         window.navigateToSection = navigateToSection;
+        window.printOrderDetails = printOrderDetails;
     </script>
 </body>
 </html>
