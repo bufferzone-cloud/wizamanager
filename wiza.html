@@ -6,6 +6,7 @@
     <title>WIZA FOOD CAFE - Manager Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add Leaflet CSS and JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -57,7 +58,7 @@
             --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
             --overlay: rgba(0, 0, 0, 0.7);
             
-            /* Sizing & Spacing */
+            /* Sizing & Spacing - Smaller values */
             --border-radius: 8px;
             --border-radius-sm: 6px;
             --border-radius-lg: 10px;
@@ -68,7 +69,7 @@
             --spacing-xl: 15px;
             --spacing-xxl: 18px;
             
-            /* Typography */
+            /* Typography - Smaller font sizes */
             --font-size-xs: 10px;
             --font-size-sm: 12px;
             --font-size-md: 14px;
@@ -92,6 +93,7 @@
             --z-toast: 1080;
         }
 
+        /* Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -99,7 +101,7 @@
         }
 
         html {
-            font-size: 14px;
+            font-size: 14px; /* Smaller base font size */
             scroll-behavior: smooth;
         }
 
@@ -107,7 +109,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-primary);
             color: var(--text-primary);
-            line-height: 1.4;
+            line-height: 1.4; /* Tighter line height */
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -115,7 +117,7 @@
 
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
-            width: 4px;
+            width: 4px; /* Smaller scrollbar */
         }
 
         ::-webkit-scrollbar-track {
@@ -178,7 +180,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 50px;
+            height: 50px; /* Smaller header */
             background: var(--bg-card);
             border-bottom: 1px solid var(--border-color);
             z-index: var(--z-fixed);
@@ -204,9 +206,9 @@
         }
 
         .logo-img {
-            width: 32px;
+            width: 32px; /* Smaller logo */
             height: 32px;
-            border-radius: 50%;
+            border-radius: 50%; /* Make logo round */
             object-fit: cover;
             border: 2px solid var(--primary);
             background: var(--primary);
@@ -269,7 +271,7 @@
         }
 
         .manager-avatar {
-            width: 30px;
+            width: 30px; /* Smaller avatar */
             height: 30px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -307,7 +309,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 55px;
+            height: 55px; /* Smaller navigation */
             background: var(--bg-card);
             border-top: 1px solid var(--border-color);
             z-index: var(--z-fixed);
@@ -323,12 +325,12 @@
             max-width: 1400px;
             margin: 0 auto;
             overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
         }
 
         .nav-container::-webkit-scrollbar {
-            display: none;
+            display: none; /* Chrome, Safari and Opera */
         }
 
         .nav-items {
@@ -354,7 +356,7 @@
             transition: all var(--transition-fast);
             border-radius: var(--border-radius);
             position: relative;
-            min-width: 60px;
+            min-width: 60px; /* Smaller nav items */
             flex-shrink: 0;
         }
 
@@ -364,7 +366,7 @@
         }
 
         .nav-item i {
-            font-size: var(--font-size-md);
+            font-size: var(--font-size-md); /* Smaller icons */
         }
 
         .notification-badge {
@@ -374,7 +376,7 @@
             background: var(--danger);
             color: white;
             border-radius: 50%;
-            width: 14px;
+            width: 14px; /* Smaller badge */
             height: 14px;
             display: flex;
             align-items: center;
@@ -386,7 +388,7 @@
 
         /* Main Content */
         .manager-main {
-            padding: 60px 0 60px;
+            padding: 60px 0 60px; /* Smaller padding */
             max-width: 1400px;
             margin: 0 auto;
             min-height: 100vh;
@@ -431,7 +433,7 @@
             position: relative;
             display: flex;
             align-items: center;
-            max-width: 400px;
+            max-width: 400px; /* Smaller search box */
             margin: 0 auto;
         }
 
@@ -461,6 +463,326 @@
             left: var(--spacing-sm);
             color: var(--text-muted);
             font-size: var(--font-size-sm);
+        }
+
+        /* Categories */
+        .categories-container {
+            margin-bottom: var(--spacing-xl);
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: var(--spacing-sm);
+        }
+
+        .categories-scroll {
+            display: inline-flex;
+            gap: var(--spacing-md);
+        }
+
+        .category-item {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-lg);
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: 1px solid transparent;
+        }
+
+        .category-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .category-item:hover:not(.active) {
+            background: var(--bg-hover);
+        }
+
+        /* Menu Items Grid */
+        .menu-items-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-lg);
+        }
+
+        .menu-item-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow);
+            transition: all var(--transition-normal);
+            position: relative;
+        }
+
+        .menu-item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .menu-item-image {
+            position: relative;
+            height: 120px; /* Smaller image area */
+            overflow: hidden;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-item-image i {
+            font-size: 36px; /* Smaller icon */
+            color: var(--text-muted);
+        }
+
+        .popular-badge, .new-badge {
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+            color: white;
+            z-index: 1;
+        }
+
+        .popular-badge {
+            background: var(--primary);
+        }
+
+        .new-badge {
+            background: var(--info);
+        }
+
+        .unavailable-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: var(--font-size-md);
+        }
+
+        .menu-item-info {
+            padding: var(--spacing-md);
+        }
+
+        .item-name {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+
+        .item-description {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .item-meta {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .item-category {
+            background: var(--bg-tertiary);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+        }
+
+        .vegetarian-badge {
+            background: rgba(52, 199, 89, 0.2);
+            color: var(--success);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+        }
+
+        .item-pricing {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            font-size: var(--font-size-xs);
+        }
+
+        .current-price {
+            font-size: var(--font-size-md);
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .discount-badge {
+            background: var(--danger);
+            color: white;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+        }
+
+        .menu-item-actions {
+            padding: 0 var(--spacing-md) var(--spacing-md);
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-xs) var(--spacing-md);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #30B453;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #E68500;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #E6352B;
+            transform: translateY(-1px);
+        }
+
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+
+        .btn-info:hover:not(:disabled) {
+            background: #006EE6;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-sm {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: var(--font-size-xs);
+        }
+
+        .btn-lg {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            font-size: var(--font-size-sm);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow);
+            transition: all var(--transition-normal);
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-secondary);
+        }
+
+        .card-body {
+            padding: var(--spacing-md);
+        }
+
+        .card-footer {
+            padding: var(--spacing-md);
+            border-top: 1px solid var(--border-light);
+            background: var(--bg-secondary);
         }
 
         /* Stats Grid */
@@ -505,7 +827,7 @@
         }
 
         .stat-icon {
-            width: 40px;
+            width: 40px; /* Smaller icon */
             height: 40px;
             border-radius: var(--border-radius);
             display: flex;
@@ -581,6 +903,10 @@
         .order-card:hover {
             transform: translateY(-1px);
             box-shadow: var(--shadow-lg);
+        }
+
+        .order-card.priority {
+            border-left: 4px solid var(--danger);
         }
 
         .order-card.new {
@@ -687,7 +1013,7 @@
         }
 
         .item-preview-image {
-            width: 20px;
+            width: 20px; /* Smaller preview image */
             height: 20px;
             border-radius: 50%;
             object-fit: cover;
@@ -706,109 +1032,6 @@
             display: flex;
             gap: var(--spacing-sm);
             flex-wrap: wrap;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-            padding: var(--spacing-xs) var(--spacing-md);
-            border: none;
-            border-radius: var(--border-radius);
-            font-size: var(--font-size-xs);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
-        }
-
-        .btn-secondary {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: var(--bg-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover:not(:disabled) {
-            background: #30B453;
-            transform: translateY(-1px);
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-warning:hover:not(:disabled) {
-            background: #E68500;
-            transform: translateY(-1px);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-danger:hover:not(:disabled) {
-            background: #E6352B;
-            transform: translateY(-1px);
-        }
-
-        .btn-info {
-            background: var(--info);
-            color: white;
-        }
-
-        .btn-info:hover:not(:disabled) {
-            background: #006EE6;
-            transform: translateY(-1px);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-        }
-
-        .btn-outline:hover:not(:disabled) {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .btn-sm {
-            padding: var(--spacing-xs) var(--spacing-sm);
-            font-size: var(--font-size-xs);
-        }
-
-        .btn-lg {
-            padding: var(--spacing-sm) var(--spacing-lg);
-            font-size: var(--font-size-sm);
         }
 
         /* Modals */
@@ -839,7 +1062,7 @@
             background: var(--bg-card);
             border-radius: var(--border-radius-lg);
             width: 100%;
-            max-width: 800px;
+            max-width: 800px; /* Larger modal for order details */
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: var(--shadow-lg);
@@ -989,7 +1212,7 @@
             padding: var(--spacing-lg);
             box-shadow: var(--shadow-lg);
             z-index: var(--z-toast);
-            max-width: 350px;
+            max-width: 350px; /* Smaller popup */
             width: 90%;
             border: 2px solid var(--primary);
             opacity: 0;
@@ -1133,7 +1356,7 @@
         }
 
         .empty-state i {
-            font-size: 36px;
+            font-size: 36px; /* Smaller icon */
             margin-bottom: var(--spacing-md);
             color: var(--bg-tertiary);
         }
@@ -1260,6 +1483,173 @@
         .status-inactive {
             background: rgba(142, 142, 147, 0.2);
             color: var(--text-muted);
+        }
+
+        /* Print Styles */
+        @media print {
+            .manager-header,
+            .manager-nav,
+            .btn,
+            .notification,
+            .new-order-popup,
+            .modal-footer,
+            .modal-header .close-modal {
+                display: none !important;
+            }
+            
+            .manager-main {
+                padding: 0;
+            }
+            
+            .content-section {
+                display: block !important;
+            }
+            
+            body {
+                background: white;
+                color: black;
+            }
+            
+            .card, .stat-card, .order-card, .menu-item-card {
+                border: 1px solid #000;
+                box-shadow: none;
+            }
+            
+            .modal {
+                position: relative;
+                background: white;
+                padding: 0;
+                display: block !important;
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .modal-content {
+                box-shadow: none;
+                max-width: 100%;
+                max-height: none;
+                transform: none;
+            }
+            
+            .order-details-content {
+                color: black;
+            }
+            
+            .order-detail-section {
+                background: #f5f5f5;
+            }
+            
+            .order-detail-section h4 {
+                color: black;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .manager-main {
+                padding: 60px var(--spacing-lg) 60px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .manager-header {
+                padding: 0 var(--spacing-md);
+            }
+            
+            .header-actions {
+                gap: var(--spacing-md);
+            }
+            
+            .manager-nav {
+                padding: 0 var(--spacing-xs);
+                height: 50px;
+            }
+            
+            .nav-item {
+                min-width: 50px;
+                padding: var(--spacing-xs);
+                font-size: var(--font-size-xs);
+            }
+            
+            .nav-item i {
+                font-size: var(--font-size-sm);
+            }
+            
+            .manager-main {
+                padding: 60px var(--spacing-md) 50px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .menu-items-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                align-items: flex-start;
+            }
+            
+            .order-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+            
+            .order-status-container {
+                text-align: left;
+                width: 100%;
+            }
+            
+            .order-actions {
+                flex-direction: column;
+            }
+            
+            .order-actions button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .manager-header {
+                height: 45px;
+            }
+            
+            .logo-text h1 {
+                font-size: var(--font-size-sm);
+            }
+            
+            .logo-text p {
+                display: none;
+            }
+            
+            .manager-nav {
+                height: 45px;
+            }
+            
+            .manager-main {
+                padding: 55px var(--spacing-sm) 45px;
+            }
+            
+            .content-section {
+                padding: var(--spacing-md);
+            }
+            
+            .modal {
+                padding: var(--spacing-md);
+            }
         }
 
         /* Additional styles for enhanced order details */
@@ -1463,108 +1853,220 @@
             border: 1px solid var(--border-color);
         }
 
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .manager-main {
-                padding: 60px var(--spacing-lg) 60px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        /* Promotions Grid */
+        .promotions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
         }
 
-        @media (max-width: 768px) {
-            .manager-header {
-                padding: 0 var(--spacing-md);
-            }
-            
-            .header-actions {
-                gap: var(--spacing-md);
-            }
-            
-            .manager-nav {
-                padding: 0 var(--spacing-xs);
-                height: 50px;
-            }
-            
-            .nav-item {
-                min-width: 50px;
-                padding: var(--spacing-xs);
-                font-size: var(--font-size-xs);
-            }
-            
-            .nav-item i {
-                font-size: var(--font-size-sm);
-            }
-            
-            .manager-main {
-                padding: 60px var(--spacing-md) 50px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .section-header {
-                flex-direction: column;
-                gap: var(--spacing-md);
-                align-items: flex-start;
-            }
-            
-            .order-header {
-                flex-direction: column;
-                gap: var(--spacing-md);
-            }
-            
-            .order-status-container {
-                text-align: left;
-                width: 100%;
-            }
-            
-            .order-actions {
-                flex-direction: column;
-            }
-            
-            .order-actions button {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .form-row {
-                flex-direction: column;
-                gap: var(--spacing-md);
-            }
+        .promotion-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow);
+            transition: all var(--transition-normal);
         }
 
-        @media (max-width: 480px) {
-            .manager-header {
-                height: 45px;
-            }
-            
-            .logo-text h1 {
-                font-size: var(--font-size-sm);
-            }
-            
-            .logo-text p {
-                display: none;
-            }
-            
-            .manager-nav {
-                height: 45px;
-            }
-            
-            .manager-main {
-                padding: 55px var(--spacing-sm) 45px;
-            }
-            
-            .content-section {
-                padding: var(--spacing-md);
-            }
-            
-            .modal {
-                padding: var(--spacing-md);
-            }
+        .promotion-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .promotion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .promotion-status {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+        }
+
+        .promotion-status.active {
+            background: rgba(52, 199, 89, 0.2);
+            color: var(--success);
+        }
+
+        .promotion-status.inactive {
+            background: rgba(142, 142, 147, 0.2);
+            color: var(--text-muted);
+        }
+
+        .promotion-description {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+            font-size: var(--font-size-sm);
+        }
+
+        .promotion-details {
+            display: flex;
+            gap: var(--spacing-lg);
+        }
+
+        .promotion-details .detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .promotion-details .label {
+            font-size: var(--font-size-xs);
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .promotion-details .value {
+            font-size: var(--font-size-sm);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Analytics Charts */
+        .analytics-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-light);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .chart-header h4 {
+            margin-bottom: 0;
+            color: var(--text-primary);
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .settings-section {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-light);
+        }
+
+        .settings-section h4 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-title {
+            font-size: var(--font-size-sm);
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .setting-description {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* New Order Indicator */
+        .new-order-indicator {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--border-radius-lg);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            z-index: var(--z-toast);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
     </style>
 </head>
@@ -1720,6 +2222,46 @@
             </div>
         </section>
 
+        <!-- Menu Management Section -->
+        <section class="content-section" id="menu-management">
+            <div class="section-header">
+                <h2>Menu Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="addMenuItemBtn">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="menuSearch" placeholder="Search menu...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="categories-container">
+                <div class="categories-scroll">
+                    <div class="category-item active" data-category="all">All</div>
+                    <div class="category-item" data-category="quick-fills">Quick Fills</div>
+                    <div class="category-item" data-category="savory-bites">Savory Bites</div>
+                    <div class="category-item" data-category="snacks-treats">Snacks & Treats</div>
+                    <div class="category-item" data-category="beverages">Beverages</div>
+                </div>
+            </div>
+
+            <!-- Menu Items Grid -->
+            <div id="menuItemsGrid" class="menu-items-grid">
+                <div class="empty-state">
+                    <i class="fas fa-utensils"></i>
+                    <h3>No Menu Items</h3>
+                    <p>Add your first menu item to get started</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Orders Section -->
         <section class="content-section" id="orders">
             <div class="section-header">
@@ -1738,6 +2280,25 @@
                     <i class="fas fa-shopping-cart"></i>
                     <h3>No Orders</h3>
                     <p>Customer orders will appear here</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Promotions Section -->
+        <section class="content-section" id="promotions">
+            <div class="section-header">
+                <h2>Promotions</h2>
+                <button class="btn btn-primary" id="addPromotionBtn">
+                    <i class="fas fa-plus"></i> Add Promotion
+                </button>
+            </div>
+
+            <!-- Promotions Grid -->
+            <div class="promotions-grid" id="promotionsGrid">
+                <div class="empty-state">
+                    <i class="fas fa-tag"></i>
+                    <h3>No Promotions</h3>
+                    <p>Create promotions to attract more customers</p>
                 </div>
             </div>
         </section>
@@ -1779,6 +2340,197 @@
                 </div>
             </div>
         </section>
+
+        <!-- Analytics Section -->
+        <section class="content-section" id="analytics">
+            <div class="section-header">
+                <h2>Analytics</h2>
+                <div class="header-actions">
+                    <select id="analyticsPeriod" class="form-group" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: var(--spacing-sm); font-size: var(--font-size-sm);">
+                        <option value="7">Last 7 Days</option>
+                        <option value="30">Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="analytics-charts">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h4>Revenue Trend</h4>
+                    </div>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h4>Order Volume</h4>
+                    </div>
+                    <canvas id="ordersChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h4>Popular Items</h4>
+                    </div>
+                    <canvas id="itemsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h4>Customer Activity</h4>
+                    </div>
+                    <canvas id="customersChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section class="content-section" id="settings">
+            <div class="section-header">
+                <h2>Settings</h2>
+                <button class="btn btn-primary" id="saveSettings">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+
+            <div class="settings-panel">
+                <div class="settings-section">
+                    <h4><i class="fas fa-bell"></i> Notifications</h4>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">New Order Alerts</div>
+                            <div class="setting-description">Play sound when new orders arrive</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notificationSound" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Order Status Updates</div>
+                            <div class="setting-description">Notify when order status changes</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="statusNotifications" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Low Stock Alerts</div>
+                            <div class="setting-description">Alert when items are running low</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="stockAlerts" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4><i class="fas fa-store"></i> Restaurant Settings</h4>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Accept New Orders</div>
+                            <div class="setting-description">Allow new orders to come in</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="acceptOrders" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Delivery Service</div>
+                            <div class="setting-description">Enable delivery orders</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="deliveryEnabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Auto Order Refresh</div>
+                            <div class="setting-description">Automatically refresh orders list</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoRefresh" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4><i class="fas fa-receipt"></i> Order Settings</h4>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Default Preparation Time</div>
+                            <div class="setting-description">Standard time to prepare orders</div>
+                        </div>
+                        <select id="preparationTime" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: var(--spacing-sm); font-size: var(--font-size-sm);">
+                            <option value="15">15 minutes</option>
+                            <option value="20">20 minutes</option>
+                            <option value="25" selected>25 minutes</option>
+                            <option value="30">30 minutes</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Auto-Accept Orders</div>
+                            <div class="setting-description">Automatically accept new orders</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoAcceptOrders">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Print Receipts</div>
+                            <div class="setting-description">Auto-print order receipts</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoPrint">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4><i class="fas fa-chart-line"></i> Analytics Settings</h4>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Daily Reports</div>
+                            <div class="setting-description">Generate daily sales reports</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="dailyReports" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Customer Insights</div>
+                            <div class="setting-description">Track customer behavior</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="customerInsights" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-title">Inventory Tracking</div>
+                            <div class="setting-description">Monitor stock levels</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="inventoryTracking">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Manager Navigation -->
@@ -1789,14 +2541,30 @@
                     <i class="fas fa-chart-pie"></i>
                     <span>Dashboard</span>
                 </button>
+                <button class="nav-item" data-section="menu-management">
+                    <i class="fas fa-utensils"></i>
+                    <span>Menu</span>
+                </button>
                 <button class="nav-item" data-section="orders">
                     <i class="fas fa-shopping-cart"></i>
                     <span>Orders</span>
                     <span class="notification-badge" id="pendingOrdersCount">0</span>
                 </button>
+                <button class="nav-item" data-section="promotions">
+                    <i class="fas fa-tag"></i>
+                    <span>Promotions</span>
+                </button>
                 <button class="nav-item" data-section="customers">
                     <i class="fas fa-users"></i>
                     <span>Customers</span>
+                </button>
+                <button class="nav-item" data-section="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
                 </button>
             </div>
         </div>
@@ -1823,6 +2591,93 @@
         </div>
     </div>
 
+    <!-- Add Menu Item Modal -->
+    <div class="modal" id="menuItemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Menu Item</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="menuItemForm">
+                    <div class="form-group">
+                        <label for="itemName">Item Name</label>
+                        <input type="text" id="itemName" required placeholder="Enter item name">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemDescription">Description</label>
+                        <textarea id="itemDescription" required placeholder="Enter item description"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="itemPrice">Price (K)</label>
+                            <input type="number" id="itemPrice" step="0.01" min="0" required placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemCategory">Category</label>
+                            <select id="itemCategory" required>
+                                <option value="quick-fills">Quick Fills</option>
+                                <option value="savory-bites">Savory Bites</option>
+                                <option value="snacks-treats">Snacks & Treats</option>
+                                <option value="beverages">Beverages</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Item</button>
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Promotion Modal -->
+    <div class="modal" id="promotionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Promotion</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="promotionForm">
+                    <div class="form-group">
+                        <label for="promotionTitle">Promotion Title</label>
+                        <input type="text" id="promotionTitle" required placeholder="Enter promotion title">
+                    </div>
+                    <div class="form-group">
+                        <label for="promotionDescription">Description</label>
+                        <textarea id="promotionDescription" required placeholder="Enter promotion description"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promotionCode">Promo Code</label>
+                            <input type="text" id="promotionCode" required placeholder="e.g., WIZA20">
+                        </div>
+                        <div class="form-group">
+                            <label for="promotionDiscount">Discount (%)</label>
+                            <input type="number" id="promotionDiscount" min="1" max="100" required placeholder="10">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="promotionStart">Start Date</label>
+                            <input type="datetime-local" id="promotionStart" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="promotionEnd">End Date</label>
+                            <input type="datetime-local" id="promotionEnd" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Create Promotion</button>
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Firebase Configuration
         const firebaseConfig = {
@@ -1843,18 +2698,32 @@
         // Manager App State
         const managerState = {
             currentSection: 'dashboard',
+            menuItems: [],
             orders: [],
             customers: [],
+            promotions: [],
+            analytics: {},
             settings: {
                 appOnline: true,
                 acceptOrders: true,
                 deliveryEnabled: true,
                 notificationSound: true,
-                autoRefresh: true
+                autoRefresh: true,
+                statusNotifications: true,
+                stockAlerts: true,
+                autoAcceptOrders: false,
+                autoPrint: false,
+                dailyReports: true,
+                customerInsights: true,
+                inventoryTracking: false,
+                preparationTime: 25
             },
             restaurantLocation: [-15.402235977316481, 28.329942522202668],
+            orderCounter: 1,
+            currentNewOrder: null,
             notificationSound: null,
-            processedOrderIds: new Set(),
+            notificationInterval: null,
+            processedOrderIds: new Set(), // Track processed orders to prevent duplicates
             currentOrderInModal: null
         };
 
@@ -1870,8 +2739,12 @@
             
             // Initialize sections
             updateDashboard();
+            loadFullMenu();
             loadOrders();
             loadCustomers();
+            loadPromotions();
+            initializeAnalytics();
+            loadSettings();
             
             // Start auto-refresh for orders
             startAutoRefresh();
@@ -1910,15 +2783,48 @@
                 orderSearch: document.getElementById('orderSearch'),
                 recentOrdersList: document.getElementById('recentOrdersList'),
                 
+                // Menu Management
+                menuItemsGrid: document.getElementById('menuItemsGrid'),
+                menuSearch: document.getElementById('menuSearch'),
+                addMenuItemBtn: document.getElementById('addMenuItemBtn'),
+                categoryItems: document.querySelectorAll('.category-item'),
+                
+                // Promotions
+                promotionsGrid: document.getElementById('promotionsGrid'),
+                addPromotionBtn: document.getElementById('addPromotionBtn'),
+                
                 // Customers
                 customerSearch: document.getElementById('customerSearch'),
                 customersTableBody: document.getElementById('customersTableBody'),
                 customersEmptyState: document.getElementById('customersEmptyState'),
                 
+                // Analytics
+                revenueChart: document.getElementById('revenueChart'),
+                ordersChart: document.getElementById('ordersChart'),
+                itemsChart: document.getElementById('itemsChart'),
+                customersChart: document.getElementById('customersChart'),
+                
+                // Settings
+                saveSettings: document.getElementById('saveSettings'),
+                notificationSound: document.getElementById('notificationSound'),
+                statusNotifications: document.getElementById('statusNotifications'),
+                stockAlerts: document.getElementById('stockAlerts'),
+                acceptOrders: document.getElementById('acceptOrders'),
+                deliveryEnabled: document.getElementById('deliveryEnabled'),
+                autoRefresh: document.getElementById('autoRefresh'),
+                preparationTime: document.getElementById('preparationTime'),
+                autoAcceptOrders: document.getElementById('autoAcceptOrders'),
+                autoPrint: document.getElementById('autoPrint'),
+                dailyReports: document.getElementById('dailyReports'),
+                customerInsights: document.getElementById('customerInsights'),
+                inventoryTracking: document.getElementById('inventoryTracking'),
+                
                 // Modals
                 modals: document.querySelectorAll('.modal'),
                 closeModalBtns: document.querySelectorAll('.close-modal'),
                 orderDetailsModal: document.getElementById('orderDetailsModal'),
+                menuItemModal: document.getElementById('menuItemModal'),
+                promotionModal: document.getElementById('promotionModal'),
                 newOrderPopup: document.getElementById('newOrderPopup'),
                 notification: document.getElementById('notification'),
                 
@@ -1928,7 +2834,11 @@
                 // Print Button
                 printOrderBtn: document.getElementById('printOrderBtn'),
                 acceptOrderBtn: document.getElementById('acceptOrderBtn'),
-                rejectOrderBtn: document.getElementById('rejectOrderBtn')
+                rejectOrderBtn: document.getElementById('rejectOrderBtn'),
+                
+                // Forms
+                menuItemForm: document.getElementById('menuItemForm'),
+                promotionForm: document.getElementById('promotionForm')
             };
         }
 
@@ -1949,9 +2859,51 @@
                 elements.orderSearch.addEventListener('input', debounce(filterOrders, 300));
             }
 
+            // Menu management
+            if (elements.addMenuItemBtn) {
+                elements.addMenuItemBtn.addEventListener('click', () => showModal(elements.menuItemModal));
+            }
+            
+            if (elements.menuSearch) {
+                elements.menuSearch.addEventListener('input', debounce(searchMenuItems, 300));
+            }
+
+            // Categories
+            if (elements.categoryItems) {
+                elements.categoryItems.forEach(item => {
+                    item.addEventListener('click', () => {
+                        // Remove active class from all categories
+                        elements.categoryItems.forEach(cat => cat.classList.remove('active'));
+                        // Add active class to clicked category
+                        item.classList.add('active');
+                        // Filter menu by category
+                        loadFullMenu(item.dataset.category);
+                    });
+                });
+            }
+
+            // Promotions
+            if (elements.addPromotionBtn) {
+                elements.addPromotionBtn.addEventListener('click', () => showModal(elements.promotionModal));
+            }
+
             // Customers
             if (elements.customerSearch) {
                 elements.customerSearch.addEventListener('input', debounce(searchCustomers, 300));
+            }
+
+            // Settings
+            if (elements.saveSettings) {
+                elements.saveSettings.addEventListener('click', saveSettings);
+            }
+
+            // Forms
+            if (elements.menuItemForm) {
+                elements.menuItemForm.addEventListener('submit', handleAddMenuItem);
+            }
+
+            if (elements.promotionForm) {
+                elements.promotionForm.addEventListener('submit', handleAddPromotion);
             }
 
             // Modals
@@ -1962,14 +2914,14 @@
             // New order popup
             document.getElementById('closePopupBtn').addEventListener('click', () => {
                 hideModal(elements.newOrderPopup);
-                stopNotificationSound();
+                stopNotificationSound(); // Stop sound when popup is closed
             });
 
             document.getElementById('viewOrderBtn').addEventListener('click', () => {
                 if (managerState.currentNewOrder) {
                     viewOrderDetails(managerState.currentNewOrder.firebaseKey);
                     hideModal(elements.newOrderPopup);
-                    stopNotificationSound();
+                    stopNotificationSound(); // Stop sound when viewing order
                 }
             });
 
@@ -2010,7 +2962,7 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeAllModals();
-                    stopNotificationSound();
+                    stopNotificationSound(); // Stop sound when escape is pressed
                 }
             });
         }
@@ -2087,6 +3039,11 @@
             if (existingOrderIndex === -1) {
                 // Add to orders array at the beginning
                 managerState.orders.unshift(enhancedOrder);
+                
+                // Update order counter
+                if (enhancedOrder.id && enhancedOrder.id >= managerState.orderCounter) {
+                    managerState.orderCounter = enhancedOrder.id + 1;
+                }
                 
                 // Save data immediately
                 saveManagerData();
@@ -2397,7 +3354,7 @@
                 saveManagerData();
                 loadOrders();
                 updateDashboard();
-                stopNotificationSound();
+                stopNotificationSound(); // Stop sound when order is accepted
             }
         }
 
@@ -2440,7 +3397,7 @@
                 saveManagerData();
                 loadOrders();
                 updateDashboard();
-                stopNotificationSound();
+                stopNotificationSound(); // Stop sound when order is rejected
             }
         }
 
@@ -2514,7 +3471,7 @@
                     case 'cancelled':
                         order.tracking.cancelled = now;
                         order.tracking.currentStatus = 'cancelled';
-                        stopNotificationSound();
+                        stopNotificationSound(); // Stop sound when order is cancelled
                         break;
                 }
                 
@@ -2560,8 +3517,22 @@
                             acceptOrders: true,
                             deliveryEnabled: true,
                             notificationSound: true,
-                            autoRefresh: true
+                            autoRefresh: true,
+                            statusNotifications: true,
+                            stockAlerts: true,
+                            autoAcceptOrders: false,
+                            autoPrint: false,
+                            dailyReports: true,
+                            customerInsights: true,
+                            inventoryTracking: false,
+                            preparationTime: 25
                         };
+                    }
+                    
+                    // Initialize order counter if not present
+                    if (!managerState.orderCounter) {
+                        managerState.orderCounter = managerState.orders.length > 0 ? 
+                            Math.max(...managerState.orders.map(o => o.id)) + 1 : 1;
                     }
                     
                 } catch (e) {
@@ -2575,15 +3546,26 @@
 
         // Initialize default data
         function initializeDefaultData() {
+            managerState.menuItems = [...completeMenuData];
             managerState.orders = [];
             managerState.customers = [];
+            managerState.promotions = [];
             managerState.settings = {
                 appOnline: true,
                 acceptOrders: true,
                 deliveryEnabled: true,
                 notificationSound: true,
-                autoRefresh: true
+                autoRefresh: true,
+                statusNotifications: true,
+                stockAlerts: true,
+                autoAcceptOrders: false,
+                autoPrint: false,
+                dailyReports: true,
+                customerInsights: true,
+                inventoryTracking: false,
+                preparationTime: 25
             };
+            managerState.orderCounter = 1;
 
             saveManagerData();
         }
@@ -2624,8 +3606,17 @@
                 case 'orders':
                     loadOrders();
                     break;
+                case 'menu-management':
+                    loadFullMenu();
+                    break;
+                case 'promotions':
+                    loadPromotions();
+                    break;
                 case 'customers':
                     loadCustomers();
+                    break;
+                case 'analytics':
+                    initializeAnalytics();
                     break;
             }
         }
@@ -3173,6 +4164,139 @@
             window.print();
         }
 
+        // Load full menu
+        function loadFullMenu(category = 'all') {
+            if (!elements.menuItemsGrid) return;
+
+            let filteredItems = managerState.menuItems;
+
+            if (category !== 'all') {
+                filteredItems = filteredItems.filter(item => item.category === category);
+            }
+
+            if (filteredItems.length === 0) {
+                elements.menuItemsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-utensils"></i>
+                        <h3>No Menu Items</h3>
+                        <p>${category === 'all' ? 'No menu items found.' : `No items in ${category} category.`}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.menuItemsGrid.innerHTML = filteredItems.map(item => `
+                <div class="menu-item-card">
+                    <div class="menu-item-image">
+                        <i class="fas fa-utensils"></i>
+                        ${item.popular ? '<span class="popular-badge">Popular</span>' : ''}
+                        ${item.new ? '<span class="new-badge">New</span>' : ''}
+                        ${!item.available ? '<div class="unavailable-overlay">Unavailable</div>' : ''}
+                    </div>
+                    <div class="menu-item-info">
+                        <h4 class="item-name">${item.name}</h4>
+                        <p class="item-description">${item.description}</p>
+                        <div class="item-meta">
+                            <span class="item-category">${formatCategory(item.category)}</span>
+                            ${item.vegetarian ? '<span class="vegetarian-badge">Vegetarian</span>' : ''}
+                        </div>
+                        <div class="item-pricing">
+                            ${item.originalPrice ? `
+                                <span class="original-price">K${item.originalPrice.toFixed(2)}</span>
+                            ` : ''}
+                            <span class="current-price">K${item.price.toFixed(2)}</span>
+                            ${item.discount ? `
+                                <span class="discount-badge">${item.discount}% OFF</span>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="menu-item-actions">
+                        <button class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search menu items
+        function searchMenuItems() {
+            const query = elements.menuSearch.value.toLowerCase().trim();
+            
+            if (query.length < 2) {
+                loadFullMenu();
+                return;
+            }
+            
+            const filteredItems = managerState.menuItems.filter(item => 
+                item.name.toLowerCase().includes(query) ||
+                item.description.toLowerCase().includes(query) ||
+                item.category.toLowerCase().includes(query)
+            );
+            
+            displaySearchResults(filteredItems, query);
+        }
+
+        // Display search results
+        function displaySearchResults(items, query) {
+            if (!elements.menuItemsGrid) return;
+
+            if (items.length === 0) {
+                elements.menuItemsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>No Results Found</h3>
+                        <p>No menu items found for "${query}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.menuItemsGrid.innerHTML = items.map(item => `
+                <div class="menu-item-card">
+                    <div class="menu-item-image">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="menu-item-info">
+                        <h4 class="item-name">${highlightText(item.name, query)}</h4>
+                        <p class="item-description">${highlightText(item.description, query)}</p>
+                        <div class="item-pricing">
+                            <span class="current-price">K${item.price.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Handle add menu item
+        function handleAddMenuItem(e) {
+            e.preventDefault();
+            
+            const itemName = document.getElementById('itemName').value;
+            const itemDescription = document.getElementById('itemDescription').value;
+            const itemPrice = parseFloat(document.getElementById('itemPrice').value);
+            const itemCategory = document.getElementById('itemCategory').value;
+            
+            const newItem = {
+                id: generateId(),
+                name: itemName,
+                description: itemDescription,
+                price: itemPrice,
+                category: itemCategory,
+                available: true,
+                image: 'default-food.jpg'
+            };
+            
+            managerState.menuItems.push(newItem);
+            saveManagerData();
+            loadFullMenu();
+            hideModal(elements.menuItemModal);
+            showNotification('Menu item added successfully!', 'success');
+        }
+
         // Load customers
         function loadCustomers() {
             // Extract customers from orders
@@ -3281,6 +4405,216 @@
             `).join('');
         }
 
+        // Load promotions
+        function loadPromotions() {
+            if (!elements.promotionsGrid) return;
+
+            if (managerState.promotions.length === 0) {
+                elements.promotionsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-tag"></i>
+                        <h3>No Promotions</h3>
+                        <p>No active promotions found. Create your first promotion to attract more customers!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.promotionsGrid.innerHTML = managerState.promotions.map(promo => `
+                <div class="promotion-card">
+                    <div class="promotion-header">
+                        <h4>${promo.title}</h4>
+                        <span class="promotion-status ${promo.active ? 'active' : 'inactive'}">
+                            ${promo.active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                    <div class="promotion-body">
+                        <p class="promotion-description">${promo.description}</p>
+                        <div class="promotion-details">
+                            <div class="detail">
+                                <span class="label">Code:</span>
+                                <span class="value">${promo.code}</span>
+                            </div>
+                            <div class="detail">
+                                <span class="label">Discount:</span>
+                                <span class="value">${promo.discount}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Handle add promotion
+        function handleAddPromotion(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('promotionTitle').value;
+            const description = document.getElementById('promotionDescription').value;
+            const code = document.getElementById('promotionCode').value;
+            const discount = parseInt(document.getElementById('promotionDiscount').value);
+            const start = document.getElementById('promotionStart').value;
+            const end = document.getElementById('promotionEnd').value;
+            
+            const newPromotion = {
+                id: generateId(),
+                title: title,
+                description: description,
+                code: code,
+                discount: discount,
+                startDate: start,
+                endDate: end,
+                active: true
+            };
+            
+            managerState.promotions.push(newPromotion);
+            saveManagerData();
+            loadPromotions();
+            hideModal(elements.promotionModal);
+            showNotification('Promotion created successfully!', 'success');
+        }
+
+        // Initialize analytics
+        function initializeAnalytics() {
+            // This would initialize charts with real data
+            // For now, we'll show placeholder charts
+            setTimeout(() => {
+                initializeCharts();
+            }, 100);
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Revenue Chart
+            if (elements.revenueChart) {
+                const revenueCtx = elements.revenueChart.getContext('2d');
+                new Chart(revenueCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Revenue (K)',
+                            data: [1200, 1900, 1500, 2000, 1800, 2500, 2200],
+                            borderColor: '#CC5500',
+                            backgroundColor: 'rgba(204, 85, 0, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#CCCCCC'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#CCCCCC'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Orders Chart
+            if (elements.ordersChart) {
+                const ordersCtx = elements.ordersChart.getContext('2d');
+                new Chart(ordersCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Orders',
+                            data: [25, 32, 28, 35, 30, 45, 38],
+                            backgroundColor: '#E67E22',
+                            borderColor: '#CC5500',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#CCCCCC'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#CCCCCC'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Load settings
+        function loadSettings() {
+            if (!elements.notificationSound) return;
+            
+            // Load settings from managerState
+            elements.notificationSound.checked = managerState.settings.notificationSound;
+            elements.statusNotifications.checked = managerState.settings.statusNotifications;
+            elements.stockAlerts.checked = managerState.settings.stockAlerts;
+            elements.acceptOrders.checked = managerState.settings.acceptOrders;
+            elements.deliveryEnabled.checked = managerState.settings.deliveryEnabled;
+            elements.autoRefresh.checked = managerState.settings.autoRefresh;
+            elements.preparationTime.value = managerState.settings.preparationTime;
+            elements.autoAcceptOrders.checked = managerState.settings.autoAcceptOrders;
+            elements.autoPrint.checked = managerState.settings.autoPrint;
+            elements.dailyReports.checked = managerState.settings.dailyReports;
+            elements.customerInsights.checked = managerState.settings.customerInsights;
+            elements.inventoryTracking.checked = managerState.settings.inventoryTracking;
+        }
+
+        // Save settings
+        function saveSettings() {
+            managerState.settings.notificationSound = elements.notificationSound.checked;
+            managerState.settings.statusNotifications = elements.statusNotifications.checked;
+            managerState.settings.stockAlerts = elements.stockAlerts.checked;
+            managerState.settings.acceptOrders = elements.acceptOrders.checked;
+            managerState.settings.deliveryEnabled = elements.deliveryEnabled.checked;
+            managerState.settings.autoRefresh = elements.autoRefresh.checked;
+            managerState.settings.preparationTime = parseInt(elements.preparationTime.value);
+            managerState.settings.autoAcceptOrders = elements.autoAcceptOrders.checked;
+            managerState.settings.autoPrint = elements.autoPrint.checked;
+            managerState.settings.dailyReports = elements.dailyReports.checked;
+            managerState.settings.customerInsights = elements.customerInsights.checked;
+            managerState.settings.inventoryTracking = elements.inventoryTracking.checked;
+            
+            saveManagerData();
+            showNotification('Settings saved successfully!', 'success');
+        }
+
         // Show modal
         function showModal(modal) {
             if (!modal) return;
@@ -3329,9 +4663,24 @@
         // Utility functions
         function generateId() {
             const allIds = [
-                ...managerState.orders.map(order => order.id)
+                ...managerState.menuItems.map(item => item.id),
+                ...managerState.orders.map(order => order.id),
+                ...managerState.customers.map(customer => customer.id),
+                ...managerState.promotions.map(promo => promo.id)
             ];
             return allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+        }
+
+        function formatCategory(category) {
+            return category.split('-').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
         }
 
         function debounce(func, wait) {
@@ -3345,6 +4694,181 @@
                 timeout = setTimeout(later, wait);
             };
         }
+
+        // Sample menu data
+        const completeMenuData = [
+            {
+                id: 1,
+                name: "Chicken & Chips (Wing)",
+                description: "Crispy chicken wings served with golden fries",
+                price: 35,
+                originalPrice: 40,
+                category: "quick-fills",
+                image: "Q1.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false,
+                discount: 12
+            },
+            {
+                id: 2,
+                name: "Sausage & Chips",
+                description: "Grilled sausage served with crispy chips",
+                price: 40,
+                category: "quick-fills",
+                image: "Q2.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false
+            },
+            {
+                id: 3,
+                name: "Chicken Drumsticks",
+                description: "Juicy, flavorful chicken drumsticks",
+                price: 45,
+                category: "quick-fills",
+                image: "Q3.jpg",
+                available: true,
+                popular: true,
+                new: true,
+                vegetarian: false
+            },
+            {
+                id: 4,
+                name: "Plain Chips",
+                description: "Crispy golden fries with a pinch of salt",
+                price: 20,
+                category: "quick-fills",
+                image: "Q4.jpg",
+                available: true,
+                vegetarian: true
+            },
+            {
+                id: 5,
+                name: "Beef Burger",
+                description: "Juicy beef patty with fresh vegetables",
+                price: 45,
+                category: "savory-bites",
+                image: "S1.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false
+            },
+            {
+                id: 6,
+                name: "Vegetable Pizza",
+                description: "Fresh vegetables on a crispy crust",
+                price: 55,
+                category: "savory-bites",
+                image: "S2.jpg",
+                available: true,
+                vegetarian: true
+            },
+            {
+                id: 7,
+                name: "Chicken Pizza",
+                description: "Tender chicken pieces on cheesy pizza",
+                price: 60,
+                category: "savory-bites",
+                image: "S3.jpg",
+                available: true,
+                popular: true,
+                vegetarian: false
+            },
+            {
+                id: 8,
+                name: "Beef Pie",
+                description: "Flaky pastry filled with seasoned beef",
+                price: 25,
+                category: "savory-bites",
+                image: "S4.jpg",
+                available: true,
+                vegetarian: false
+            },
+            {
+                id: 9,
+                name: "Samosa (2pcs)",
+                description: "Crispy pastry filled with spiced potatoes",
+                price: 15,
+                category: "snacks-treats",
+                image: "ST1.jpg",
+                available: true,
+                popular: true,
+                vegetarian: true
+            },
+            {
+                id: 10,
+                name: "Spring Rolls (3pcs)",
+                description: "Crispy rolls with vegetable filling",
+                price: 20,
+                category: "snacks-treats",
+                image: "ST2.jpg",
+                available: true,
+                vegetarian: true
+            },
+            {
+                id: 11,
+                name: "Cream Doughnut",
+                description: "Soft doughnut filled with sweet cream",
+                price: 12,
+                category: "snacks-treats",
+                image: "ST3.jpg",
+                available: true,
+                vegetarian: true
+            },
+            {
+                id: 12,
+                name: "Chocolate Muffin",
+                description: "Rich chocolate muffin with soft center",
+                price: 15,
+                category: "snacks-treats",
+                image: "ST4.jpg",
+                available: true,
+                new: true,
+                vegetarian: true
+            },
+            {
+                id: 13,
+                name: "Coca Cola (500ml)",
+                description: "Classic cola soft drink",
+                price: 15,
+                category: "beverages",
+                image: "B1.jpg",
+                available: true,
+                popular: true,
+                vegetarian: true
+            },
+            {
+                id: 14,
+                name: "Fanta (500ml)",
+                description: "Refreshing orange flavored drink",
+                price: 15,
+                category: "beverages",
+                image: "B2.jpg",
+                available: true,
+                vegetarian: true
+            },
+            {
+                id: 15,
+                name: "Sprite (500ml)",
+                description: "Crisp lemon-lime flavored soda",
+                price: 15,
+                category: "beverages",
+                image: "B3.jpg",
+                available: true,
+                vegetarian: true
+            },
+            {
+                id: 16,
+                name: "Bottled Water (500ml)",
+                description: "Pure drinking water",
+                price: 8,
+                category: "beverages",
+                image: "B4.jpg",
+                available: true,
+                vegetarian: true
+            }
+        ];
 
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', initializeManagerApp);
