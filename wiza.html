@@ -303,13 +303,13 @@
             color: var(--text-primary);
         }
 
-        /* Navigation */
+        /* Navigation - 40% BIGGER */
         .manager-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 55px; /* Smaller navigation */
+            height: 77px; /* 40% bigger (was 55px) */
             background: var(--bg-card);
             border-top: 1px solid var(--border-color);
             z-index: var(--z-fixed);
@@ -351,12 +351,12 @@
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: var(--font-size-xs);
+            font-size: var(--font-size-sm); /* 40% bigger font */
             cursor: pointer;
             transition: all var(--transition-fast);
             border-radius: var(--border-radius);
             position: relative;
-            min-width: 60px; /* Smaller nav items */
+            min-width: 84px; /* 40% bigger (was 60px) */
             flex-shrink: 0;
         }
 
@@ -366,7 +366,7 @@
         }
 
         .nav-item i {
-            font-size: var(--font-size-md); /* Smaller icons */
+            font-size: var(--font-size-lg); /* 40% bigger icons (was var(--font-size-md)) */
         }
 
         .notification-badge {
@@ -388,7 +388,7 @@
 
         /* Main Content */
         .manager-main {
-            padding: 60px 0 60px; /* Smaller padding */
+            padding: 60px 0 77px; /* Smaller padding, accounting for bigger nav */
             max-width: 1400px;
             margin: 0 auto;
             min-height: 100vh;
@@ -1553,7 +1553,7 @@
         /* Responsive Design */
         @media (max-width: 1200px) {
             .manager-main {
-                padding: 60px var(--spacing-lg) 60px;
+                padding: 60px var(--spacing-lg) 77px;
             }
             
             .stats-grid {
@@ -1572,21 +1572,21 @@
             
             .manager-nav {
                 padding: 0 var(--spacing-xs);
-                height: 50px;
+                height: 70px; /* Adjusted for bigger nav */
             }
             
             .nav-item {
-                min-width: 50px;
+                min-width: 70px; /* Adjusted for bigger nav */
                 padding: var(--spacing-xs);
                 font-size: var(--font-size-xs);
             }
             
             .nav-item i {
-                font-size: var(--font-size-sm);
+                font-size: var(--font-size-md);
             }
             
             .manager-main {
-                padding: 60px var(--spacing-md) 50px;
+                padding: 60px var(--spacing-md) 70px;
             }
             
             .stats-grid {
@@ -1642,11 +1642,11 @@
             }
             
             .manager-nav {
-                height: 45px;
+                height: 63px; /* Adjusted for bigger nav */
             }
             
             .manager-main {
-                padding: 55px var(--spacing-sm) 45px;
+                padding: 55px var(--spacing-sm) 63px;
             }
             
             .content-section {
@@ -2109,6 +2109,38 @@
             transform: translateY(-1px);
             box-shadow: var(--shadow);
         }
+
+        /* Sound Notification Controls */
+        .sound-controls {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            z-index: var(--z-fixed);
+        }
+
+        .sound-toggle {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-normal);
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary-dark);
+        }
+
+        .sound-toggle.muted {
+            background: var(--text-muted);
+        }
     </style>
 </head>
 <body>
@@ -2136,6 +2168,13 @@
             </div>
         </div>
     </header>
+
+    <!-- Sound Controls -->
+    <div class="sound-controls">
+        <button class="sound-toggle" id="soundToggle" title="Toggle notification sound">
+            <i class="fas fa-volume-up"></i>
+        </button>
+    </div>
 
     <!-- New Order Popup -->
     <div class="new-order-popup" id="newOrderPopup">
@@ -2574,7 +2613,7 @@
         </section>
     </main>
 
-    <!-- Manager Navigation -->
+    <!-- Manager Navigation - 40% BIGGER -->
     <nav class="manager-nav">
         <div class="nav-container">
             <div class="nav-items">
@@ -2768,7 +2807,8 @@
             notificationSound: null,
             notificationInterval: null,
             processedOrderIds: new Set(), // Track processed orders to prevent duplicates
-            currentOrderInModal: null
+            currentOrderInModal: null,
+            soundEnabled: true
         };
 
         // DOM Elements
@@ -2882,7 +2922,10 @@
                 
                 // Forms
                 menuItemForm: document.getElementById('menuItemForm'),
-                promotionForm: document.getElementById('promotionForm')
+                promotionForm: document.getElementById('promotionForm'),
+                
+                // Sound Controls
+                soundToggle: document.getElementById('soundToggle')
             };
         }
 
@@ -2984,6 +3027,11 @@
                 elements.rejectOrderBtn.addEventListener('click', rejectCurrentOrder);
             }
 
+            // Sound toggle
+            if (elements.soundToggle) {
+                elements.soundToggle.addEventListener('click', toggleSound);
+            }
+
             // Event delegation for dynamic elements
             document.addEventListener('click', function(e) {
                 // View order details
@@ -3009,6 +3057,22 @@
                     stopNotificationSound(); // Stop sound when escape is pressed
                 }
             });
+        }
+
+        // Toggle sound on/off
+        function toggleSound() {
+            managerState.soundEnabled = !managerState.soundEnabled;
+            
+            if (managerState.soundEnabled) {
+                elements.soundToggle.innerHTML = '<i class="fas fa-volume-up"></i>';
+                elements.soundToggle.classList.remove('muted');
+                showNotification('Sound notifications enabled', 'success');
+            } else {
+                elements.soundToggle.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                elements.soundToggle.classList.add('muted');
+                stopNotificationSound();
+                showNotification('Sound notifications disabled', 'warning');
+            }
         }
 
         // Firebase Real-time Listeners - FIXED to keep listening
@@ -3278,7 +3342,9 @@
             showNewOrderPopup(order);
             
             // Play notification sound
-            playNotificationSound();
+            if (managerState.soundEnabled) {
+                playNotificationSound();
+            }
         }
 
         // Show in-app order notification
@@ -4188,7 +4254,7 @@
                 // Use actual coordinates if available, otherwise use default
                 const customerCoords = order.customerLocation.coordinates ? 
                     [order.customerLocation.coordinates.latitude, order.customerLocation.coordinates.longitude] :
-                    [-15.4002208, 28.3025851]; // Default customer coordinates
+                    [-15.4001909, 28.3026508]; // Default customer coordinates from Firebase
                 
                 const map = L.map('deliveryMap').setView(customerCoords, 15);
                 
