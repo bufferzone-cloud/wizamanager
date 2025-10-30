@@ -2339,7 +2339,7 @@
     <header class="manager-header">
         <div class="header-content">
             <div class="logo">
-                <img src="wfc.png" alt="WFC Logo" class="logo-img">
+                <div class="logo-img">WFC</div>
                 <div class="logo-text">
                     <h1>WIZA FOOD CAFE</h1>
                     <p>Manager Dashboard</p>
@@ -3095,7 +3095,7 @@
             const permissionRequest = document.getElementById('permissionRequest');
             if (permissionRequest) {
                 permissionRequest.classList.remove('show');
-            // After hiding permission request, request permissions
+                // After hiding permission request, request permissions
                 requestPermissions();
             }
         }
@@ -5206,7 +5206,7 @@
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 // Redirect to main site
-                window.location.href = 'https://bufferzone-cloud.github.io/wizafoodcafe/';
+                window.location.href = 'https://bufferzone-cloud.github.io/wizamanager/home.html';
             }
         }
 
