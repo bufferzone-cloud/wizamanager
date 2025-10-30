@@ -15,6 +15,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
     <style>
         :root {
             /* Dark Orange Color Scheme */
@@ -2109,9 +2112,229 @@
             transform: translateY(-1px);
             box-shadow: var(--shadow);
         }
+
+        /* PWA Install Prompt */
+        .install-prompt {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-md);
+            box-shadow: var(--shadow-lg);
+            z-index: var(--z-toast);
+            max-width: 400px;
+            width: 90%;
+            display: none;
+        }
+
+        .install-prompt.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .install-prompt-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .install-prompt-header i {
+            font-size: var(--font-size-xl);
+            color: var(--primary);
+        }
+
+        .install-prompt-header h3 {
+            font-size: var(--font-size-md);
+            margin-bottom: 0;
+        }
+
+        .install-prompt-actions {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+
+        .install-prompt-actions button {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Permission Request */
+        .permission-request {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-card);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-lg);
+            z-index: var(--z-modal);
+            max-width: 400px;
+            width: 90%;
+            display: none;
+        }
+
+        .permission-request.show {
+            display: block;
+        }
+
+        .permission-request-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .permission-request-header i {
+            font-size: var(--font-size-xl);
+            color: var(--primary);
+        }
+
+        .permission-request-header h3 {
+            font-size: var(--font-size-md);
+            margin-bottom: 0;
+        }
+
+        .permission-request-content {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .permission-request-actions {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+
+        .permission-request-actions button {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Overlay Notification */
+        .overlay-notification {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: var(--z-modal);
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-normal);
+        }
+
+        .overlay-notification.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .overlay-notification-content {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            border: 2px solid var(--primary);
+        }
+
+        .overlay-notification-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            color: var(--primary);
+        }
+
+        .overlay-notification-header i {
+            font-size: var(--font-size-xl);
+        }
+
+        .overlay-notification-header h3 {
+            font-size: var(--font-size-lg);
+            margin-bottom: 0;
+        }
+
+        .overlay-notification-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .overlay-notification-actions button {
+            flex: 1;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
+    <!-- PWA Install Prompt -->
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-prompt-header">
+            <i class="fas fa-download"></i>
+            <h3>Install WIZA FOOD CAFE Manager</h3>
+        </div>
+        <p>Install the app for a better experience with push notifications and offline access.</p>
+        <div class="install-prompt-actions">
+            <button class="btn btn-secondary" id="installCancelBtn">Not Now</button>
+            <button class="btn btn-primary" id="installConfirmBtn">Install</button>
+        </div>
+    </div>
+
+    <!-- Permission Request -->
+    <div class="permission-request" id="permissionRequest">
+        <div class="permission-request-header">
+            <i class="fas fa-bell"></i>
+            <h3>App Permissions</h3>
+        </div>
+        <div class="permission-request-content">
+            <p>To provide the best experience, WIZA FOOD CAFE Manager needs:</p>
+            <ul style="text-align: left; margin: var(--spacing-md) 0; padding-left: var(--spacing-lg);">
+                <li>Notification permissions for new order alerts</li>
+                <li>Display over other apps for urgent order notifications</li>
+            </ul>
+            <p>These permissions ensure you never miss a new order.</p>
+        </div>
+        <div class="permission-request-actions">
+            <button class="btn btn-secondary" id="permissionCancelBtn">Skip</button>
+            <button class="btn btn-primary" id="permissionConfirmBtn">Allow Permissions</button>
+        </div>
+    </div>
+
+    <!-- Overlay Notification -->
+    <div class="overlay-notification" id="overlayNotification">
+        <div class="overlay-notification-content">
+            <div class="overlay-notification-header">
+                <i class="fas fa-bell"></i>
+                <h3>New Order!</h3>
+            </div>
+            <div id="overlayOrderInfo">
+                <p><strong id="overlayOrderId">Order #WIZA0001</strong></p>
+                <p id="overlayCustomer">Customer: John Doe</p>
+                <p id="overlayOrderTotal">Total: K35.00</p>
+                <p id="overlayOrderItems">1x Chicken & Chips, 2x Sausage & Chips</p>
+            </div>
+            <div class="overlay-notification-actions">
+                <button class="btn btn-secondary" id="overlayCloseBtn">Close</button>
+                <button class="btn btn-primary" id="overlayViewBtn">View Order</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Manager Header -->
     <header class="manager-header">
         <div class="header-content">
@@ -2768,7 +2991,14 @@
             notificationSound: null,
             notificationInterval: null,
             processedOrderIds: new Set(), // Track processed orders to prevent duplicates
-            currentOrderInModal: null
+            currentOrderInModal: null,
+            // PWA state
+            deferredPrompt: null,
+            isAppInstalled: false,
+            permissionsGranted: {
+                notifications: false,
+                displayOverApps: false
+            }
         };
 
         // DOM Elements
@@ -2793,7 +3023,156 @@
             // Start auto-refresh for orders
             startAutoRefresh();
             
+            // Initialize PWA features
+            initializePWA();
+            
             showNotification('Manager dashboard loaded successfully!', 'success');
+        }
+
+        // Initialize PWA features
+        function initializePWA() {
+            // Check if app is already installed
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                managerState.isAppInstalled = true;
+                console.log('App is running in standalone mode');
+            }
+            
+            // Listen for beforeinstallprompt event
+            window.addEventListener('beforeinstallprompt', (e) => {
+                // Prevent the mini-infobar from appearing on mobile
+                e.preventDefault();
+                // Stash the event so it can be triggered later
+                managerState.deferredPrompt = e;
+                // Show install prompt
+                setTimeout(() => {
+                    showInstallPrompt();
+                }, 3000);
+            });
+            
+            // Listen for app installed event
+            window.addEventListener('appinstalled', () => {
+                managerState.isAppInstalled = true;
+                hideInstallPrompt();
+                console.log('App was successfully installed');
+                // Show permission request after installation
+                setTimeout(() => {
+                    showPermissionRequest();
+                }, 2000);
+            });
+            
+            // Check for existing permissions
+            checkPermissions();
+        }
+
+        // Show install prompt
+        function showInstallPrompt() {
+            if (managerState.deferredPrompt && !managerState.isAppInstalled) {
+                const installPrompt = document.getElementById('installPrompt');
+                if (installPrompt) {
+                    installPrompt.classList.add('show');
+                }
+            }
+        }
+
+        // Hide install prompt
+        function hideInstallPrompt() {
+            const installPrompt = document.getElementById('installPrompt');
+            if (installPrompt) {
+                installPrompt.classList.remove('show');
+            }
+        }
+
+        // Show permission request
+        function showPermissionRequest() {
+            const permissionRequest = document.getElementById('permissionRequest');
+            if (permissionRequest) {
+                permissionRequest.classList.add('show');
+            }
+        }
+
+        // Hide permission request
+        function hidePermissionRequest() {
+            const permissionRequest = document.getElementById('permissionRequest');
+            if (permissionRequest) {
+                permissionRequest.classList.remove('show');
+            // After hiding permission request, request permissions
+                requestPermissions();
+            }
+        }
+
+        // Check existing permissions
+        function checkPermissions() {
+            // Check notification permission
+            if (Notification.permission === 'granted') {
+                managerState.permissionsGranted.notifications = true;
+            }
+            
+            // Check for display over other apps permission (Android specific)
+            // This is a simplified check - in a real app you'd use specific APIs
+            if (typeof document.requestPictureInPicture !== 'undefined' || 
+                typeof document.fullscreenEnabled !== 'undefined') {
+                // Assume permission is available for demo purposes
+                managerState.permissionsGranted.displayOverApps = true;
+            }
+        }
+
+        // Request permissions
+        function requestPermissions() {
+            // Request notification permission
+            if (!managerState.permissionsGranted.notifications) {
+                Notification.requestPermission().then(permission => {
+                    managerState.permissionsGranted.notifications = permission === 'granted';
+                    if (managerState.permissionsGranted.notifications) {
+                        console.log('Notification permission granted');
+                        showNotification('Notification permissions enabled', 'success');
+                    }
+                });
+            }
+            
+            // For display over apps, we can't directly request it via JavaScript
+            // This would typically be handled by the app manifest and user settings
+            // For this demo, we'll assume it's granted
+            managerState.permissionsGranted.displayOverApps = true;
+            
+            // Save permissions state
+            saveManagerData();
+        }
+
+        // Show overlay notification for new orders
+        function showOverlayNotification(order) {
+            if (managerState.permissionsGranted.displayOverApps) {
+                const overlayNotification = document.getElementById('overlayNotification');
+                const overlayOrderId = document.getElementById('overlayOrderId');
+                const overlayCustomer = document.getElementById('overlayCustomer');
+                const overlayOrderTotal = document.getElementById('overlayOrderTotal');
+                const overlayOrderItems = document.getElementById('overlayOrderItems');
+                
+                if (overlayNotification && overlayOrderId && overlayCustomer && overlayOrderTotal && overlayOrderItems) {
+                    overlayOrderId.textContent = `Order #${order.ref}`;
+                    overlayCustomer.textContent = `Customer: ${order.customer.name}`;
+                    overlayOrderTotal.textContent = `Total: K${order.total.toFixed(2)}`;
+                    
+                    // Show first 3 items
+                    const itemsText = order.items.slice(0, 3).map(item => 
+                        `${item.quantity}x ${item.name}`
+                    ).join(', ');
+                    overlayOrderItems.textContent = itemsText + (order.items.length > 3 ? `, +${order.items.length - 3} more` : '');
+                    
+                    overlayNotification.classList.add('show');
+                    
+                    // Play notification sound
+                    playNotificationSound();
+                }
+            }
+        }
+
+        // Hide overlay notification
+        function hideOverlayNotification() {
+            const overlayNotification = document.getElementById('overlayNotification');
+            if (overlayNotification) {
+                overlayNotification.classList.remove('show');
+                stopNotificationSound();
+            }
         }
 
         // Start auto-refresh for orders
@@ -2882,7 +3261,20 @@
                 
                 // Forms
                 menuItemForm: document.getElementById('menuItemForm'),
-                promotionForm: document.getElementById('promotionForm')
+                promotionForm: document.getElementById('promotionForm'),
+                
+                // PWA Elements
+                installPrompt: document.getElementById('installPrompt'),
+                installCancelBtn: document.getElementById('installCancelBtn'),
+                installConfirmBtn: document.getElementById('installConfirmBtn'),
+                permissionRequest: document.getElementById('permissionRequest'),
+                permissionCancelBtn: document.getElementById('permissionCancelBtn'),
+                permissionConfirmBtn: document.getElementById('permissionConfirmBtn'),
+                
+                // Overlay Notification
+                overlayNotification: document.getElementById('overlayNotification'),
+                overlayCloseBtn: document.getElementById('overlayCloseBtn'),
+                overlayViewBtn: document.getElementById('overlayViewBtn')
             };
         }
 
@@ -2984,6 +3376,37 @@
                 elements.rejectOrderBtn.addEventListener('click', rejectCurrentOrder);
             }
 
+            // PWA event listeners
+            if (elements.installCancelBtn) {
+                elements.installCancelBtn.addEventListener('click', hideInstallPrompt);
+            }
+
+            if (elements.installConfirmBtn) {
+                elements.installConfirmBtn.addEventListener('click', installApp);
+            }
+
+            if (elements.permissionCancelBtn) {
+                elements.permissionCancelBtn.addEventListener('click', hidePermissionRequest);
+            }
+
+            if (elements.permissionConfirmBtn) {
+                elements.permissionConfirmBtn.addEventListener('click', hidePermissionRequest);
+            }
+
+            // Overlay notification event listeners
+            if (elements.overlayCloseBtn) {
+                elements.overlayCloseBtn.addEventListener('click', hideOverlayNotification);
+            }
+
+            if (elements.overlayViewBtn) {
+                elements.overlayViewBtn.addEventListener('click', () => {
+                    if (managerState.currentNewOrder) {
+                        viewOrderDetails(managerState.currentNewOrder.firebaseKey);
+                        hideOverlayNotification();
+                    }
+                });
+            }
+
             // Event delegation for dynamic elements
             document.addEventListener('click', function(e) {
                 // View order details
@@ -3009,6 +3432,22 @@
                     stopNotificationSound(); // Stop sound when escape is pressed
                 }
             });
+        }
+
+        // Install app
+        function installApp() {
+            if (managerState.deferredPrompt) {
+                managerState.deferredPrompt.prompt();
+                managerState.deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    managerState.deferredPrompt = null;
+                });
+            }
+            hideInstallPrompt();
         }
 
         // Firebase Real-time Listeners - FIXED to keep listening
@@ -3277,20 +3716,20 @@
             // Show popup notification
             showNewOrderPopup(order);
             
+            // Show overlay notification if permissions are granted
+            if (managerState.permissionsGranted.displayOverApps) {
+                showOverlayNotification(order);
+            }
+            
             // Play notification sound
             playNotificationSound();
-        }
-
-        // Show in-app order notification
-        function showInAppOrderNotification(order) {
-            showNotification(`New order #${order.ref} from ${order.customer.name} - K${order.total.toFixed(2)}`, 'success');
         }
 
         // Play notification sound
         function playNotificationSound() {
             try {
-                // Create audio element with a ringtone sound
-                managerState.notificationSound = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+                // Create audio element with the notification sound
+                managerState.notificationSound = new Audio('Notification.mp3');
                 managerState.notificationSound.volume = 0.7;
                 
                 // Play sound repeatedly until stopped
@@ -3372,6 +3811,11 @@
             }
         }
 
+        // Show in-app order notification
+        function showInAppOrderNotification(order) {
+            showNotification(`New order #${order.ref} from ${order.customer.name} - K${order.total.toFixed(2)}`, 'success');
+        }
+
         // Manager accepts order
         async function acceptOrder(orderId) {
             const order = managerState.orders.find(o => o.firebaseKey === orderId);
@@ -3412,6 +3856,7 @@
                 loadOrders();
                 updateDashboard();
                 stopNotificationSound(); // Stop sound when order is accepted
+                hideOverlayNotification(); // Hide overlay notification
             }
         }
 
@@ -3455,6 +3900,7 @@
                 loadOrders();
                 updateDashboard();
                 stopNotificationSound(); // Stop sound when order is rejected
+                hideOverlayNotification(); // Hide overlay notification
             }
         }
 
@@ -3529,6 +3975,7 @@
                         order.tracking.cancelled = now;
                         order.tracking.currentStatus = 'cancelled';
                         stopNotificationSound(); // Stop sound when order is cancelled
+                        hideOverlayNotification(); // Hide overlay notification
                         break;
                 }
                 
@@ -4032,7 +4479,7 @@
                         ` : ''}
                     </div>
                     ${order.customerLocation.coordinates ? `
-                    <div class="map-container" id="deliveryMap"></div>
+                    <div class="map-container" id="deliveryMap-${order.firebaseKey}"></div>
                     <div class="navigation-buttons">
                         <a href="https://waze.com/ul?ll=${order.customerLocation.coordinates.latitude},${order.customerLocation.coordinates.longitude}&navigate=yes" target="_blank" class="nav-btn waze">
                             <i class="fab fa-waze"></i> Navigate with Waze
@@ -4181,19 +4628,46 @@
 
         // Initialize delivery map
         function initializeDeliveryMap(order) {
-            const mapContainer = document.getElementById('deliveryMap');
-            if (!mapContainer) return;
+            const mapContainer = document.getElementById(`deliveryMap-${order.firebaseKey}`);
+            if (!mapContainer) {
+                console.error('Map container not found for order:', order.firebaseKey);
+                return;
+            }
             
             try {
-                // Use actual coordinates if available, otherwise use default
-                const customerCoords = order.customerLocation.coordinates ? 
-                    [order.customerLocation.coordinates.latitude, order.customerLocation.coordinates.longitude] :
-                    [-15.4002208, 28.3025851]; // Default customer coordinates
+                // Get customer coordinates - handle different data structures
+                let customerLat, customerLng;
                 
-                const map = L.map('deliveryMap').setView(customerCoords, 15);
+                if (order.customerLocation && order.customerLocation.coordinates) {
+                    // Handle coordinates object structure
+                    customerLat = order.customerLocation.coordinates.latitude;
+                    customerLng = order.customerLocation.coordinates.longitude;
+                } else if (order.customerLocation && Array.isArray(order.customerLocation)) {
+                    // Handle array structure [lat, lng]
+                    customerLat = order.customerLocation[0];
+                    customerLng = order.customerLocation[1];
+                } else {
+                    // Default coordinates if none available
+                    customerLat = -15.4002208;
+                    customerLng = 28.3025851;
+                    console.warn('Using default coordinates for order:', order.firebaseKey);
+                }
+
+                // Validate coordinates
+                if (!customerLat || !customerLng) {
+                    console.error('Invalid coordinates for order:', order.firebaseKey, customerLat, customerLng);
+                    mapContainer.innerHTML = '<p>Invalid customer coordinates</p>';
+                    return;
+                }
+
+                const customerCoords = [customerLat, customerLng];
+                
+                // Initialize map with proper error handling
+                const map = L.map(`deliveryMap-${order.firebaseKey}`).setView(customerCoords, 15);
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 18
                 }).addTo(map);
                 
                 // Add restaurant marker
@@ -4212,12 +4686,26 @@
                 L.polyline([managerState.restaurantLocation, customerCoords], {
                     color: 'orange',
                     weight: 4,
-                    opacity: 0.7
+                    opacity: 0.7,
+                    dashArray: '5, 10'
                 }).addTo(map);
                 
+                // Fit map to show both locations
+                map.fitBounds([managerState.restaurantLocation, customerCoords], {
+                    padding: [20, 20]
+                });
+                
+                console.log('Map initialized successfully for order:', order.firebaseKey);
+                
             } catch (error) {
-                console.error('Error initializing map:', error);
-                mapContainer.innerHTML = '<p>Error loading map</p>';
+                console.error('Error initializing map for order:', order.firebaseKey, error);
+                mapContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: var(--text-muted);">
+                        <i class="fas fa-map-marked-alt" style="font-size: 48px; margin-bottom: 10px;"></i>
+                        <p>Unable to load map</p>
+                        <p style="font-size: var(--font-size-xs);">Error: ${error.message}</p>
+                    </div>
+                `;
             }
         }
 
