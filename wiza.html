@@ -16,7 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="https://bufferzone-cloud.github.io/wizamanager/manifest.json">
     
     <style>
         :root {
@@ -2959,6 +2959,19 @@
         const db = firebase.database();
         const storage = firebase.storage();
 
+         // Register service worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('https://bufferzone-cloud.github.io/wizamanager/sw.js')
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(function(error) {
+                    console.log('ServiceWorker registration failed: ', error);
+                });
+        });
+    }
+
         // Restaurant location
         const restaurantLocation = [-15.402235977316481, 28.329942522202668];
 
@@ -5432,3 +5445,4 @@
     </script>
 </body>
 </html>
+
