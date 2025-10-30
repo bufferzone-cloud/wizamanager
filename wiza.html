@@ -306,13 +306,13 @@
             color: var(--text-primary);
         }
 
-        /* Navigation */
+        /* Navigation - 40% BIGGER */
         .manager-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 55px; /* Smaller navigation */
+            height: 77px; /* 40% bigger (from 55px) */
             background: var(--bg-card);
             border-top: 1px solid var(--border-color);
             z-index: var(--z-fixed);
@@ -354,12 +354,12 @@
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: var(--font-size-xs);
+            font-size: var(--font-size-sm); /* 40% bigger font */
             cursor: pointer;
             transition: all var(--transition-fast);
             border-radius: var(--border-radius);
             position: relative;
-            min-width: 60px; /* Smaller nav items */
+            min-width: 84px; /* 40% bigger (from 60px) */
             flex-shrink: 0;
         }
 
@@ -369,7 +369,7 @@
         }
 
         .nav-item i {
-            font-size: var(--font-size-md); /* Smaller icons */
+            font-size: var(--font-size-lg); /* 40% bigger icons (from md) */
         }
 
         .notification-badge {
@@ -379,8 +379,8 @@
             background: var(--danger);
             color: white;
             border-radius: 50%;
-            width: 14px; /* Smaller badge */
-            height: 14px;
+            width: 20px; /* 40% bigger (from 14px) */
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -391,7 +391,7 @@
 
         /* Main Content */
         .manager-main {
-            padding: 60px 0 60px; /* Smaller padding */
+            padding: 60px 0 77px; /* Adjusted for bigger nav */
             max-width: 1400px;
             margin: 0 auto;
             min-height: 100vh;
@@ -1556,7 +1556,7 @@
         /* Responsive Design */
         @media (max-width: 1200px) {
             .manager-main {
-                padding: 60px var(--spacing-lg) 60px;
+                padding: 60px var(--spacing-lg) 77px;
             }
             
             .stats-grid {
@@ -1575,21 +1575,21 @@
             
             .manager-nav {
                 padding: 0 var(--spacing-xs);
-                height: 50px;
+                height: 70px;
             }
             
             .nav-item {
-                min-width: 50px;
+                min-width: 70px;
                 padding: var(--spacing-xs);
                 font-size: var(--font-size-xs);
             }
             
             .nav-item i {
-                font-size: var(--font-size-sm);
+                font-size: var(--font-size-md);
             }
             
             .manager-main {
-                padding: 60px var(--spacing-md) 50px;
+                padding: 60px var(--spacing-md) 70px;
             }
             
             .stats-grid {
@@ -1645,11 +1645,11 @@
             }
             
             .manager-nav {
-                height: 45px;
+                height: 63px;
             }
             
             .manager-main {
-                padding: 55px var(--spacing-sm) 45px;
+                padding: 55px var(--spacing-sm) 63px;
             }
             
             .content-section {
@@ -2116,7 +2116,7 @@
         /* PWA Install Prompt */
         .install-prompt {
             position: fixed;
-            bottom: 70px;
+            bottom: 85px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--bg-card);
@@ -2797,7 +2797,7 @@
         </section>
     </main>
 
-    <!-- Manager Navigation -->
+    <!-- Manager Navigation - 40% BIGGER -->
     <nav class="manager-nav">
         <div class="nav-container">
             <div class="nav-items">
@@ -2959,18 +2959,18 @@
         const db = firebase.database();
         const storage = firebase.storage();
 
-         // Register service worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            navigator.serviceWorker.register('https://bufferzone-cloud.github.io/wizamanager/sw.js')
-                .then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                })
-                .catch(function(error) {
-                    console.log('ServiceWorker registration failed: ', error);
-                });
-        });
-    }
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('https://bufferzone-cloud.github.io/wizamanager/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
 
         // Restaurant location
         const restaurantLocation = [-15.402235977316481, 28.329942522202668];
@@ -5445,4 +5445,3 @@
     </script>
 </body>
 </html>
-
