@@ -2074,6 +2074,41 @@
             from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
+
+        /* Navigation buttons for maps */
+        .navigation-buttons {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            justify-content: center;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+
+        .nav-btn.waze {
+            background: #33CCFF;
+            color: white;
+        }
+
+        .nav-btn.google {
+            background: #4285F4;
+            color: white;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
     </style>
 </head>
 <body>
@@ -3489,7 +3524,7 @@
                             statusUpdated: order.statusUpdated,
                             tracking: order.tracking
                         });
-                        console.log(`✅ Order ${order.ref} status updated to ${newStatus}`);
+                                                console.log(`✅ Order ${order.ref} status updated to ${newStatus}`);
                         
                         showNotification(`Order ${order.ref} status updated to ${newStatus}`, 'success');
                         
@@ -3939,16 +3974,16 @@
                                     <h5>${item.name}</h5>
                                     <p class="item-price">K${item.price} × ${item.quantity} = K${(item.price * item.quantity).toFixed(2)}</p>
                                     ${item.description ? `<p class="item-description">${item.description}</p>` : ''}
-                                    ${item.customizations && (item.customizations.toppings.length > 0 || item.customizations.specialInstructions) ? `
+                                    ${(item.toppings && item.toppings.length > 0) || item.instructions ? `
                                         <div class="customization-list">
-                                            ${item.customizations.toppings.length > 0 ? `
+                                            ${item.toppings && item.toppings.length > 0 ? `
                                                 <div class="customization-item">
-                                                    <strong>Toppings:</strong> ${item.customizations.toppings.join(', ')}
+                                                    <strong>Toppings:</strong> ${item.toppings.join(', ')}
                                                 </div>
                                             ` : ''}
-                                            ${item.customizations.specialInstructions ? `
+                                            ${item.instructions ? `
                                                 <div class="customization-item">
-                                                    <strong>Special Instructions:</strong> ${item.customizations.specialInstructions}
+                                                    <strong>Special Instructions:</strong> ${item.instructions}
                                                 </div>
                                             ` : ''}
                                         </div>
@@ -3965,7 +4000,7 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <label>Address:</label>
-                            <span>${order.deliveryLocation.address || 'Sibweni Road, Northmead, Lusaka, Lusaka Province, Zambia'}</span>
+                            <span>${order.deliveryLocation.address || (order.deliveryLocation.coordinates ? 'Coordinates provided' : 'No address provided')}</span>
                         </div>
                         ${order.deliveryLocation.coordinates ? `
                         <div class="detail-item">
@@ -3988,6 +4023,14 @@
                     </div>
                     ${order.deliveryLocation.coordinates ? `
                     <div class="map-container" id="deliveryMap"></div>
+                    <div class="navigation-buttons">
+                        <a href="https://waze.com/ul?ll=${order.deliveryLocation.coordinates.latitude},${order.deliveryLocation.coordinates.longitude}&navigate=yes" target="_blank" class="nav-btn waze">
+                            <i class="fab fa-waze"></i> Navigate with Waze
+                        </a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${order.deliveryLocation.coordinates.latitude},${order.deliveryLocation.coordinates.longitude}" target="_blank" class="nav-btn google">
+                            <i class="fab fa-google"></i> Navigate with Google Maps
+                        </a>
+                    </div>
                     ` : ''}
                 </div>
                 ` : ''}
