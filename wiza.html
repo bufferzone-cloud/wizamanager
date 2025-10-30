@@ -2736,6 +2736,9 @@
         const db = firebase.database();
         const storage = firebase.storage();
 
+        // Restaurant location
+        const restaurantLocation = [-15.402235977316481, 28.329942522202668];
+
         // Manager App State
         const managerState = {
             currentSection: 'dashboard',
@@ -2759,7 +2762,7 @@
                 inventoryTracking: false,
                 preparationTime: 25
             },
-            restaurantLocation: [-15.402235977316481, 28.329942522202668],
+            restaurantLocation: restaurantLocation,
             orderCounter: 1,
             currentNewOrder: null,
             notificationSound: null,
@@ -3133,6 +3136,19 @@
         function validateAndEnhanceOrder(order) {
             const now = new Date().toISOString();
             
+            // Handle customerLocation data structure
+            let customerLocation = null;
+            if (order.customerLocation) {
+                customerLocation = {
+                    address: order.customerLocation.address || "Address not provided",
+                    coordinates: order.customerLocation.coordinates || {
+                        latitude: order.customerLocation[0] || null,
+                        longitude: order.customerLocation[1] || null
+                    },
+                    timestamp: order.customerLocation.timestamp || now
+                };
+            }
+            
             return {
                 id: order.id || generateId(),
                 ref: order.ref || `WIZA${(order.id || generateId()).toString().padStart(4, '0')}`,
@@ -3146,7 +3162,7 @@
                 status: order.status || 'pending',
                 date: order.date || now,
                 delivery: order.delivery || { isDelivery: false },
-                deliveryLocation: order.deliveryLocation || null,
+                customerLocation: customerLocation,
                 customer: order.customer || { 
                     name: 'Unknown Customer', 
                     email: '', 
@@ -3178,8 +3194,8 @@
                 deliveryTime: order.deliveryTime || 15,
                 totalPreparationTime: order.totalPreparationTime || 40,
                 restaurantLocation: order.restaurantLocation || {
-                    latitude: -15.402236,
-                    longitude: 28.329943,
+                    latitude: restaurantLocation[0],
+                    longitude: restaurantLocation[1],
                     address: "WIZA FOOD CAFE, Plot 123, Great East Road, Lusaka"
                 },
                 orderSource: order.orderSource || 'web_app',
@@ -3524,7 +3540,7 @@
                             statusUpdated: order.statusUpdated,
                             tracking: order.tracking
                         });
-                                                console.log(`✅ Order ${order.ref} status updated to ${newStatus}`);
+                        console.log(`✅ Order ${order.ref} status updated to ${newStatus}`);
                         
                         showNotification(`Order ${order.ref} status updated to ${newStatus}`, 'success');
                         
@@ -3994,40 +4010,34 @@
                     </div>
                 </div>
 
-                ${order.delivery.isDelivery && order.deliveryLocation ? `
+                ${order.delivery.isDelivery && order.customerLocation ? `
                 <div class="order-detail-section">
-                    <h4><i class="fas fa-map-marker-alt"></i> Delivery Location</h4>
+                    <h4><i class="fas fa-map-marker-alt"></i> Customer Location</h4>
                     <div class="detail-grid">
                         <div class="detail-item">
                             <label>Address:</label>
-                            <span>${order.deliveryLocation.address || (order.deliveryLocation.coordinates ? 'Coordinates provided' : 'No address provided')}</span>
+                            <span>${order.customerLocation.address || 'Address not provided'}</span>
                         </div>
-                        ${order.deliveryLocation.coordinates ? `
+                        ${order.customerLocation.coordinates ? `
                         <div class="detail-item">
                             <label>Coordinates:</label>
-                            <span>${order.deliveryLocation.coordinates.latitude}, ${order.deliveryLocation.coordinates.longitude}</span>
+                            <span>${order.customerLocation.coordinates.latitude}, ${order.customerLocation.coordinates.longitude}</span>
                         </div>
                         ` : ''}
-                        ${order.deliveryLocation.distance ? `
+                        ${order.customerLocation.timestamp ? `
                         <div class="detail-item">
-                            <label>Distance:</label>
-                            <span>${order.deliveryLocation.distance}</span>
-                        </div>
-                        ` : ''}
-                        ${order.deliveryLocation.deliveryNotes ? `
-                        <div class="detail-item">
-                            <label>Delivery Notes:</label>
-                            <span>${order.deliveryLocation.deliveryNotes}</span>
+                            <label>Location Timestamp:</label>
+                            <span>${new Date(order.customerLocation.timestamp).toLocaleString()}</span>
                         </div>
                         ` : ''}
                     </div>
-                    ${order.deliveryLocation.coordinates ? `
+                    ${order.customerLocation.coordinates ? `
                     <div class="map-container" id="deliveryMap"></div>
                     <div class="navigation-buttons">
-                        <a href="https://waze.com/ul?ll=${order.deliveryLocation.coordinates.latitude},${order.deliveryLocation.coordinates.longitude}&navigate=yes" target="_blank" class="nav-btn waze">
+                        <a href="https://waze.com/ul?ll=${order.customerLocation.coordinates.latitude},${order.customerLocation.coordinates.longitude}&navigate=yes" target="_blank" class="nav-btn waze">
                             <i class="fab fa-waze"></i> Navigate with Waze
                         </a>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${order.deliveryLocation.coordinates.latitude},${order.deliveryLocation.coordinates.longitude}" target="_blank" class="nav-btn google">
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${order.customerLocation.coordinates.latitude},${order.customerLocation.coordinates.longitude}" target="_blank" class="nav-btn google">
                             <i class="fab fa-google"></i> Navigate with Google Maps
                         </a>
                     </div>
@@ -4159,8 +4169,8 @@
                 }
             }
 
-            // Initialize map if delivery location exists
-            if (order.delivery.isDelivery && order.deliveryLocation && order.deliveryLocation.coordinates) {
+            // Initialize map if customer location exists
+            if (order.delivery.isDelivery && order.customerLocation && order.customerLocation.coordinates) {
                 setTimeout(() => {
                     initializeDeliveryMap(order);
                 }, 100);
@@ -4176,11 +4186,11 @@
             
             try {
                 // Use actual coordinates if available, otherwise use default
-                const deliveryCoords = order.deliveryLocation.coordinates ? 
-                    [order.deliveryLocation.coordinates.latitude, order.deliveryLocation.coordinates.longitude] :
-                    [-15.402236, 28.329943]; // Default coordinates
+                const customerCoords = order.customerLocation.coordinates ? 
+                    [order.customerLocation.coordinates.latitude, order.customerLocation.coordinates.longitude] :
+                    [-15.4002208, 28.3025851]; // Default customer coordinates
                 
-                const map = L.map('deliveryMap').setView(deliveryCoords, 15);
+                const map = L.map('deliveryMap').setView(customerCoords, 15);
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors'
@@ -4192,14 +4202,14 @@
                     .bindPopup('WIZA FOOD CAFE')
                     .openPopup();
                 
-                // Add delivery location marker
-                L.marker(deliveryCoords)
+                // Add customer location marker
+                L.marker(customerCoords)
                     .addTo(map)
-                    .bindPopup('Delivery Location')
+                    .bindPopup('Customer Location')
                     .openPopup();
                 
                 // Add route line
-                L.polyline([managerState.restaurantLocation, deliveryCoords], {
+                L.polyline([managerState.restaurantLocation, customerCoords], {
                     color: 'orange',
                     weight: 4,
                     opacity: 0.7
