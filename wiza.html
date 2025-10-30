@@ -3075,50 +3075,92 @@
             }
         }
 
-        // Firebase Real-time Listeners - FIXED to keep listening
+        // Improved Firebase Real-time Listeners
         function setupFirebaseListeners() {
             console.log("📡 Setting up Firebase real-time listeners...");
             
-            // Listen for new orders
+            // Listen for new orders with improved error handling
             const ordersRef = db.ref("orders");
             
             // This listener will keep running and process all new orders
             ordersRef.on('child_added', (snapshot) => {
-                const newOrder = snapshot.val();
-                const orderKey = snapshot.key;
-                
-                console.log("🆕 New order received from Firebase:", newOrder);
-                
-                // Check if we've already processed this order
-                if (newOrder && !managerState.processedOrderIds.has(orderKey)) {
-                    // Mark this order as processed
-                    managerState.processedOrderIds.add(orderKey);
+                try {
+                    const newOrder = snapshot.val();
+                    const orderKey = snapshot.key;
                     
-                    // Add Firebase key to order
-                    newOrder.firebaseKey = orderKey;
-                    newOrder.id = newOrder.orderId || generateId();
+                    console.log("🆕 New order received from Firebase:", newOrder);
                     
-                    // Process the new order
-                    processNewOrder(newOrder);
-                    
-                    // Show new order notification to manager
-                    if (managerState.settings.acceptOrders) {
-                        showNewOrderNotification(newOrder);
+                    if (!newOrder) {
+                        console.warn("⚠️ Received null order data");
+                        return;
                     }
+                    
+                    // Check if we've already processed this order
+                    if (!managerState.processedOrderIds.has(orderKey)) {
+                        // Mark this order as processed
+                        managerState.processedOrderIds.add(orderKey);
+                        
+                        // Add Firebase key to order
+                        newOrder.firebaseKey = orderKey;
+                        newOrder.id = newOrder.orderId || generateId();
+                        
+                        // Process the new order
+                        processNewOrder(newOrder);
+                        
+                        // Show new order notification to manager
+                        if (managerState.settings.acceptOrders) {
+                            showNewOrderNotification(newOrder);
+                        }
+                    } else {
+                        console.log("📝 Order already processed:", orderKey);
+                    }
+                } catch (error) {
+                    console.error("❌ Error processing new order:", error);
                 }
+            }, (error) => {
+                console.error("❌ Firebase listener error:", error);
             });
 
             // Listen for order updates
             ordersRef.on('child_changed', (snapshot) => {
-                const updatedOrder = snapshot.val();
-                const orderKey = snapshot.key;
-                updatedOrder.firebaseKey = orderKey;
-                updatedOrder.id = updatedOrder.orderId || orderKey;
-                
-                console.log("🔄 Order updated:", updatedOrder);
-                
-                // Update the order in the manager state
-                updateExistingOrder(updatedOrder);
+                try {
+                    const updatedOrder = snapshot.val();
+                    const orderKey = snapshot.key;
+                    
+                    if (!updatedOrder) return;
+                    
+                    updatedOrder.firebaseKey = orderKey;
+                    updatedOrder.id = updatedOrder.orderId || orderKey;
+                    
+                    console.log("🔄 Order updated:", updatedOrder);
+                    
+                    // Update the order in the manager state
+                    updateExistingOrder(updatedOrder);
+                } catch (error) {
+                    console.error("❌ Error processing order update:", error);
+                }
+            });
+
+            // Listen for order removals
+            ordersRef.on('child_removed', (snapshot) => {
+                try {
+                    const removedOrderKey = snapshot.key;
+                    console.log("🗑️ Order removed:", removedOrderKey);
+                    
+                    // Remove from processed orders set
+                    managerState.processedOrderIds.delete(removedOrderKey);
+                    
+                    // Remove from local state
+                    const orderIndex = managerState.orders.findIndex(o => o.firebaseKey === removedOrderKey);
+                    if (orderIndex !== -1) {
+                        managerState.orders.splice(orderIndex, 1);
+                        saveManagerData();
+                        loadOrders();
+                        updateDashboard();
+                    }
+                } catch (error) {
+                    console.error("❌ Error processing order removal:", error);
+                }
             });
 
             // Handle connection state
@@ -3132,67 +3174,81 @@
                     updateConnectionStatus(false);
                 }
             });
+
+            // Add error handler for the entire connection
+            ordersRef.on('value', () => {}, (error) => {
+                console.error("❌ Firebase connection error:", error);
+                updateConnectionStatus(false);
+            });
         }
 
         // Process new order from Firebase
         function processNewOrder(order) {
-            // Validate and enhance order data
-            const enhancedOrder = validateAndEnhanceOrder(order);
-            
-            // Check if order already exists (by ID or firebase key)
-            const existingOrderIndex = managerState.orders.findIndex(o => 
-                o.id === enhancedOrder.id || o.firebaseKey === enhancedOrder.firebaseKey
-            );
-            
-            if (existingOrderIndex === -1) {
-                // Add to orders array at the beginning
-                managerState.orders.unshift(enhancedOrder);
+            try {
+                // Validate and enhance order data
+                const enhancedOrder = validateAndEnhanceOrder(order);
                 
-                // Update order counter
-                if (enhancedOrder.id && enhancedOrder.id >= managerState.orderCounter) {
-                    managerState.orderCounter = enhancedOrder.id + 1;
+                // Check if order already exists (by ID or firebase key)
+                const existingOrderIndex = managerState.orders.findIndex(o => 
+                    o.id === enhancedOrder.id || o.firebaseKey === enhancedOrder.firebaseKey
+                );
+                
+                if (existingOrderIndex === -1) {
+                    // Add to orders array at the beginning
+                    managerState.orders.unshift(enhancedOrder);
+                    
+                    // Update order counter
+                    if (enhancedOrder.id && enhancedOrder.id >= managerState.orderCounter) {
+                        managerState.orderCounter = enhancedOrder.id + 1;
+                    }
+                    
+                    // Save data immediately
+                    saveManagerData();
+                    
+                    // Update UI in real-time
+                    updateUIForNewOrder(enhancedOrder);
+                    
+                    console.log('✅ New order processed successfully:', enhancedOrder.ref);
+                } else {
+                    console.log('⚠️ Order already exists, updating:', enhancedOrder.ref);
+                    // Update existing order
+                    managerState.orders[existingOrderIndex] = {
+                        ...managerState.orders[existingOrderIndex],
+                        ...enhancedOrder
+                    };
+                    
+                    saveManagerData();
+                    updateUIForOrderUpdate(enhancedOrder);
                 }
-                
-                // Save data immediately
-                saveManagerData();
-                
-                // Update UI in real-time
-                updateUIForNewOrder(enhancedOrder);
-                
-                console.log('✅ New order processed successfully:', enhancedOrder.ref);
-            } else {
-                console.log('⚠️ Order already exists, updating:', enhancedOrder.ref);
-                // Update existing order
-                managerState.orders[existingOrderIndex] = {
-                    ...managerState.orders[existingOrderIndex],
-                    ...enhancedOrder
-                };
-                
-                saveManagerData();
-                updateUIForOrderUpdate(enhancedOrder);
+            } catch (error) {
+                console.error('❌ Error processing new order:', error);
             }
         }
 
         // Update existing order
         function updateExistingOrder(updatedOrder) {
-            const orderIndex = managerState.orders.findIndex(o => 
-                o.id === updatedOrder.id || o.firebaseKey === updatedOrder.firebaseKey
-            );
-            
-            if (orderIndex !== -1) {
-                managerState.orders[orderIndex] = {
-                    ...managerState.orders[orderIndex],
-                    ...updatedOrder
-                };
+            try {
+                const orderIndex = managerState.orders.findIndex(o => 
+                    o.id === updatedOrder.id || o.firebaseKey === updatedOrder.firebaseKey
+                );
                 
-                saveManagerData();
-                updateUIForOrderUpdate(updatedOrder);
-                
-                console.log(`✅ Order ${updatedOrder.ref} updated in local state`);
-            } else {
-                // If order doesn't exist locally, add it
-                console.log('⚠️ Order not found locally, adding:', updatedOrder.ref);
-                processNewOrder(updatedOrder);
+                if (orderIndex !== -1) {
+                    managerState.orders[orderIndex] = {
+                        ...managerState.orders[orderIndex],
+                        ...updatedOrder
+                    };
+                    
+                    saveManagerData();
+                    updateUIForOrderUpdate(updatedOrder);
+                    
+                    console.log(`✅ Order ${updatedOrder.ref} updated in local state`);
+                } else {
+                    // If order doesn't exist locally, add it
+                    console.log('⚠️ Order not found locally, adding:', updatedOrder.ref);
+                    processNewOrder(updatedOrder);
+                }
+            } catch (error) {
+                console.error('❌ Error updating existing order:', error);
             }
         }
 
@@ -3352,24 +3408,50 @@
             showNotification(`New order #${order.ref} from ${order.customer.name} - K${order.total.toFixed(2)}`, 'success');
         }
 
-        // Play notification sound
+        // Play notification sound - IMPROVED VERSION
         function playNotificationSound() {
             try {
-                // Create audio element with a ringtone sound
-                managerState.notificationSound = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
-                managerState.notificationSound.volume = 0.7;
+                // Stop any existing sound first
+                stopNotificationSound();
                 
-                // Play sound repeatedly until stopped
-                managerState.notificationSound.addEventListener('ended', function() {
-                    this.currentTime = 0;
-                    this.play();
+                // Create audio element with your actual sound file
+                managerState.notificationSound = new Audio('Notification.mp3');
+                managerState.notificationSound.volume = 1.0; // Full volume
+                managerState.notificationSound.preload = 'auto';
+                
+                // Set up event listeners for better control
+                managerState.notificationSound.addEventListener('canplaythrough', function() {
+                    console.log('🔊 Notification sound ready to play');
                 });
                 
+                managerState.notificationSound.addEventListener('error', function(e) {
+                    console.error('🔇 Error loading notification sound:', e);
+                    playFallbackSound();
+                });
+                
+                // Play sound repeatedly until stopped (with improved loop handling)
+                let playCount = 0;
+                const maxPlays = 5; // Limit to 5 plays to prevent infinite looping
+                
+                managerState.notificationSound.addEventListener('ended', function() {
+                    playCount++;
+                    if (playCount < maxPlays && managerState.soundEnabled) {
+                        this.currentTime = 0;
+                        this.play().catch(e => {
+                            console.log('Audio play failed on loop:', e);
+                        });
+                    } else {
+                        stopNotificationSound();
+                    }
+                });
+                
+                // Play the sound
                 managerState.notificationSound.play().catch(e => {
                     console.log('Audio play failed:', e);
                     // Fallback to browser beep
                     playFallbackSound();
                 });
+                
             } catch (error) {
                 console.error('Error playing notification sound:', error);
                 playFallbackSound();
@@ -3389,11 +3471,32 @@
                 oscillator.frequency.value = 800;
                 oscillator.type = 'sine';
                 
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
                 
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 1);
+                
+                // Play multiple times for better notification
+                setTimeout(() => {
+                    if (managerState.soundEnabled) {
+                        const oscillator2 = audioContext.createOscillator();
+                        const gainNode2 = audioContext.createGain();
+                        
+                        oscillator2.connect(gainNode2);
+                        gainNode2.connect(audioContext.destination);
+                        
+                        oscillator2.frequency.value = 1000;
+                        oscillator2.type = 'sine';
+                        
+                        gainNode2.gain.setValueAtTime(0.7, audioContext.currentTime + 1.2);
+                        gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2.2);
+                        
+                        oscillator2.start(audioContext.currentTime + 1.2);
+                        oscillator2.stop(audioContext.currentTime + 2.2);
+                    }
+                }, 1200);
+                
             } catch (error) {
                 console.error('Fallback sound also failed:', error);
             }
@@ -3404,6 +3507,7 @@
             if (managerState.notificationSound) {
                 managerState.notificationSound.pause();
                 managerState.notificationSound.currentTime = 0;
+                managerState.notificationSound = null;
             }
         }
 
