@@ -2846,21 +2846,7 @@ let elements = {};
 async function initializeManagerApp() {
     console.log('🚀 Initializing Enhanced Manager App...');
     
-    // Check if we need to redirect FIRST
-    const currentUrl = window.location.href;
-    const targetUrl = 'https://bufferzone-cloud.github.io/wizamanager/home.html';
-    
-    // More specific check to avoid redirect loops
-    if (!currentUrl.includes('/wizamanager/home.html') && !currentUrl.includes('/home.html')) {
-        console.log('🔄 Redirecting to manager home page...');
-        window.location.href = targetUrl;
-        return; // Stop execution completely
-    }
-    
-    // Only initialize if we're on the correct page
-    console.log('✅ On correct page, initializing app...');
-    
-    // Initialize PWA (only once)
+    // Initialize PWA
     initializePWA();
     
     // Register Service Worker
@@ -5516,6 +5502,7 @@ window.initializeDeliveryMap = initializeDeliveryMap;
     </script>
 </body>
 </html>
+
 
 
 
