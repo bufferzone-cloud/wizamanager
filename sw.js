@@ -1,8 +1,8 @@
-const CACHE_NAME = 'wiza-food-cafe-manager-v2';
-const HOME_URL = 'https://bufferzone-cloud.github.io/wizamanager/home.html';
+// Service Worker for WIZA FOOD CAFE Manager - Enhanced with real-time notifications
+const CACHE_NAME = 'wiza-food-cafe-manager-v3';
+const HOME_URL = 'https://bufferzone-cloud.github.io/wizamanager/';
 const urlsToCache = [
   HOME_URL,
-  'https://bufferzone-cloud.github.io/wizamanager/',
   'https://bufferzone-cloud.github.io/wizamanager/wfc.png',
   'https://bufferzone-cloud.github.io/wizamanager/Notification.mp3',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
@@ -14,40 +14,56 @@ const urlsToCache = [
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js'
 ];
 
+// Install event
 self.addEventListener('install', function(event) {
-  console.log('Service Worker installing...');
+  console.log('🛠️ Manager Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
-        console.log('Opened cache');
+        console.log('📦 Opened cache for manager');
         return cache.addAll(urlsToCache).catch(error => {
-          console.log('Cache addAll error:', error);
+          console.log('⚠️ Cache addAll error:', error);
         });
       })
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
+// Activate event
+self.addEventListener('activate', function(event) {
+  console.log('🎯 Manager Service Worker activating...');
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cacheName) {
+          if (cacheName !== CACHE_NAME) {
+            console.log('🗑️ Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// Fetch event
 self.addEventListener('fetch', function(event) {
-  // Only handle same-origin requests and the home page
   if (event.request.url.startsWith('https://bufferzone-cloud.github.io/wizamanager/')) {
     event.respondWith(
       caches.match(event.request)
         .then(function(response) {
-          // Return cached version or fetch from network
+          // Return cached version
           if (response) {
             return response;
           }
           
+          // Fetch from network
           return fetch(event.request).then(function(response) {
-            // Check if we received a valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
 
-            // Clone the response
-            var responseToCache = response.clone();
-
+            const responseToCache = response.clone();
             caches.open(CACHE_NAME)
               .then(function(cache) {
                 cache.put(event.request, responseToCache);
@@ -55,7 +71,7 @@ self.addEventListener('fetch', function(event) {
 
             return response;
           }).catch(function() {
-            // If both cache and network fail, show offline page
+            // Fallback to home page for document requests
             if (event.request.destination === 'document') {
               return caches.match(HOME_URL);
             }
@@ -65,104 +81,186 @@ self.addEventListener('fetch', function(event) {
   }
 });
 
-self.addEventListener('activate', function(event) {
-  console.log('Service Worker activating...');
-  event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  return self.clients.claim();
-});
-
-// Handle push notifications
+// Enhanced Push Notification Handler
 self.addEventListener('push', function(event) {
-  console.log('Push notification received');
+  console.log('📢 Push notification received in manager');
   
-  if (!event.data) return;
+  if (!event.data) {
+    console.log('❌ No data in push event');
+    return;
+  }
   
   let data;
   try {
     data = event.data.json();
+    console.log('📨 Push data:', data);
   } catch (e) {
+    console.log('⚠️ Error parsing push data, using fallback');
     data = {
       title: 'WIZA FOOD CAFE',
-      body: event.data.text() || 'New order received!'
+      body: event.data.text() || 'New order received!',
+      orderId: 'unknown',
+      customerName: 'Customer'
     };
   }
-  
+
   const options = {
-    body: data.body || 'New order received!',
+    body: data.body || `New order from ${data.customerName || 'Customer'}`,
     icon: 'https://bufferzone-cloud.github.io/wizamanager/wfc.png',
     badge: 'https://bufferzone-cloud.github.io/wizamanager/wfc.png',
-    vibrate: [100, 50, 100],
+    vibrate: [200, 100, 200, 100, 200],
+    tag: data.orderId || 'new-order',
+    requireInteraction: true,
     data: {
       url: HOME_URL,
-      dateOfArrival: Date.now()
+      orderId: data.orderId,
+      customerName: data.customerName,
+      timestamp: Date.now(),
+      action: 'view-order'
     },
     actions: [
       {
         action: 'view',
-        title: 'View Order'
+        title: '📋 View Order'
+      },
+      {
+        action: 'accept',
+        title: '✅ Accept'
       },
       {
         action: 'close',
-        title: 'Close'
+        title: '❌ Close'
       }
     ]
   };
   
   event.waitUntil(
-    self.registration.showNotification(data.title || 'WIZA FOOD CAFE', options)
+    self.registration.showNotification(
+      data.title || '🍔 New Order - WIZA FOOD CAFE', 
+      options
+    ).then(() => {
+      console.log('✅ Manager notification shown successfully');
+    }).catch(error => {
+      console.error('❌ Error showing notification:', error);
+    })
   );
 });
 
+// Enhanced Notification Click Handler
 self.addEventListener('notificationclick', function(event) {
-  console.log('Notification clicked:', event.action);
+  console.log('🖱️ Notification clicked:', event.action);
   event.notification.close();
   
-  if (event.action === 'view' || event.action === '') {
-    event.waitUntil(
-      clients.matchAll({type: 'window'}).then(function(windowClients) {
-        // Check if there is already a window open
-        for (let i = 0; i < windowClients.length; i++) {
-          let client = windowClients[i];
-          if (client.url === HOME_URL && 'focus' in client) {
-            return client.focus();
-          }
+  const notificationData = event.notification.data;
+  const action = event.action;
+  
+  event.waitUntil(
+    clients.matchAll({ 
+      type: 'window',
+      includeUncontrolled: true 
+    }).then(function(windowClients) {
+      // Focus existing window or open new one
+      for (let client of windowClients) {
+        if (client.url.includes('wizamanager') && 'focus' in client) {
+          // Send action data to the manager app
+          client.postMessage({
+            type: 'NOTIFICATION_ACTION',
+            action: action,
+            orderId: notificationData.orderId,
+            customerName: notificationData.customerName,
+            timestamp: notificationData.timestamp
+          });
+          return client.focus();
         }
-        
-        // If no window is open, open a new one
-        if (clients.openWindow) {
-          return clients.openWindow(HOME_URL);
-        }
-      })
-    );
-  }
+      }
+      
+      // If no existing window, open new one
+      if (clients.openWindow) {
+        return clients.openWindow(HOME_URL);
+      }
+    })
+  );
 });
 
-// Handle background sync for offline orders
+// Background Sync for offline functionality
 self.addEventListener('sync', function(event) {
-  console.log('Background sync:', event.tag);
+  console.log('🔄 Background sync:', event.tag);
+  
   if (event.tag === 'order-sync') {
-    event.waitUntil(
-      // Implement your background sync logic here
-      // This would sync any pending orders when the connection is restored
-      syncOrders()
-    );
+    event.waitUntil(syncPendingOrders());
+  }
+  
+  if (event.tag === 'notification-sync') {
+    event.waitUntil(syncMissedNotifications());
   }
 });
 
-async function syncOrders() {
-  // This function would handle syncing any pending orders
-  // when the device comes back online
-  console.log('Syncing orders...');
-  // Implementation would depend on your specific sync requirements
+// Sync pending orders when back online
+async function syncPendingOrders() {
+  try {
+    console.log('🔄 Syncing pending orders...');
+    // Implementation for syncing any pending order actions
+    const pendingActions = await getPendingActions();
+    
+    for (let action of pendingActions) {
+      await processPendingAction(action);
+    }
+    
+    console.log('✅ Pending orders synced successfully');
+  } catch (error) {
+    console.error('❌ Error syncing orders:', error);
+  }
 }
+
+// Sync missed notifications
+async function syncMissedNotifications() {
+  try {
+    console.log('🔄 Syncing missed notifications...');
+    // Check for any missed orders while offline
+    // This would query Firebase for recent orders
+  } catch (error) {
+    console.error('❌ Error syncing notifications:', error);
+  }
+}
+
+// Helper functions for background sync
+async function getPendingActions() {
+  // Get pending actions from IndexedDB
+  return new Promise((resolve) => {
+    resolve([]);
+  });
+}
+
+async function processPendingAction(action) {
+  // Process individual pending action
+  return Promise.resolve();
+}
+
+// Message handler for communication with manager app
+self.addEventListener('message', function(event) {
+  const { type, data } = event.data || {};
+  
+  switch (type) {
+    case 'SKIP_WAITING':
+      self.skipWaiting();
+      break;
+      
+    case 'TRIGGER_NOTIFICATION':
+      // For testing notifications
+      self.registration.showNotification('Test Notification', {
+        body: 'This is a test notification from manager',
+        icon: 'https://bufferzone-cloud.github.io/wizamanager/wfc.png',
+        badge: 'https://bufferzone-cloud.github.io/wizamanager/wfc.png'
+      });
+      break;
+      
+    case 'CHECK_UPDATES':
+      event.ports[0].postMessage({
+        type: 'UPDATE_STATUS',
+        updateAvailable: false
+      });
+      break;
+  }
+});
+
+console.log('🎯 WIZA FOOD CAFE Manager Service Worker loaded successfully');
