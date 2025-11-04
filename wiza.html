@@ -2835,8 +2835,12 @@ const managerState = {
 let elements = {};
 
 // Initialize Enhanced Manager App
+// Add this to your initializeManagerApp function
 async function initializeManagerApp() {
     console.log('🚀 Initializing Enhanced Manager App...');
+    
+    // Initialize PWA
+    initializePWA();
     
     // Check if we need to redirect
     const currentUrl = window.location.href;
@@ -2934,46 +2938,102 @@ async function requestNotificationPermission() {
 }
 
 // PWA Installation
+// Enhanced PWA Installation Handler for Manager App
 function initializePWA() {
+    let deferredPrompt;
+    const installPrompt = document.getElementById('pwaInstallPrompt');
+    
     // Listen for beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('🚀 PWA install prompt triggered in manager');
         e.preventDefault();
-        managerState.deferredPrompt = e;
+        deferredPrompt = e;
         
-        // Show install prompt
-        const prompt = document.getElementById('pwaInstallPrompt');
-        if (prompt) {
-            prompt.style.display = 'block';
-        }
+        // Show install prompt in the middle of the screen
+        setTimeout(() => {
+            if (!isAppInstalled()) {
+                showInstallPrompt();
+            }
+        }, 3000); // Show after 3 seconds
     });
-    
-    // Install button
+
+    // Install button handler
     document.getElementById('installPWA')?.addEventListener('click', async () => {
-        if (!managerState.deferredPrompt) return;
+        if (!deferredPrompt) return;
         
-        managerState.deferredPrompt.prompt();
-        const { outcome } = await managerState.deferredPrompt.userChoice;
+        console.log('📲 Installing PWA from manager...');
+        deferredPrompt.prompt();
+        
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response: ${outcome}`);
         
         if (outcome === 'accepted') {
-            console.log('✅ PWA installed');
-            document.getElementById('pwaInstallPrompt').style.display = 'none';
+            console.log('✅ PWA installed successfully from manager');
+            hideInstallPrompt();
+            
+            // Show success message
+            showNotification('App installed successfully!', 'success');
         }
         
-        managerState.deferredPrompt = null;
+        deferredPrompt = null;
     });
-    
-    // Close button
+
+    // Close button handler
     document.getElementById('closePWA')?.addEventListener('click', () => {
-        document.getElementById('pwaInstallPrompt').style.display = 'none';
+        console.log('❌ PWA install cancelled from manager');
+        hideInstallPrompt();
     });
-    
-    // Check if app is already installed
-    window.addEventListener('appinstalled', () => {
-        console.log('✅ PWA was installed');
-        managerState.deferredPrompt = null;
+
+    // Listen for app installation
+    window.addEventListener('appinstalled', (evt) => {
+        console.log('🎉 WIZA Manager was successfully installed');
+        hideInstallPrompt();
+        
+        // Update UI to reflect installed state
+        updateAppInstalledUI();
     });
 }
 
+// Show install prompt in the middle of the screen
+function showInstallPrompt() {
+    const prompt = document.getElementById('pwaInstallPrompt');
+    if (prompt) {
+        prompt.style.display = 'block';
+        prompt.style.position = 'fixed';
+        prompt.style.top = '50%';
+        prompt.style.left = '50%';
+        prompt.style.transform = 'translate(-50%, -50%)';
+        prompt.style.zIndex = '10000';
+        prompt.style.background = 'var(--bg-card)';
+        prompt.style.border = '2px solid var(--primary)';
+        prompt.style.borderRadius = 'var(--border-radius-lg)';
+        prompt.style.padding = 'var(--spacing-lg)';
+        prompt.style.boxShadow = 'var(--shadow-lg)';
+        prompt.style.textAlign = 'center';
+        prompt.style.maxWidth = '90%';
+        prompt.style.width = '300px';
+    }
+}
+
+// Hide install prompt
+function hideInstallPrompt() {
+    const prompt = document.getElementById('pwaInstallPrompt');
+    if (prompt) {
+        prompt.style.display = 'none';
+    }
+}
+
+// Check if app is already installed
+function isAppInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true;
+}
+
+// Update UI when app is installed
+function updateAppInstalledUI() {
+    // You can update the UI to show installed state
+    console.log('📱 App is installed, updating UI...');
+}
 // Test Notifications
 function setupTestNotifications() {
     document.getElementById('testNotification')?.addEventListener('click', () => {
@@ -5392,6 +5452,7 @@ window.initializeDeliveryMap = initializeDeliveryMap;
     </script>
 </body>
 </html>
+
 
 
 
