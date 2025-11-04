@@ -7,7 +7,13 @@
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    
+    <!-- Auto-redirect to specified URL -->
+<script>
+    // Redirect to the specified URL when app opens
+    if (window.location.href !== 'https://bufferzone-cloud.github.io/wizamanager/home.html') {
+        window.location.href = 'https://bufferzone-cloud.github.io/wizamanager/home.html';
+    }
+</script>
     <!-- Icons -->
     <link rel="icon" href="wfc.png" type="image/png">
     <link rel="apple-touch-icon" href="wfc.png">
@@ -2775,15 +2781,16 @@
 
     <script>
         // Enhanced Firebase Configuration
+// Enhanced Firebase Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyCZEqWRAHW0tW6j0WfBf8lxj61oExa6BwY",
+    apiKey: "BEHA9PJkJV_r7A5zDGXApm9LnO3N0XccM7nukrKgDTNCNKyFEn0bzAlhve4SwR6i3XX1jl-5acCeHEVAWkyT2t4",
     authDomain: "wizafoodcafe.firebaseapp.com",
     databaseURL: "https://wizafoodcafe-default-rtdb.firebaseio.com",
     projectId: "wizafoodcafe",
     storageBucket: "wizafoodcafe.firebasestorage.app",
     messagingSenderId: "248334218737",
     appId: "1:248334218737:web:94fabd0bbdf75bb8410050"
-};
+};;
 
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
@@ -2836,6 +2843,16 @@ let elements = {};
 async function initializeManagerApp() {
     console.log('🚀 Initializing Enhanced Manager App...');
     
+    // Check if we need to redirect
+    const currentUrl = window.location.href;
+    const targetUrl = 'https://bufferzone-cloud.github.io/wizamanager/home.html';
+    
+    if (!currentUrl.includes('wizamanager/home.html')) {
+        console.log('🔄 Redirecting to manager home page...');
+        window.location.href = targetUrl;
+        return; // Stop execution since we're redirecting
+    }
+    
     // Initialize PWA
     initializePWA();
     
@@ -2845,14 +2862,11 @@ async function initializeManagerApp() {
     // Request Notification Permission
     await requestNotificationPermission();
     
-    // Setup test notifications
-    setupTestNotifications();
-    
     // Initialize the rest of your app
     initializeElements();
     setupEventListeners();
     loadManagerData();
-    setupFirebaseListeners();
+    setupEnhancedFirebaseListeners(); // Use enhanced listeners
     
     // Initialize sections
     updateDashboard();
@@ -2866,7 +2880,7 @@ async function initializeManagerApp() {
     // Start auto-refresh for orders
     startAutoRefresh();
     
-    showNotification('Enhanced Manager dashboard loaded successfully!', 'success');
+    showNotification('Enhanced Manager dashboard loaded with real-time order tracking!', 'success');
 }
 
 // Service Worker Registration
@@ -3221,7 +3235,8 @@ function setupEventListeners() {
 }
 
 // Enhanced Firebase Real-time Listeners
-function setupFirebaseListeners() {
+// Enhanced Firebase Real-time Listeners with Sound and Notifications
+function setupEnhancedFirebaseListeners() {
     console.log("📡 Setting up enhanced Firebase real-time listeners...");
     
     // Listen for new orders with improved error handling
@@ -3251,9 +3266,9 @@ function setupFirebaseListeners() {
                 // Process the new order
                 processNewOrder(newOrder);
                 
-                // Show new order notification to manager
+                // Show enhanced new order notification to manager
                 if (managerState.settings.acceptOrders) {
-                    showNewOrderNotification(newOrder);
+                    showEnhancedNewOrderNotification(newOrder);
                 }
             } else {
                 console.log("📝 Order already processed:", orderKey);
@@ -3280,30 +3295,13 @@ function setupFirebaseListeners() {
             
             // Update the order in the manager state
             updateExistingOrder(updatedOrder);
-        } catch (error) {
-            console.error("❌ Error processing order update:", error);
-        }
-    });
-
-    // Listen for order removals
-    ordersRef.on('child_removed', (snapshot) => {
-        try {
-            const removedOrderKey = snapshot.key;
-            console.log("🗑️ Order removed:", removedOrderKey);
             
-            // Remove from processed orders set
-            managerState.processedOrderIds.delete(removedOrderKey);
-            
-            // Remove from local state
-            const orderIndex = managerState.orders.findIndex(o => o.firebaseKey === removedOrderKey);
-            if (orderIndex !== -1) {
-                managerState.orders.splice(orderIndex, 1);
-                saveManagerData();
-                loadOrders();
-                updateDashboard();
+            // Show notification for status changes
+            if (updatedOrder.status && updatedOrder.status !== 'pending') {
+                showStatusUpdateNotification(updatedOrder);
             }
         } catch (error) {
-            console.error("❌ Error processing order removal:", error);
+            console.error("❌ Error processing order update:", error);
         }
     });
 
@@ -3315,17 +3313,11 @@ function setupFirebaseListeners() {
         
         if (managerState.isOnline) {
             console.log("✅ Firebase Realtime Database connected");
-            showNotification('Connected to server', 'success');
+            showNotification('Connected to server - Receiving real-time orders', 'success');
         } else {
             console.log("❌ Firebase Realtime Database disconnected");
             showNotification('Offline - working locally', 'warning');
         }
-    });
-
-    // Add error handler for the entire connection
-    ordersRef.on('value', () => {}, (error) => {
-        console.error("❌ Firebase connection error:", error);
-        updateConnectionStatus(false);
     });
 }
 
@@ -3548,8 +3540,14 @@ function updateConnectionStatus(connected) {
 }
 
 // Enhanced Notification System
-function showNewOrderNotification(order) {
+// Enhanced Notification System with Sound
+function showEnhancedNewOrderNotification(order) {
     managerState.currentNewOrder = order;
+    
+    // Play notification sound immediately
+    if (managerState.soundEnabled && managerState.settings.notificationSound) {
+        playNotificationSound();
+    }
     
     // Show browser notification
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -3559,18 +3557,20 @@ function showNewOrderNotification(order) {
             badge: 'wfc.png',
             tag: order.firebaseKey,
             requireInteraction: true,
+            vibrate: [200, 100, 200],
             data: {
                 orderId: order.firebaseKey,
-                customerName: order.customer.name
+                customerName: order.customer.name,
+                total: order.total
             },
             actions: [
                 {
                     action: 'view',
-                    title: 'View Order'
+                    title: '📋 View Order'
                 },
                 {
                     action: 'accept',
-                    title: 'Accept'
+                    title: '✅ Accept'
                 }
             ]
         });
@@ -3579,6 +3579,11 @@ function showNewOrderNotification(order) {
             window.focus();
             viewOrderDetails(order.firebaseKey);
             notification.close();
+            stopNotificationSound();
+        };
+        
+        notification.onclose = function() {
+            stopNotificationSound();
         };
     }
     
@@ -3588,13 +3593,11 @@ function showNewOrderNotification(order) {
     // Show popup notification
     showNewOrderPopup(order);
     
-    // Play notification sound
-    if (managerState.soundEnabled && managerState.settings.notificationSound) {
-        playNotificationSound();
-    }
+    // Update notification badge
+    updatePendingOrdersCount();
 }
 
-// Enhanced Sound Notification
+// Enhanced Sound Notification with Fallback
 function playNotificationSound() {
     try {
         // Stop any existing sound first
@@ -3602,7 +3605,7 @@ function playNotificationSound() {
         
         // Create audio element with your actual sound file
         managerState.notificationSound = new Audio('Notification.mp3');
-        managerState.notificationSound.volume = 1.0; // Full volume
+        managerState.notificationSound.volume = 1.0;
         managerState.notificationSound.preload = 'auto';
         
         // Set up event listeners for better control
@@ -3634,7 +3637,6 @@ function playNotificationSound() {
         // Play the sound
         managerState.notificationSound.play().catch(e => {
             console.log('Audio play failed:', e);
-            // Fallback to browser beep
             playFallbackSound();
         });
         
@@ -3663,26 +3665,6 @@ function playFallbackSound() {
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 1);
         
-        // Play multiple times for better notification
-        setTimeout(() => {
-            if (managerState.soundEnabled) {
-                const oscillator2 = audioContext.createOscillator();
-                const gainNode2 = audioContext.createGain();
-                
-                oscillator2.connect(gainNode2);
-                gainNode2.connect(audioContext.destination);
-                
-                oscillator2.frequency.value = 1000;
-                oscillator2.type = 'sine';
-                
-                gainNode2.gain.setValueAtTime(0.7, audioContext.currentTime + 1.2);
-                gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2.2);
-                
-                oscillator2.start(audioContext.currentTime + 1.2);
-                oscillator2.stop(audioContext.currentTime + 2.2);
-            }
-        }, 1200);
-        
     } catch (error) {
         console.error('Fallback sound also failed:', error);
     }
@@ -3694,6 +3676,35 @@ function stopNotificationSound() {
         managerState.notificationSound.pause();
         managerState.notificationSound.currentTime = 0;
         managerState.notificationSound = null;
+    }
+}
+
+// Show status update notifications
+function showStatusUpdateNotification(order) {
+    if (managerState.settings.statusNotifications) {
+        const statusMessages = {
+            'preparing': `Order ${order.ref} is now being prepared`,
+            'ready': `Order ${order.ref} is ready for pickup/delivery`,
+            'out-for-delivery': `Order ${order.ref} is out for delivery`,
+            'completed': `Order ${order.ref} has been completed`,
+            'cancelled': `Order ${order.ref} has been cancelled`
+        };
+        
+        const message = statusMessages[order.status];
+        if (message) {
+            showNotification(message, 'info');
+            
+            // Show browser notification for important status changes
+            if (order.status === 'ready' || order.status === 'out-for-delivery') {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification(`Order ${order.status} - WIZA FOOD CAFE`, {
+                        body: message,
+                        icon: 'wfc.png',
+                        tag: `status-${order.firebaseKey}`
+                    });
+                }
+            }
+        }
     }
 }
 
@@ -3751,13 +3762,23 @@ function toggleSound() {
 
 // Start auto-refresh for orders
 function startAutoRefresh() {
-    // Refresh orders every 2 seconds
+    // Refresh orders every 2 seconds for real-time updates
     setInterval(() => {
         if (managerState.currentSection === 'orders' || managerState.currentSection === 'dashboard') {
-            loadOrders();
             updateDashboard();
+            updatePendingOrdersCount();
         }
     }, 2000);
+    
+    // Check for new orders specifically every 3 seconds
+    setInterval(() => {
+        if (managerState.orders.length > 0) {
+            const pendingOrders = managerState.orders.filter(order => order.status === 'pending');
+            if (pendingOrders.length > 0) {
+                updatePendingOrdersCount();
+            }
+        }
+    }, 3000);
 }
 
 // Update UI when new order is received
@@ -5376,4 +5397,5 @@ window.initializeDeliveryMap = initializeDeliveryMap;
     </script>
 </body>
 </html>
+
 
