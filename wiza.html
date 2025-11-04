@@ -2153,12 +2153,19 @@
     </style>
 </head>
 <body>
-    <!-- PWA Install Prompt -->
-    <div class="pwa-install-prompt" id="pwaInstallPrompt">
-        <span>Install WIZA FOOD CAFE Manager for better experience</span>
-        <button id="installPWA" style="margin-left: 10px; background: white; color: var(--primary); border: none; padding: 5px 10px; border-radius: 4px;">Install</button>
-        <button id="closePWA" style="margin-left: 5px; background: transparent; color: white; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">Close</button>
+    <!-- PWA Install Prompt - Fixed Version -->
+<div class="pwa-install-prompt" id="pwaInstallPrompt" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); color: var(--text-primary); padding: 20px; border-radius: var(--border-radius-lg); border: 2px solid var(--primary); z-index: 10000; text-align: center; max-width: 90%; width: 300px;">
+    <div style="margin-bottom: 15px;">
+        <strong style="font-size: 1.1rem;">Install WIZA Manager</strong>
+        <p style="font-size: 0.9rem; margin-top: 10px; color: var(--text-secondary);">
+            Get the full app experience
+        </p>
     </div>
+    <div style="display: flex; gap: 10px;">
+        <button id="installPWA" style="flex: 1; background: var(--primary); color: white; border: none; padding: 10px; border-radius: var(--border-radius); cursor: pointer;">Install</button>
+        <button id="closePWA" style="flex: 1; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 10px; border-radius: var(--border-radius); cursor: pointer;">Close</button>
+    </div>
+</div>
    <!-- Manager Header -->
     <header class="manager-header">
         <div class="header-content">
@@ -2993,7 +3000,63 @@ function initializePWA() {
         updateAppInstalledUI();
     });
 }
+// PWA Installation for Manager App
+let deferredPrompt;
 
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('🚀 PWA install prompt triggered in manager');
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show install prompt after a delay
+    setTimeout(() => {
+        if (!isAppInstalled()) {
+            showInstallPrompt();
+        }
+    }, 3000);
+});
+
+function showInstallPrompt() {
+    const prompt = document.getElementById('pwaInstallPrompt');
+    if (prompt && deferredPrompt) {
+        prompt.style.display = 'block';
+    }
+}
+
+function hideInstallPrompt() {
+    const prompt = document.getElementById('pwaInstallPrompt');
+    if (prompt) {
+        prompt.style.display = 'none';
+    }
+}
+
+function isAppInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true;
+}
+
+document.getElementById('installPWA')?.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+        console.log('✅ PWA installed from manager');
+        hideInstallPrompt();
+    }
+    
+    deferredPrompt = null;
+});
+
+document.getElementById('closePWA')?.addEventListener('click', () => {
+    hideInstallPrompt();
+});
+
+window.addEventListener('appinstalled', (evt) => {
+    console.log('🎉 App installed from manager');
+    hideInstallPrompt();
+});
 // Show install prompt in the middle of the screen
 function showInstallPrompt() {
     const prompt = document.getElementById('pwaInstallPrompt');
@@ -5452,6 +5515,7 @@ window.initializeDeliveryMap = initializeDeliveryMap;
     </script>
 </body>
 </html>
+
 
 
 
