@@ -3,11 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WIZA FOOD CAFE - Loading</title><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WIZA FOOD CAFE - Loading</title>
     
     <!-- PWA Manifest -->
@@ -115,20 +110,22 @@
         /* PWA Install Prompt Styles */
         .pwa-install-prompt {
             position: fixed;
-            bottom: 20px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             background: #2A2A2A;
             color: white;
-            padding: 15px 20px;
+            padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             z-index: 10000;
             display: none;
-            align-items: center;
+            flex-direction: column;
             gap: 15px;
             max-width: 90%;
+            width: 350px;
             border: 2px solid #CC5500;
+            text-align: center;
         }
         
         .pwa-install-prompt.show {
@@ -139,17 +136,19 @@
         .install-buttons {
             display: flex;
             gap: 10px;
+            justify-content: center;
         }
         
         .install-btn {
             background: #CC5500;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 10px 20px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
             transition: background 0.3s ease;
+            flex: 1;
         }
         
         .install-btn:hover {
@@ -160,10 +159,11 @@
             background: transparent;
             color: #CCCCCC;
             border: 1px solid #555555;
-            padding: 8px 16px;
+            padding: 10px 20px;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
+            flex: 1;
         }
         
         .cancel-btn:hover {
@@ -189,11 +189,11 @@
         @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateX(-50%) translateY(20px);
+                transform: translate(-50%, -40%);
             }
             to {
                 opacity: 1;
-                transform: translateX(-50%) translateY(0);
+                transform: translate(-50%, -50%);
             }
         }
         
@@ -216,14 +216,7 @@
             }
             
             .pwa-install-prompt {
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
-            }
-            
-            .install-buttons {
-                width: 100%;
-                justify-content: center;
+                width: 90%;
             }
         }
     </style>
@@ -249,8 +242,10 @@
     <!-- PWA Install Prompt -->
     <div class="pwa-install-prompt" id="pwaInstallPrompt">
         <div class="prompt-text">
-            <strong>Install WIZA Manager</strong>
-            <p style="font-size: 0.9rem; margin-top: 5px; color: #CCCCCC;">Get the full app experience with quick access</p>
+            <strong style="font-size: 1.2rem;">Install WIZA Manager</strong>
+            <p style="font-size: 0.9rem; margin-top: 10px; color: #CCCCCC;">
+                Get the full app experience with quick access to order management
+            </p>
         </div>
         <div class="install-buttons">
             <button class="install-btn" id="installPWA">Install</button>
@@ -259,61 +254,11 @@
     </div>
 
     <script>
-        // PWA Installation Handling
+        // Enhanced PWA Installation Handling
         let deferredPrompt;
         const installPrompt = document.getElementById('pwaInstallPrompt');
         const installBtn = document.getElementById('installPWA');
         const closeBtn = document.getElementById('closePWA');
-
-        // Listen for beforeinstallprompt event
-        window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('🚀 PWA install prompt triggered');
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Show install prompt after a delay
-            setTimeout(() => {
-                if (!isAppInstalled()) {
-                    installPrompt.classList.add('show');
-                }
-            }, 2000);
-        });
-
-        // Install button click handler
-        installBtn.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            
-            console.log('📲 Installing PWA...');
-            deferredPrompt.prompt();
-            
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User response to the install prompt: ${outcome}`);
-            
-            if (outcome === 'accepted') {
-                console.log('✅ PWA installed successfully');
-                installPrompt.classList.remove('show');
-                
-                // Redirect to manager app after successful installation
-                setTimeout(() => {
-                    window.location.href = "wiza.html";
-                }, 1000);
-            }
-            
-            deferredPrompt = null;
-        });
-
-        // Close button handler
-        closeBtn.addEventListener('click', () => {
-            console.log('❌ PWA install cancelled');
-            installPrompt.classList.remove('show');
-            
-            // Continue with normal redirect
-            setTimeout(() => {
-                if (timeLeft <= 0) {
-                    window.location.href = "wiza.html";
-                }
-            }, 1000);
-        });
 
         // Check if app is already installed
         function isAppInstalled() {
@@ -321,16 +266,86 @@
                    window.navigator.standalone === true;
         }
 
+        // Show install prompt
+        function showInstallPrompt() {
+            if (!isAppInstalled() && deferredPrompt) {
+                console.log('📱 Showing install prompt');
+                installPrompt.classList.add('show');
+            }
+        }
+
+        // Hide install prompt
+        function hideInstallPrompt() {
+            console.log('❌ Hiding install prompt');
+            installPrompt.classList.remove('show');
+        }
+
+        // Listen for beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('🚀 PWA install prompt triggered');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install prompt after a short delay
+            setTimeout(() => {
+                showInstallPrompt();
+            }, 2000);
+        });
+
+        // Install button click handler
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                console.log('❌ No install prompt available');
+                return;
+            }
+            
+            console.log('📲 Installing PWA...');
+            
+            try {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                
+                if (outcome === 'accepted') {
+                    console.log('✅ PWA installed successfully');
+                    hideInstallPrompt();
+                    
+                    // Show success message
+                    alert('WIZA Manager installed successfully!');
+                }
+            } catch (error) {
+                console.error('❌ Error during installation:', error);
+            }
+            
+            deferredPrompt = null;
+        });
+
+        // Close button handler
+        closeBtn.addEventListener('click', () => {
+            console.log('❌ PWA install cancelled by user');
+            hideInstallPrompt();
+        });
+
         // Listen for app installation
         window.addEventListener('appinstalled', (evt) => {
             console.log('🎉 WIZA Manager was successfully installed');
-            installPrompt.classList.remove('show');
+            hideInstallPrompt();
+            
+            // Update UI to reflect installed state
+            updateAppInstalledUI();
         });
+
+        // Update UI when app is installed
+        function updateAppInstalledUI() {
+            console.log('📱 App is installed, updating UI...');
+            // You can add any UI updates here
+        }
 
         // Progress bar animation
         const loadingBar = document.getElementById('loadingBar');
         const countdownElement = document.getElementById('countdown');
         let timeLeft = 5;
+        let redirectTimer;
         
         const updateProgressBar = () => {
             const progress = 100 - (timeLeft / 5 * 100);
@@ -340,14 +355,17 @@
             
             if (timeLeft <= 0) {
                 clearInterval(interval);
-                // Check if we should redirect or wait for PWA installation
-                if (!installPrompt.classList.contains('show') && !deferredPrompt) {
-                    window.location.href = "wiza.html";
-                }
+                redirectToManager();
             }
             
             timeLeft--;
         };
+        
+        // Redirect to manager
+        function redirectToManager() {
+            console.log('🔄 Redirecting to manager app...');
+            window.location.href = "wiza.html";
+        }
         
         // Initial call to set the progress immediately
         updateProgressBar();
@@ -371,179 +389,18 @@
         // Check if we're already in standalone mode (installed)
         if (isAppInstalled()) {
             console.log('📱 App is already installed, redirecting directly...');
-            window.location.href = "wiza.html";
+            // Clear the countdown and redirect immediately
+            clearInterval(interval);
+            redirectToManager();
         }
+
+        // Prevent immediate redirect if install prompt is showing
+        window.addEventListener('beforeunload', (e) => {
+            if (installPrompt.classList.contains('show')) {
+                // Don't prevent default, but log
+                console.log('⚠️ Install prompt is showing, user might want to install');
+            }
+        });
     </script>
 </body>
-</html>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        
-        .loading-container {
-            text-align: center;
-            max-width: 90%;
-            padding: 20px;
-        }
-        
-        .logo {
-            width: 220px;
-            height: 220px;
-            margin: 0 auto 25px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
-            animation: pulse 2s infinite;
-            padding: 20px;
-        }
-        
-        .logo img {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 50%;
-        }
-        
-        h1 {
-            font-size: 2.8rem;
-            color: #333;
-            margin-bottom: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            color: #777;
-            margin-bottom: 30px;
-            font-weight: 500;
-        }
-        
-        .powered-by {
-            font-size: 0.9rem;
-            color: #999;
-            margin-top: 30px;
-        }
-        
-        .loading-bar-container {
-            width: 280px;
-            height: 12px;
-            background-color: #f0f0f0;
-            border-radius: 10px;
-            margin: 0 auto;
-            overflow: hidden;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .loading-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(to right, #ff6b6b, #ff8e53);
-            border-radius: 10px;
-            transition: width 0.5s ease;
-        }
-        
-        .countdown {
-            font-size: 1.2rem;
-            color: #ff6b6b;
-            margin-top: 15px;
-            font-weight: 600;
-        }
-        
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
-            }
-            50% {
-                transform: scale(1.05);
-                box-shadow: 0 12px 30px rgba(255, 107, 107, 0.4);
-            }
-            100% {
-                transform: scale(1);
-                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .logo {
-                width: 180px;
-                height: 180px;
-            }
-            
-            h1 {
-                font-size: 2.2rem;
-            }
-            
-            .subtitle {
-                font-size: 1rem;
-            }
-            
-            .loading-bar-container {
-                width: 220px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="loading-container">
-        <div class="logo">
-            <img src="wfc.png" alt="WIZA FOOD CAFE Logo">
-        </div>
-        
-        <h1>WIZA FOOD CAFE</h1>
-        <p class="subtitle">Serving delicious moments</p>
-        
-        <div class="loading-bar-container">
-            <div class="loading-bar" id="loadingBar"></div>
-        </div>
-        
-        <div class="countdown" id="countdown">5 seconds remaining</div>
-        
-        <p class="powered-by">Powered by BUFFER ZONE</p>
-    </div>
-
-    <script>
-        // Progress bar animation
-        const loadingBar = document.getElementById('loadingBar');
-        const countdownElement = document.getElementById('countdown');
-        let timeLeft = 5;
-        
-        const updateProgressBar = () => {
-            const progress = 100 - (timeLeft / 5 * 100);
-            loadingBar.style.width = progress + '%';
-            
-            countdownElement.textContent = timeLeft + " second" + (timeLeft !== 1 ? "s" : "") + " remaining";
-            
-            if (timeLeft <= 0) {
-                clearInterval(interval);
-                window.location.href = "wiza.html";
-            }
-            
-            timeLeft--;
-        };
-        
-        // Initial call to set the progress immediately
-        updateProgressBar();
-        
-        // Update progress every second
-        const interval = setInterval(updateProgressBar, 1000);
-    </script>
-</body>
-
 </html>
