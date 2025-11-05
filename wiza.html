@@ -2843,6 +2843,7 @@ let elements = {};
 
 // Initialize Enhanced Manager App
 // Add this to your initializeManagerApp function
+// Also update your initializeManagerApp function to ensure Firebase is properly initialized:
 async function initializeManagerApp() {
     console.log('🚀 Initializing Enhanced Manager App...');
     
@@ -2859,7 +2860,34 @@ async function initializeManagerApp() {
     initializeElements();
     setupEventListeners();
     loadManagerData();
-    setupEnhancedFirebaseListeners();
+    
+    // Initialize Firebase FIRST, then setup listeners
+    try {
+        // Your existing Firebase config
+        const firebaseConfig = {
+            apiKey: "BEHA9PJkJV_r7A5zDGXApm9LnO3N0XccM7nukrKgDTNCNKyFEn0bzAlhve4SwR6i3XX1jl-5acCeHEVAWkyT2t4",
+            authDomain: "wizafoodcafe.firebaseapp.com",
+            databaseURL: "https://wizafoodcafe-default-rtdb.firebaseio.com",
+            projectId: "wizafoodcafe",
+            storageBucket: "wizafoodcafe.firebasestorage.app",
+            messagingSenderId: "248334218737",
+            appId: "1:248334218737:web:94fabd0bbdf75bb8410050"
+        };
+
+        // Re-initialize Firebase to ensure it's ready
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        console.log("✅ Firebase initialized successfully");
+        
+        // Now setup enhanced Firebase listeners
+        setupEnhancedFirebaseListeners();
+        
+    } catch (error) {
+        console.error("❌ Firebase initialization failed:", error);
+        showNotification('Firebase connection failed', 'error');
+    }
     
     // Initialize sections
     updateDashboard();
@@ -2875,7 +2903,6 @@ async function initializeManagerApp() {
     
     showNotification('Enhanced Manager dashboard loaded with real-time order tracking!', 'success');
 }
-
 // Service Worker Registration
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
@@ -3344,9 +3371,31 @@ function setupEventListeners() {
 function setupEnhancedFirebaseListeners() {
     console.log("📡 Setting up enhanced Firebase real-time listeners...");
     
-    // Listen for new orders with improved error handling
+    // Listen for ALL orders (existing and new)
     const ordersRef = db.ref("orders");
     
+    // First, get ALL existing orders once
+    ordersRef.once('value').then((snapshot) => {
+        console.log("📦 Loading existing orders from Firebase...");
+        const orders = snapshot.val();
+        
+        if (orders) {
+            Object.keys(orders).forEach(orderKey => {
+                const order = orders[orderKey];
+                if (!managerState.processedOrderIds.has(orderKey)) {
+                    managerState.processedOrderIds.add(orderKey);
+                    order.firebaseKey = orderKey;
+                    order.id = order.orderId || generateId();
+                    processNewOrder(order);
+                }
+            });
+            console.log(`✅ Loaded ${Object.keys(orders).length} existing orders`);
+        }
+    }).catch(error => {
+        console.error("❌ Error loading existing orders:", error);
+    });
+
+    // Then listen for new orders
     ordersRef.on('child_added', (snapshot) => {
         try {
             const newOrder = snapshot.val();
@@ -3410,6 +3459,25 @@ function setupEnhancedFirebaseListeners() {
         }
     });
 
+    // Listen for order removals
+    ordersRef.on('child_removed', (snapshot) => {
+        try {
+            const orderKey = snapshot.key;
+            console.log("🗑️ Order removed:", orderKey);
+            
+            // Remove from local state
+            managerState.orders = managerState.orders.filter(order => order.firebaseKey !== orderKey);
+            managerState.processedOrderIds.delete(orderKey);
+            
+            saveManagerData();
+            updateDashboard();
+            loadOrders();
+            
+        } catch (error) {
+            console.error("❌ Error processing order removal:", error);
+        }
+    });
+
     // Enhanced connection monitoring
     const connectedRef = db.ref(".info/connected");
     connectedRef.on("value", (snap) => {
@@ -3419,11 +3487,38 @@ function setupEnhancedFirebaseListeners() {
         if (managerState.isOnline) {
             console.log("✅ Firebase Realtime Database connected");
             showNotification('Connected to server - Receiving real-time orders', 'success');
+            
+            // Refresh orders when coming back online
+            refreshOrders();
         } else {
             console.log("❌ Firebase Realtime Database disconnected");
             showNotification('Offline - working locally', 'warning');
         }
     });
+}
+
+// Add this function to refresh orders periodically
+function refreshOrders() {
+    // Refresh orders every 30 seconds to catch any missed updates
+    setInterval(() => {
+        if (managerState.isOnline) {
+            const ordersRef = db.ref("orders");
+            ordersRef.once('value').then((snapshot) => {
+                const orders = snapshot.val();
+                if (orders) {
+                    Object.keys(orders).forEach(orderKey => {
+                        const order = orders[orderKey];
+                        if (!managerState.processedOrderIds.has(orderKey)) {
+                            managerState.processedOrderIds.add(orderKey);
+                            order.firebaseKey = orderKey;
+                            order.id = order.orderId || generateId();
+                            processNewOrder(order);
+                        }
+                    });
+                }
+            });
+        }
+    }, 30000); // 30 seconds
 }
 
 // Enhanced Coordinate Handling
@@ -5502,6 +5597,7 @@ window.initializeDeliveryMap = initializeDeliveryMap;
     </script>
 </body>
 </html>
+
 
 
 
