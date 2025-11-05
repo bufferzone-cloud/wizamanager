@@ -64,30 +64,74 @@ self.addEventListener('activate', function(event) {
 });
 
 // Fetch event - Enhanced caching strategy
+// Fetch event - Enhanced caching strategy
 self.addEventListener('fetch', function(event) {
   const request = event.request;
   
-  // Handle Firebase requests with network-first strategy
+  // Handle Firebase requests with network-only strategy
   if (request.url.includes('firebaseio.com')) {
     event.respondWith(
       fetch(request)
         .then(response => {
-          // Cache successful Firebase responses
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, responseClone);
-            });
-          }
+          // Return fresh data from network
           return response;
         })
         .catch(() => {
-          // Fallback to cache if network fails
-          return caches.match(request);
+          // If network fails, don't use cache for Firebase data
+          // We want real-time data or nothing
+          return new Response(JSON.stringify({ error: 'Offline' }), {
+            status: 408,
+            headers: { 'Content-Type': 'application/json' }
+          });
         })
     );
     return;
   }
+
+  // For navigation requests, use network-first with cache fallback
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .catch(() => {
+          return caches.match(HOME_URL);
+        })
+    );
+    return;
+  }
+
+  // For static assets, use cache-first strategy
+  event.respondWith(
+    caches.match(request)
+      .then(function(response) {
+        if (response) {
+          return response;
+        }
+        
+        return fetch(request).then(function(response) {
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then(function(cache) {
+              cache.put(request, responseToCache);
+            });
+
+          return response;
+        }).catch(function() {
+          // For CSS and JS files, return empty responses rather than failing
+          if (request.destination === 'style' || request.destination === 'script') {
+            return new Response('', { 
+              status: 200, 
+              statusText: 'OK',
+              headers: { 'Content-Type': 'text/css' }
+            });
+          }
+        });
+      })
+  );
+});
 
   // For navigation requests, use network-first with cache fallback
   if (request.mode === 'navigate') {
